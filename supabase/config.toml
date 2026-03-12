@@ -1,0 +1,16 @@
+project_id = "icvstljgzqhdezqdtmes"
+
+[functions.ca-chatbot]
+verify_jwt = false
+
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.verify-razorpay-payment]
+verify_jwt = false
+
+[functions.admin-stats]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false
