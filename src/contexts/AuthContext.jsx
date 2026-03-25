@@ -35,16 +35,19 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     // Set up auth state listener FIRST
+    // Only fetch user data on genuine auth events to avoid double-fetching on mount
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
-        // Defer profile fetch with setTimeout
         if (session?.user) {
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
+          // Only re-fetch profile/role on real auth state changes, not the initial trigger
+          if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+            setTimeout(() => {
+              fetchUserData(session.user.id);
+            }, 0);
+          }
         } else {
           setProfile(null);
           setRole(null);
@@ -53,7 +56,7 @@ export function AuthProvider({ children }) {
       }
     );
 
-    // THEN check for existing session
+    // THEN check for existing session — this is the primary fetch path on page load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);

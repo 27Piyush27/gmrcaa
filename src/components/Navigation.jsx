@@ -56,14 +56,23 @@ export const Navigation = () => {
     window.location.href = "/";
   };
 
+  const isStaff = role === "admin" || role === "ca";
   const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "About", path: "/about" },
-  { name: "Services", path: "/services" },
-  { name: "Contact", path: "/contact" },
-  { name: "Dashboard", path: "/dashboard" },
-  ...(role === "admin" || role === "ca" ? [{ name: "Admin", path: "/admin" }] : [])];
-
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+    { name: "Services", path: "/services" },
+    ...(!isStaff ? [{ name: "Tax Calculator", path: "/tax-calculator" }] : []),
+    { name: "Contact", path: "/contact" },
+    ...(!isStaff ? [
+      { name: "My Dashboard", path: "/dashboard" },
+      { name: "My Appointments", path: "/my-appointments" },
+    ] : []),
+    ...(isStaff ? [
+      { name: "Admin Panel", path: "/admin" },
+      { name: "Blog", path: "/admin/blog" },
+      { name: "Reviews", path: "/admin/testimonials" },
+    ] : []),
+  ];
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "";
 

@@ -153,3 +153,36 @@ To ensure the Notification Bell updates live when a service request status chang
 
 ## Done!
 Your new Supabase project is now fully configured and linked to your GMR & Associates application.
+
+---
+
+## 8. New Tables (Migration v2 — 2026-03-25)
+
+Run the file `supabase/migrations/20260325000001_appointments_and_invoices.sql` in the Supabase SQL editor to add:
+
+### Appointments Table
+Stores client consultation bookings from the `/appointments` page.
+
+```sql
+-- Key columns
+user_id, date, time_slot, type (video/phone/in_person), topic, notes, status (pending/confirmed/cancelled/completed), assigned_ca
+```
+
+**RLS:** Clients can INSERT/SELECT their own appointments. CA/admin can view and update all.
+
+### Invoices Table
+Saves a record every time a client downloads an invoice PDF.
+
+```sql
+-- Key columns
+user_id, payment_id, invoice_number (unique), service_title, base_amount, gst_amount, total_amount, generated_at
+```
+
+**RLS:** Clients can INSERT/SELECT their own invoices. CA/admin can SELECT all.
+
+### Notifications Table (already existed)
+The `notifications` table was already in the schema. The `NotificationBell` component has been upgraded to:
+- Read directly from this table instead of `service_requests`
+- Show real notification `title` + `body` text
+- Highlight unread notifications
+- Support **Mark all read** button

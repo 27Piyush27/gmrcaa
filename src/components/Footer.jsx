@@ -11,13 +11,21 @@ export const Footer = () => {
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
     { name: "Contact", path: "/contact" },
-    { name: "Client Portal", path: "/dashboard" }],
+    { name: "Client Portal", path: "/dashboard" },
+    { name: "Blog", path: "/blog" },
+    { name: "FAQ", path: "/faq" },
+    { name: "Team", path: "/team" },
+    { name: "Testimonials", path: "/testimonials" }],
 
     services: [
-    { name: "Accounting", path: "/services/accounting" },
-    { name: "Auditing", path: "/services/auditing" },
-    { name: "Tax Advisory", path: "/services/tax" },
-    { name: "Consulting", path: "/services" }]
+    { name: "Tax Calculator", path: "/tax-calculator" },
+    { name: "Book Consultation", path: "/appointments" },
+    { name: "Tax Advisory", path: "/services" },
+    { name: "View All Services", path: "/services" }],
+
+    legal: [
+    { name: "Terms of Service", path: "/terms" },
+    { name: "Privacy Policy", path: "/privacy" }]
 
   };
 
@@ -69,13 +77,13 @@ export const Footer = () => {
             </div>
 
             {/* Company Links */}
-            <div className="md:col-span-3 md:col-start-7">
+            <div className="md:col-span-2 md:col-start-7">
               <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5">
                 Company
               </p>
               <ul className="space-y-3">
                 {links.company.map((link) =>
-                <li key={link.path}>
+                <li key={link.path + link.name}>
                     <Link
                     to={link.path}
                     className="text-[15px] text-foreground/70 hover:text-foreground hover:translate-x-0.5 transition-all duration-200 flex items-center gap-1.5 group">
@@ -89,13 +97,30 @@ export const Footer = () => {
             </div>
 
             {/* Services Links */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-2">
               <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5">
                 Services
               </p>
               <ul className="space-y-3">
                 {links.services.map((link) =>
-                <li key={link.path}>
+                <li key={link.path + link.name}>
+                    <Link
+                    to={link.path}
+                    className="text-[15px] text-foreground/70 hover:text-foreground hover:translate-x-0.5 transition-all duration-200 flex items-center gap-1.5 group">
+                    
+                      {link.name}
+                      <ArrowUpRight className="h-3 w-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200" />
+                    </Link>
+                  </li>
+                )}
+              </ul>
+
+              <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5 mt-8">
+                Legal
+              </p>
+              <ul className="space-y-3">
+                {links.legal.map((link) =>
+                <li key={link.path + link.name}>
                     <Link
                     to={link.path}
                     className="text-[15px] text-foreground/70 hover:text-foreground hover:translate-x-0.5 transition-all duration-200 flex items-center gap-1.5 group">

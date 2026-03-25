@@ -1,6 +1,6 @@
 /**
  * InvoiceButton — reusable download-invoice button.
- * Can be placed anywhere: PaymentSuccess, payment history rows, Dashboard, etc.
+ * Generates a PDF locally AND saves the invoice record to Supabase.
  */
 
 import { useState } from "react";
@@ -9,21 +9,7 @@ import { FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { generateInvoicePDF, generateInvoiceNumber } from "@/lib/generateInvoice";
 import { useAuth } from "@/contexts/AuthContext";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import { supabase } from "@/integrations/supabase/client";
 
 export function InvoiceButton({
   paymentId,
@@ -75,6 +61,23 @@ export function InvoiceButton({
       await new Promise((r) => setTimeout(r, 50));
       generateInvoicePDF(invoiceData);
       toast.success(`Invoice ${invoiceNumber} downloaded!`);
+
+      // ── Save invoice record to DB (non-blocking — failure won't break PDF) ──
+      if (user) {
+        try {
+          await supabase.from("invoices").insert({
+            user_id: user.id,
+            invoice_number: invoiceNumber,
+            service_title: serviceTitle || "Service",
+            base_amount: baseAmount || 0,
+            gst_amount: gstAmount || 0,
+            total_amount: totalAmount || 0,
+          });
+        } catch (dbErr) {
+          // Silently log — user still has the PDF
+          console.warn("Invoice DB save failed (PDF still downloaded):", dbErr);
+        }
+      }
     } catch (err) {
       console.error("Invoice generation failed:", err);
       toast.error("Failed to generate invoice. Please try again.");

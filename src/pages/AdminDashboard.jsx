@@ -16,19 +16,25 @@ import {
   Briefcase,
   Clock,
   CheckCircle,
-
   FileText,
-
   Loader2,
   Users,
   IndianRupee,
   Send,
-  Eye } from
+  Eye,
+  UserCheck,
+  CalendarDays } from
 "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ServiceStatusStepper } from "@/components/ServiceStatusStepper";
 import { CADocumentReview } from "@/components/CADocumentReview";
+import { CASendNote } from "@/components/CASendNote";
+import { KanbanBoard } from "@/components/KanbanBoard";
+import { RevenueCharts } from "@/components/RevenueCharts";
+import { ExportButton } from "@/components/ExportButton";
+import { SkeletonDashboard } from "@/components/SkeletonLoaders";
+import { LayoutGrid, List, BarChart3 } from "lucide-react";
 
 
 
@@ -66,6 +72,8 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("list"); // list | kanban | analytics
+  const [payments, setPayments] = useState([]);
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -100,6 +108,10 @@ export default function AdminDashboard() {
       }));
 
       setRequests(enriched);
+
+      // Also fetch payments for revenue charts
+      const { data: payData } = await supabase.from("payments").select("*").order("created_at", { ascending: true });
+      setPayments(payData || []);
     } catch (error) {
       console.error("Error fetching requests:", error);
       toast.error("Failed to load service requests");
@@ -172,6 +184,28 @@ export default function AdminDashboard() {
         "Service marked as completed. Client has been notified and can now make payment." :
         "Service request updated successfully"
       );
+
+      // ── Send email notification to client ─────────────────────────────────
+      try {
+        const clientEmail = selectedRequest.profiles?.email;
+        const clientName = selectedRequest.profiles?.name || "Client";
+        if (clientEmail) {
+          await supabase.functions.invoke("send-status-email", {
+            body: {
+              clientEmail,
+              clientName,
+              serviceName: selectedRequest.services?.name || selectedRequest.service_id || "Service",
+              newStatus: updateStatus,
+              notes: updateNotes || undefined,
+              amount: updateAmount ? parseFloat(updateAmount) : undefined,
+            },
+          });
+        }
+      } catch (emailErr) {
+        // Non-critical: log but don't block the success flow
+        console.warn("Email notification failed (non-critical):", emailErr);
+      }
+
       setDialogOpen(false);
       fetchRequests();
     } catch (error) {
@@ -268,7 +302,6 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 mb-2">
             {role === "admin" ?
             <Shield className="h-6 w-6" /> :
-
             <Briefcase className="h-6 w-6" />
             }
             <h1 className="text-3xl font-semibold tracking-tight">
@@ -278,6 +311,30 @@ export default function AdminDashboard() {
           <p className="text-background/70">
             Manage service requests, update statuses, and handle client deliverables.
           </p>
+          <button
+            onClick={() => navigate("/clients")}
+            className="mt-4 mr-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
+            <UserCheck className="w-4 h-4" />
+            Manage Clients
+          </button>
+          <button
+            onClick={() => navigate("/admin/appointments")}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
+            <CalendarDays className="w-4 h-4" />
+            Manage Appointments
+          </button>
+          <button
+            onClick={() => navigate("/admin/blog")}
+            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
+            <FileText className="w-4 h-4" />
+            Manage Blog
+          </button>
+          <button
+            onClick={() => navigate("/admin/testimonials")}
+            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
+            <Users className="w-4 h-4" />
+            Manage Reviews
+          </button>
         </div>
       </div>
 
@@ -287,7 +344,7 @@ export default function AdminDashboard() {
           {[
           { label: "All", count: requests.length, filter: "all" },
           { label: "Pending", count: requests.filter((r) => r.status === "pending").length, filter: "pending" },
-          { label: "In Progress", count: requests.filter((r) => r.status === "in_progress" || r.status === "in_progress").length, filter: "in_progress" },
+          { label: "In Progress", count: requests.filter((r) => r.status === "in_progress").length, filter: "in_progress" },
           { label: "Completed", count: requests.filter((r) => r.status === "completed").length, filter: "completed" },
           { label: "Paid", count: requests.filter((r) => r.status === "paid").length, filter: "paid" }].
           map((stat) =>
@@ -307,11 +364,48 @@ export default function AdminDashboard() {
           )}
         </div>
 
+        {/* View Toggle + Export */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-1 bg-secondary/50 rounded-xl p-1">
+            <button onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <List className="w-3.5 h-3.5" /> List
+            </button>
+            <button onClick={() => setViewMode("kanban")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <LayoutGrid className="w-3.5 h-3.5" /> Kanban
+            </button>
+            <button onClick={() => setViewMode("analytics")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "analytics" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <BarChart3 className="w-3.5 h-3.5" /> Analytics
+            </button>
+          </div>
+          <ExportButton
+            data={requests.map(r => ({ Service: r.services?.name || r.service_id, Client: r.profiles?.name || "", Status: r.status, Progress: `${r.progress}%`, Amount: r.amount || "", Date: new Date(r.created_at).toLocaleDateString("en-IN") }))}
+            filename="gmr_service_requests"
+            columns={[{ key: "Service", label: "Service" }, { key: "Client", label: "Client" }, { key: "Status", label: "Status" }, { key: "Progress", label: "Progress" }, { key: "Amount", label: "Amount" }, { key: "Date", label: "Date" }]}
+            label="Export CSV" />
+        </div>
+
+        {/* Analytics view */}
+        {viewMode === "analytics" && (
+          <div className="space-y-6 mb-8">
+            <RevenueCharts payments={payments} />
+          </div>
+        )}
+
+        {/* Kanban view */}
+        {viewMode === "kanban" && (
+          <div className="mb-8">
+            <KanbanBoard requests={filteredRequests} onSelectRequest={openManageDialog} />
+          </div>
+        )}
+
+        {viewMode === "list" && (
+        <>
         {/* Requests List */}
         {loadingRequests ?
-        <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-          </div> :
+        <SkeletonDashboard /> :
         filteredRequests.length === 0 ?
         <Card>
             <CardContent className="py-12 text-center">
@@ -466,7 +560,15 @@ export default function AdminDashboard() {
               <CADocumentReview
                 serviceRequestId={selectedRequest.id}
                 clientName={selectedRequest.profiles?.name} />
+              }
 
+              <Separator />
+
+              {selectedRequest &&
+              <CASendNote
+                targetUserId={selectedRequest.user_id}
+                clientName={selectedRequest.profiles?.name}
+                serviceRequestId={selectedRequest.id} />
               }
 
               <Separator />
@@ -508,6 +610,8 @@ export default function AdminDashboard() {
             </div>
           </DialogContent>
         </Dialog>
+      </>
+      )}
       </div>
     </div>);
 

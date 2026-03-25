@@ -147,5 +147,6 @@ export function useServiceNotifications(onUpdate) {
         channelRef.current = null;
       }
     };
-  }, [user, handleUpdate, onUpdate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, handleUpdate]);
 }

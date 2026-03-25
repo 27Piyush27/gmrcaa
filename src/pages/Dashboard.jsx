@@ -31,6 +31,11 @@ import { useServiceNotifications } from "@/hooks/useServiceNotifications";
 import { ServiceStatusStepper } from "@/components/ServiceStatusStepper";
 import { ServicePaymentButton } from "@/components/ServicePaymentButton";
 import { ClientDocumentUpload } from "@/components/ClientDocumentUpload";
+import { ServiceRating } from "@/components/ServiceRating";
+import { InvoiceButton } from "@/components/InvoiceButton";
+import { TaxDeadlineCalendar } from "@/components/TaxDeadlineCalendar";
+import { SkeletonDashboard } from "@/components/SkeletonLoaders";
+import { Link } from "react-router-dom";
 
 
 
@@ -146,12 +151,20 @@ export default function Dashboard() {
   const roleIcon = role === "admin" ? <Shield className="h-4 w-4" /> : role === "ca" ? <Briefcase className="h-4 w-4" /> : <User className="h-4 w-4" />;
   const roleLabel = role === "admin" ? "Administrator" : role === "ca" ? "Chartered Accountant" : "Client";
 
-  const stats = [
-  { icon: FileText, label: "Total Services", value: requests.length, color: "from-violet-500 to-purple-600", lightBg: "bg-violet-50 dark:bg-violet-950/30", iconColor: "text-violet-600 dark:text-violet-400" },
-  { icon: Activity, label: "In Progress", value: requests.filter((r) => r.status === "in_progress" || r.status === "in_progress").length, color: "from-blue-500 to-cyan-600", lightBg: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400" },
-  { icon: CheckCircle, label: "Ready to Pay", value: requests.filter((r) => r.status === "completed").length, color: "from-emerald-500 to-green-600", lightBg: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400" },
-  { icon: CreditCard, label: "Paid & Done", value: requests.filter((r) => r.status === "paid").length, color: "from-amber-500 to-orange-600", lightBg: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400" }];
+  const isStaff = role === "admin" || role === "ca";
 
+  // Role-aware stats
+  const stats = isStaff ? [
+    { icon: FileText, label: "Total Cases", value: requests.length, color: "from-violet-500 to-purple-600", lightBg: "bg-violet-50 dark:bg-violet-950/30", iconColor: "text-violet-600 dark:text-violet-400" },
+    { icon: Activity, label: "In Progress", value: requests.filter(r => r.status === "in_progress").length, color: "from-blue-500 to-cyan-600", lightBg: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400" },
+    { icon: CheckCircle, label: "Completed", value: requests.filter(r => r.status === "completed" || r.status === "paid").length, color: "from-emerald-500 to-green-600", lightBg: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400" },
+    { icon: IndianRupee, label: "Revenue Collected", value: requests.filter(r => r.status === "paid").reduce((sum, r) => sum + (r.amount || 0), 0), color: "from-amber-500 to-orange-600", lightBg: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400", prefix: "₹" },
+  ] : [
+    { icon: FileText, label: "Total Services", value: requests.length, color: "from-violet-500 to-purple-600", lightBg: "bg-violet-50 dark:bg-violet-950/30", iconColor: "text-violet-600 dark:text-violet-400" },
+    { icon: Activity, label: "In Progress", value: requests.filter(r => r.status === "in_progress").length, color: "from-blue-500 to-cyan-600", lightBg: "bg-blue-50 dark:bg-blue-950/30", iconColor: "text-blue-600 dark:text-blue-400" },
+    { icon: CheckCircle, label: "Ready to Pay", value: requests.filter(r => r.status === "completed").length, color: "from-emerald-500 to-green-600", lightBg: "bg-emerald-50 dark:bg-emerald-950/30", iconColor: "text-emerald-600 dark:text-emerald-400" },
+    { icon: CreditCard, label: "Paid & Done", value: requests.filter(r => r.status === "paid").length, color: "from-amber-500 to-orange-600", lightBg: "bg-amber-50 dark:bg-amber-950/30", iconColor: "text-amber-600 dark:text-amber-400" },
+  ];
 
   const containerVariants = {
     hidden: {},
@@ -200,13 +213,13 @@ export default function Dashboard() {
                 transition={{ delay: 0.2 }}
                 className="text-background/50 text-sm font-medium tracking-widest uppercase mb-1">
                 
-                Welcome back
+                {isStaff ? "CA Workspace" : "Welcome back"}
               </motion.p>
               <motion.h1
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.25 }}
-                className="text-3xl md:text-4xl lg:text-5xl font-semibold gradient-text-premium tracking-tight">
+                className="text-3xl md:text-4xl lg:text-5xl font-semibold text-background tracking-tight">
                 
                 {profile?.name || user.email?.split("@")[0]}
               </motion.h1>
@@ -230,22 +243,45 @@ export default function Dashboard() {
               transition={{ delay: 0.4 }}
               className="flex flex-wrap gap-3">
               
-              <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 hover-lift text-background text-sm font-medium transition-colors">
-                
-                <Plus className="w-4 h-4" />
-                New Service
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 hover-lift text-background text-sm font-medium transition-colors">
-                
-                <MessageCircle className="w-4 h-4" />
-                Support
-              </motion.button>
+              {isStaff ? (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/admin")}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 text-background text-sm font-medium transition-colors">
+                    <Briefcase className="w-4 h-4" />
+                    Manage Cases
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/contact")}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 text-background text-sm font-medium transition-colors">
+                    <MessageCircle className="w-4 h-4" />
+                    Contact Support
+                  </motion.button>
+                </>
+              ) : (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/services")}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 text-background text-sm font-medium transition-colors">
+                    <Plus className="w-4 h-4" />
+                    New Service
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.04, backgroundColor: "rgba(255,255,255,0.18)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => navigate("/contact")}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-dark border border-white/10 text-background text-sm font-medium transition-colors">
+                    <MessageCircle className="w-4 h-4" />
+                    Support
+                  </motion.button>
+                </>
+              )}
             </motion.div>
           </motion.div>
         </div>
@@ -294,33 +330,32 @@ export default function Dashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
           
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-xl md:text-2xl font-semibold tracking-tight">My Services</h2>
-              <p className="text-sm text-muted-foreground mt-1">Pay after service completion — always.</p>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
+                  {!isStaff ? "My Services" : "All Service Requests"}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {!isStaff ? "Pay after service completion — always." : "Manage and track client service requests."}
+                </p>
+              </div>
+              {!isStaff && (
+              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-xl border-border/60"
+                  onClick={() => navigate("/services")}>
+                  
+                  <Plus className="w-4 h-4" />
+                  Request New
+                </Button>
+              </motion.div>
+              )}
             </div>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 rounded-xl border-border/60"
-                onClick={() => navigate("/services")}>
-                
-                <Plus className="w-4 h-4" />
-                Request New
-              </Button>
-            </motion.div>
-          </div>
 
           {loadingRequests ?
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-8 h-8 border-2 border-foreground border-t-transparent rounded-full" />
-            
-              <p className="text-sm text-muted-foreground">Loading your services…</p>
-            </div> :
+          <SkeletonDashboard /> :
           requests.length === 0 ?
           <motion.div
             initial={{ opacity: 0, scale: 0.97 }}
@@ -371,7 +406,7 @@ export default function Dashboard() {
                         <div className="flex items-start gap-3">
                           <div className={`w-10 h-10 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             {request.status === "completed" && <CheckCircle className={`w-5 h-5 ${cfg.color}`} />}
-                            {(request.status === "in_progress" || request.status === "in_progress") && <Clock className={`w-5 h-5 ${cfg.color} animate-pulse`} />}
+                            {request.status === "in_progress" && <Clock className={`w-5 h-5 ${cfg.color} animate-pulse`} />}
                             {request.status === "pending" && <Clock className={`w-5 h-5 ${cfg.color}`} />}
                             {request.status === "paid" && <CreditCard className={`w-5 h-5 ${cfg.color}`} />}
                             {request.status === "cancelled" && <AlertCircle className={`w-5 h-5 ${cfg.color}`} />}
@@ -467,16 +502,19 @@ export default function Dashboard() {
                                 </motion.button>
                           }
 
-                              {/* Client upload */}
+                              {/* Client upload — only for clients */}
+                              {!isStaff && (
                               <div className="rounded-xl border border-border/50 bg-secondary/20 p-4">
                                 <ClientDocumentUpload serviceRequestId={request.id} status={request.status} />
                               </div>
+                              )}
                             </div>
                           </motion.div>
                       }
                       </AnimatePresence>
 
-                      {/* ── Payment button ──────────────────────────────── */}
+                      {/* ── Payment + Rating — client only ──────────────── */}
+                      {!isStaff && (
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
                         <ServicePaymentButton
                         serviceRequestId={request.id}
@@ -494,7 +532,25 @@ export default function Dashboard() {
                             View details <ChevronRight className="w-3 h-3" />
                           </motion.button>
                       }
+                        {request.status === "paid" && (
+                          <div className="flex flex-wrap gap-2">
+                            <ServiceRating serviceRequestId={request.id} serviceName={request.services?.name} />
+                            <InvoiceButton
+                              paymentId={request.payment_id || request.id}
+                              serviceTitle={request.services?.name || request.service_id}
+                              baseAmount={Math.round((request.amount || 0) / 1.18)}
+                              gstAmount={Math.round((request.amount || 0) - (request.amount || 0) / 1.18)}
+                              totalAmount={request.amount || 0}
+                              date={new Date(request.created_at).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs rounded-full"
+                              label="Download Invoice"
+                            />
+                          </div>
+                        )}
                       </div>
+                      )}
                     </div>
                   </motion.div>);
 
@@ -510,24 +566,73 @@ export default function Dashboard() {
           transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           className="grid grid-cols-1 md:grid-cols-2 gap-4">
           
-          {[
-          {
-            icon: MessageCircle,
-            title: "Get Support",
-            desc: "Reach our team and get your queries resolved quickly.",
-            action: () => navigate("/contact"),
-            label: "Contact Us",
-            gradient: "from-violet-500/10 to-purple-500/5"
-          },
-          {
-            icon: TrendingUp,
-            title: "Explore Services",
-            desc: "Browse our comprehensive range of CA services.",
-            action: () => navigate("/services"),
-            label: "View Services",
-            gradient: "from-blue-500/10 to-cyan-500/5"
-          }].
-          map(({ icon: Icon, title, desc, action, label, gradient }) =>
+          {(isStaff ? [
+            {
+              icon: Briefcase,
+              title: "Admin Panel",
+              desc: "Manage all client service requests, update statuses, and upload deliverables.",
+              action: () => navigate("/admin"),
+              label: "Open Panel",
+              gradient: "from-violet-500/10 to-purple-500/5"
+            },
+            {
+              icon: TrendingUp,
+              title: "Revenue Analytics",
+              desc: "View collections, monthly revenue trends, and payment history.",
+              action: () => navigate("/analytics"),
+              label: "View Revenue",
+              gradient: "from-blue-500/10 to-cyan-500/5"
+            },
+            {
+              icon: Calendar,
+              title: "Tax Deadlines",
+              desc: "Stay on top of upcoming ITR, GST, and TDS filing deadlines for clients.",
+              action: () => {},
+              label: "View Deadlines",
+              gradient: "from-emerald-500/10 to-green-500/5"
+            },
+            {
+              icon: MessageCircle,
+              title: "Contact Support",
+              desc: "Reach admin team for system help or escalations.",
+              action: () => navigate("/contact"),
+              label: "Contact Us",
+              gradient: "from-amber-500/10 to-orange-500/5"
+            },
+          ] : [
+            {
+              icon: MessageCircle,
+              title: "Get Support",
+              desc: "Reach our team and get your queries resolved quickly.",
+              action: () => navigate("/contact"),
+              label: "Contact Us",
+              gradient: "from-violet-500/10 to-purple-500/5"
+            },
+            {
+              icon: TrendingUp,
+              title: "View Analytics",
+              desc: "Track your spending, services, and payment history.",
+              action: () => navigate("/analytics"),
+              label: "Analytics",
+              gradient: "from-blue-500/10 to-cyan-500/5"
+            },
+            {
+              icon: Calendar,
+              title: "Book Consultation",
+              desc: "Schedule a one-on-one session with our expert CAs.",
+              action: () => navigate("/appointments"),
+              label: "Book Now",
+              gradient: "from-emerald-500/10 to-green-500/5"
+            },
+            {
+              icon: User,
+              title: "My Profile",
+              desc: "Update your personal details, PAN, and GSTIN.",
+              action: () => navigate("/profile"),
+              label: "Edit Profile",
+              gradient: "from-amber-500/10 to-orange-500/5"
+            },
+          ]).map(({ icon: Icon, title, desc, action, label, gradient }) =>
           <motion.div
             key={title}
             whileHover={{ y: -3, scale: 1.01 }}
@@ -556,6 +661,17 @@ export default function Dashboard() {
             </motion.div>
           )}
         </motion.div>
+
+        {/* ── Tax Deadline Calendar — only for users with active services ── */}
+        {requests.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-2xl border border-border/60 bg-card p-6 md:p-7">
+          <TaxDeadlineCalendar />
+        </motion.div>
+        )}
       </div>
     </div>);
 

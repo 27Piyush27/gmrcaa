@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MessageSquare, X, Send, Trash2, ArrowRight } from "lucide-react";
+import {
+  MessageSquare, X, Send, Trash2, ArrowRight, Mic, MicOff,
+  Image as ImageIcon, Globe, Calendar, Calculator, Bell, Sparkles, Loader2
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,47 +12,166 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 
-
-
-
-
-
+// ── constants ──────────────────────────────────────────────────────────
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ca-chatbot`;
 const SUPABASE_CLIENT_KEY =
-import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const QUICK_OPTIONS = [
-"I need help filing my Income Tax Return",
-"I want to register for GST",
-"I'm starting a new company",
-"What services do you offer?"];
+const QUICK_OPTIONS_EN = [
+  "I need help filing my Income Tax Return",
+  "I want to register for GST",
+  "I'm starting a new company",
+  "What services do you offer?",
+];
 
+const QUICK_OPTIONS_HI = [
+  "मुझे इनकम टैक्स रिटर्न दाखिल करने में मदद चाहिए",
+  "मुझे GST के लिए रजिस्ट्रेशन करना है",
+  "मैं एक नई कंपनी शुरू कर रहा हूँ",
+  "आपकी क्या सेवाएँ हैं?",
+];
 
+const TAX_DEADLINES = [
+  { label: "ITR Filing (Individuals)", date: "2026-07-31", labelHi: "ITR दाखिल (व्यक्तिगत)" },
+  { label: "TDS Return – Q1", date: "2026-07-31", labelHi: "TDS रिटर्न – Q1" },
+  { label: "GST Annual Return", date: "2026-12-31", labelHi: "GST वार्षिक रिटर्न" },
+  { label: "Advance Tax – 1st Instalment", date: "2026-06-15", labelHi: "एडवांस टैक्स – पहली किस्त" },
+  { label: "Company Annual Filing (ROC)", date: "2026-10-31", labelHi: "कंपनी वार्षिक फाइलिंग (ROC)" },
+];
+
+// ── helpers ─────────────────────────────────────────────────────────────
+function getDaysUntil(dateStr) {
+  const target = new Date(dateStr + "T23:59:59");
+  const now = new Date();
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+}
+
+function getUpcomingDeadlines(lang = "en") {
+  return TAX_DEADLINES
+    .map((d) => ({ ...d, daysLeft: getDaysUntil(d.date) }))
+    .filter((d) => d.daysLeft > 0 && d.daysLeft <= 60)
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .map((d) => ({
+      text: lang === "hi"
+        ? `${d.labelHi} — ${d.daysLeft} दिन शेष (${d.date})`
+        : `${d.label} — ${d.daysLeft} days left (${d.date})`,
+      daysLeft: d.daysLeft,
+    }));
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── component ──────────────────────────────────────────────────────────
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
+  const [lang, setLang] = useState("en"); // en | hi
+  const [isListening, setIsListening] = useState(false);
+  const [showDeadlines, setShowDeadlines] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null); // { file, preview, base64 }
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [deadlineBadge, setDeadlineBadge] = useState(false);
+
   const scrollRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const recognitionRef = useRef(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-scroll to bottom
+  const isHindi = lang === "hi";
+  const quickOptions = isHindi ? QUICK_OPTIONS_HI : QUICK_OPTIONS_EN;
+  const upcomingDeadlines = getUpcomingDeadlines(lang);
+
+  // Show deadline badge on open if deadlines are upcoming
+  useEffect(() => {
+    if (isOpen && upcomingDeadlines.length > 0 && messages.length === 0) {
+      setDeadlineBadge(true);
+    }
+  }, [isOpen, upcomingDeadlines.length, messages.length]);
+
+  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const el = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]") || scrollRef.current;
+      el.scrollTop = el.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, showDeadlines, showBookingForm]);
 
-  // Create conversation for logged-in users
+  // ── Voice (Web Speech API) ────────────────────────────────────────
+  const startListening = useCallback(() => {
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      alert(isHindi ? "आपका ब्राउज़र वॉइस इनपुट सपोर्ट नहीं करता" : "Your browser doesn't support voice input");
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = isHindi ? "hi-IN" : "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onresult = (e) => {
+      const transcript = Array.from(e.results)
+        .map((r) => r[0].transcript)
+        .join("");
+      setInput(transcript);
+    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setIsListening(true);
+  }, [isHindi]);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
+
+  // ── Image handling ────────────────────────────────────────────────
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert(isHindi ? "कृपया एक इमेज फ़ाइल चुनें" : "Please select an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert(isHindi ? "फ़ाइल 10MB से छोटी होनी चाहिए" : "File must be smaller than 10MB");
+      return;
+    }
+    const base64 = await fileToBase64(file);
+    setPendingImage({
+      file,
+      preview: URL.createObjectURL(file),
+      base64,
+      mimeType: file.type,
+    });
+  };
+
+  const removePendingImage = () => {
+    if (pendingImage?.preview) URL.revokeObjectURL(pendingImage.preview);
+    setPendingImage(null);
+  };
+
+  // ── Conversation persistence ──────────────────────────────────────
   const ensureConversation = useCallback(async () => {
     if (!user || conversationId) return conversationId;
-    const { data } = await supabase.
-    from("chat_conversations").
-    insert({ user_id: user.id, title: "AI Assistant Chat" }).
-    select("id").
-    single();
+    const { data } = await supabase
+      .from("chat_conversations")
+      .insert({ user_id: user.id, title: "AI Assistant Chat" })
+      .select("id")
+      .single();
     if (data) {
       setConversationId(data.id);
       return data.id;
@@ -57,14 +179,27 @@ export function AIChatbot() {
     return null;
   }, [user, conversationId]);
 
+  // ── Send message ──────────────────────────────────────────────────
   const sendMessage = async (text) => {
-    if (!text.trim() || isLoading) return;
+    if ((!text.trim() && !pendingImage) || isLoading) return;
 
-    const userMsg = { role: "user", content: text.trim() };
+    const userMsg = {
+      role: "user",
+      content: text.trim() || (isHindi ? "इस डॉक्यूमेंट का विश्लेषण करें" : "Analyze this document"),
+    };
+    if (pendingImage) {
+      userMsg.image = {
+        base64: pendingImage.base64,
+        mimeType: pendingImage.mimeType,
+        preview: pendingImage.preview,
+      };
+    }
+
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
+    setShowBookingForm(false);
 
     let convId = conversationId;
     if (user) {
@@ -74,16 +209,26 @@ export function AIChatbot() {
     let assistantContent = "";
 
     try {
+      // Build API payload
+      const apiMessages = updatedMessages.map((m) => {
+        const msg = { role: m.role, content: m.content };
+        if (m.image) {
+          msg.image = { base64: m.image.base64, mimeType: m.image.mimeType };
+        }
+        return msg;
+      });
+
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_CLIENT_KEY}`
+          Authorization: `Bearer ${SUPABASE_CLIENT_KEY}`,
         },
         body: JSON.stringify({
-          messages: updatedMessages,
-          conversationId: convId
-        })
+          messages: apiMessages,
+          conversationId: convId,
+          lang,
+        }),
       });
 
       if (!resp.ok) {
@@ -102,7 +247,7 @@ export function AIChatbot() {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") {
             return prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, content } : m
+              i === prev.length - 1 ? { ...m, content } : m
             );
           }
           return [...prev, { role: "assistant", content }];
@@ -137,54 +282,101 @@ export function AIChatbot() {
         }
       }
 
-      // Save assistant message for logged-in users
+      // Check if assistant wants to show booking form
+      if (assistantContent.includes("[SHOW_BOOKING_FORM]")) {
+        setShowBookingForm(true);
+        assistantContent = assistantContent.replace(/\[SHOW_BOOKING_FORM\]/g, "");
+        upsertAssistant(assistantContent);
+      }
+
+      // Save assistant message
       if (user && convId && assistantContent) {
         await supabase.from("chat_messages").insert({
           conversation_id: convId,
           role: "assistant",
-          content: assistantContent
+          content: assistantContent,
         });
       }
     } catch (err) {
       console.error("Chat error:", err);
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
       const fallback =
-      /rate limit|429/i.test(errorMsg) ?
-      "I’m getting high traffic right now. For starting a new company, I can help with incorporation and compliance. Recommended: [SERVICE:company-law] and [SERVICE:tax]. Tell me whether you want Pvt Ltd, LLP, or OPC." :
-      `Sorry, ${errorMsg}. Please try again.`;
-      setMessages((prev) => [
-      ...prev,
-      { role: "assistant", content: fallback }]
-      );
+        /rate limit|429/i.test(errorMsg)
+          ? isHindi
+            ? "मैं अभी उच्च ट्रैफ़िक पर हूँ। कृपया कुछ सेकंड बाद पुनः प्रयास करें।"
+            : "I'm getting high traffic right now. Please try again in a few seconds."
+          : `Sorry, ${errorMsg}. Please try again.`;
+      setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
     } finally {
       setIsLoading(false);
+      removePendingImage();
     }
   };
 
   const clearChat = () => {
     setMessages([]);
     setConversationId(null);
+    setShowBookingForm(false);
+    setShowDeadlines(false);
+    removePendingImage();
   };
 
-  // Parse service links from assistant messages
+  // ── Inline booking form submit ────────────────────────────────────
+  const handleInlineBooking = async (formData) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    try {
+      const { error } = await supabase.from("appointments").insert({
+        user_id: user.id,
+        date: formData.date,
+        time_slot: formData.time,
+        type: formData.type,
+        topic: formData.topic,
+        notes: formData.notes || null,
+        status: "pending",
+      });
+      if (error) throw error;
+      setShowBookingForm(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: isHindi
+            ? `✅ आपकी अपॉइंटमेंट **${formData.date}** को **${formData.time}** पर बुक हो गई है! हम जल्द ही पुष्टि करेंगे।`
+            : `✅ Your appointment has been booked for **${formData.date}** at **${formData.time}**! We'll confirm shortly.`,
+        },
+      ]);
+    } catch (err) {
+      console.error("Booking error:", err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: isHindi
+            ? "❌ बुकिंग में त्रुटि हुई। कृपया पुनः प्रयास करें।"
+            : "❌ Booking failed. Please try again.",
+        },
+      ]);
+    }
+  };
+
+  // ── Render helpers ────────────────────────────────────────────────
   const renderContent = (content) => {
     const serviceRegex = /\[SERVICE:([\w-]+)\]/g;
     const parts = content.split(serviceRegex);
 
-    if (parts.length === 1) {
-      return (
-        <ReactMarkdown
-          components={{
-            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-            ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-            li: ({ children }) => <li className="mb-1">{children}</li>,
-            strong: ({ children }) => <strong className="font-semibold">{children}</strong>
-          }}>
-          
-          {content}
-        </ReactMarkdown>);
+    const mdComponents = {
+      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+      ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+      ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+      li: ({ children }) => <li className="mb-1">{children}</li>,
+      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+    };
 
+    if (parts.length === 1) {
+      return <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>;
     }
 
     return parts.map((part, i) => {
@@ -195,32 +387,131 @@ export function AIChatbot() {
             size="sm"
             variant="accent"
             className="my-1 text-xs"
-            onClick={() => navigate(`/services/${part}`)}>
-            
-            View Service <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>);
-
+            onClick={() => navigate(`/services/${part}`)}
+          >
+            {isHindi ? "सेवा देखें" : "View Service"} <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        );
       }
-      return part ?
-      <ReactMarkdown
-        key={i}
-        components={{
-          p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-          ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-          li: ({ children }) => <li className="mb-1">{children}</li>,
-          strong: ({ children }) => <strong className="font-semibold">{children}</strong>
-        }}>
-        
+      return part ? (
+        <ReactMarkdown key={i} components={mdComponents}>
           {part}
-        </ReactMarkdown> :
-      null;
+        </ReactMarkdown>
+      ) : null;
     });
   };
 
+  // ── Inline booking form ───────────────────────────────────────────
+  const InlineBookingForm = () => {
+    const [bk, setBk] = useState({ date: "", time: "", type: "video", topic: "advisory", notes: "" });
+    const today = new Date();
+    const dates = [];
+    for (let i = 1; i <= 14 && dates.length < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      if (d.getDay() !== 0) dates.push(d.toISOString().split("T")[0]);
+    }
+    const times = ["10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
+
+    return (
+      <div className="mx-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5" />
+          {isHindi ? "त्वरित अपॉइंटमेंट बुक करें" : "Quick Book Appointment"}
+        </p>
+
+        {/* Date */}
+        <div className="flex flex-wrap gap-1.5">
+          {dates.map((d) => (
+            <button key={d} onClick={() => setBk((prev) => ({ ...prev, date: d }))}
+              className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
+                bk.date === d ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
+              )}>
+              {new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+            </button>
+          ))}
+        </div>
+
+        {/* Time */}
+        {bk.date && (
+          <div className="flex flex-wrap gap-1.5 animate-in fade-in duration-200">
+            {times.map((t) => (
+              <button key={t} onClick={() => setBk((prev) => ({ ...prev, time: t }))}
+                className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
+                  bk.time === t ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
+                )}>
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Type */}
+        {bk.time && (
+          <div className="flex gap-1.5 animate-in fade-in duration-200">
+            {[
+              { val: "video", lbl: "Video" },
+              { val: "phone", lbl: isHindi ? "फ़ोन" : "Phone" },
+              { val: "in_person", lbl: isHindi ? "ऑफ़िस" : "Office" },
+            ].map((t) => (
+              <button key={t.val} onClick={() => setBk((prev) => ({ ...prev, type: t.val }))}
+                className={cn("text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                  bk.type === t.val ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
+                )}>
+                {t.lbl}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {bk.date && bk.time && (
+          <Button size="sm" className="w-full h-8 text-xs rounded-lg gap-1.5"
+            onClick={() => handleInlineBooking(bk)}>
+            <Calendar className="h-3 w-3" />
+            {isHindi ? "बुक करें" : "Confirm Booking"}
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  // ── Deadline panel ────────────────────────────────────────────────
+  const DeadlinePanel = () => (
+    <div className="mx-2 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2 animate-in slide-in-from-bottom-2 duration-300">
+      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+        <Bell className="h-3.5 w-3.5 text-amber-500" />
+        {isHindi ? "आगामी कर समयसीमाएँ" : "Upcoming Tax Deadlines"}
+      </p>
+      {upcomingDeadlines.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">
+          {isHindi ? "अगले 60 दिनों में कोई समयसीमा नहीं" : "No deadlines in the next 60 days"}
+        </p>
+      ) : (
+        upcomingDeadlines.map((d, i) => (
+          <div key={i}
+            className={cn("text-[11px] px-2.5 py-1.5 rounded-lg border",
+              d.daysLeft <= 15 ? "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400" :
+              d.daysLeft <= 30 ? "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400" :
+              "border-border/50 text-muted-foreground"
+            )}>
+            {d.text}
+          </div>
+        ))
+      )}
+      <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
+        onClick={() => {
+          setShowDeadlines(false);
+          sendMessage(isHindi ? "मुझे कर समयसीमाओं के बारे में विस्तार से बताएं" : "Tell me more about upcoming tax deadlines and what I need to prepare");
+        }}>
+        {isHindi ? "AI से और जानें →" : "Ask AI for details →"}
+      </Button>
+    </div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
   return (
     <>
-      {/* Floating button */}
+      {/* ── Floating button ───────────────────────────────────────── */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -229,73 +520,110 @@ export function AIChatbot() {
           !isOpen && "animate-[pulse-ring_2s_ease-in-out_infinite]",
           isOpen && "rotate-90"
         )}
-        aria-label="Open AI Assistant">
-        
+        aria-label="Open AI Assistant"
+      >
         {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+        {/* Deadline notification dot */}
+        {!isOpen && upcomingDeadlines.length > 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-background animate-pulse" />
+        )}
       </button>
 
-      {/* Chat panel */}
-      {isOpen &&
-      <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-8rem)] flex flex-col rounded-3xl border border-border/50 glass-frosted shadow-hero overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
-          {/* Header */}
+      {/* ── Chat panel ────────────────────────────────────────────── */}
+      {isOpen && (
+        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] flex flex-col rounded-3xl border border-border/50 glass-frosted shadow-hero overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+          
+          {/* ── Header ─────────────────────────────────────────── */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <h3 className="font-semibold text-sm text-foreground">
-                GMR AI Assistant
+              <h3 className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {isHindi ? "GMR AI सहायक" : "GMR AI Assistant"}
               </h3>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            <div className="flex items-center gap-1">
+              {/* Language toggle */}
+              <Button variant="ghost" size="icon" className="h-7 w-7" title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
+                onClick={() => setLang(lang === "en" ? "hi" : "en")}>
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+              {/* Deadlines */}
+              <Button variant="ghost" size="icon" className="h-7 w-7 relative"
+                onClick={() => { setShowDeadlines(!showDeadlines); setDeadlineBadge(false); }}
+                title={isHindi ? "कर समयसीमाएँ" : "Tax Deadlines"}>
+                <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                {deadlineBadge && upcomingDeadlines.length > 0 && (
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-500" />
+                )}
+              </Button>
+              {/* Clear */}
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
+                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </div>
           </div>
 
-          {/* Messages */}
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {/* ── Feature pills ──────────────────────────────────── */}
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50 overflow-x-auto scrollbar-hide">
+            <button onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
+              <ImageIcon className="h-3 w-3" /> {isHindi ? "डॉक्यूमेंट" : "Document"}
+            </button>
+            <button onClick={() => sendMessage(isHindi ? "मेरा टैक्स कैलकुलेट करो" : "Calculate my tax")}
+              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
+              <Calculator className="h-3 w-3" /> {isHindi ? "टैक्स गणना" : "Tax Calc"}
+            </button>
+            <button onClick={() => sendMessage(isHindi ? "मुझे अपॉइंटमेंट बुक करनी है" : "I want to book an appointment")}
+              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
+              <Calendar className="h-3 w-3" /> {isHindi ? "बुकिंग" : "Book"}
+            </button>
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium whitespace-nowrap">
+              {isHindi ? "हिंदी" : "EN"}
+            </span>
+          </div>
+
+          {/* ── Messages ───────────────────────────────────────── */}
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            {messages.length === 0 ?
-          <div className="space-y-4">
+            {/* Deadlines panel */}
+            {showDeadlines && <DeadlinePanel />}
+
+            {messages.length === 0 ? (
+              <div className="space-y-4">
                 <p className="text-sm text-muted-foreground text-center">
-                  👋 Hello! I'm your CA assistant. How can I help you today?
+                  {isHindi
+                    ? "👋 नमस्ते! मैं आपका CA सहायक हूँ। मैं कैसे मदद कर सकता हूँ?"
+                    : "👋 Hello! I'm your CA assistant. How can I help you today?"}
                 </p>
                 <div className="grid gap-2">
-                  {QUICK_OPTIONS.map((opt) =>
-              <button
-                key={opt}
-                onClick={() => sendMessage(opt)}
-                className="text-left text-xs px-3.5 py-2.5 rounded-xl border border-border/60 bg-secondary/40 hover:bg-secondary hover:border-foreground/20 hover:scale-[1.02] transition-all duration-200 text-foreground">
-                
+                  {quickOptions.map((opt) => (
+                    <button key={opt} onClick={() => sendMessage(opt)}
+                      className="text-left text-xs px-3.5 py-2.5 rounded-xl border border-border/60 bg-secondary/40 hover:bg-secondary hover:border-foreground/20 hover:scale-[1.02] transition-all duration-200 text-foreground">
                       {opt}
                     </button>
-              )}
+                  ))}
                 </div>
-              </div> :
-
-          <div className="space-y-3">
-                {messages.map((msg, i) =>
-            <div
-              key={i}
-              className={cn(
-                "flex",
-                msg.role === "user" ? "justify-end" : "justify-start"
-              )}>
-              
-                    <div
-                className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm",
-                  msg.role === "user" ?
-                  "bg-primary text-primary-foreground rounded-br-md" :
-                  "bg-secondary text-secondary-foreground rounded-bl-md"
-                )}>
-                
-                      {msg.role === "assistant" ?
-                renderContent(msg.content) :
-                msg.content}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((msg, i) => (
+                  <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
+                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                      msg.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-md"
+                        : "bg-secondary text-secondary-foreground rounded-bl-md"
+                    )}>
+                      {/* Show image thumbnail if user sent one */}
+                      {msg.image?.preview && (
+                        <img src={msg.image.preview} alt="uploaded" className="w-full max-w-[200px] rounded-lg mb-2" />
+                      )}
+                      {msg.role === "assistant" ? renderContent(msg.content) : msg.content}
                     </div>
                   </div>
-            )}
-                {isLoading && messages[messages.length - 1]?.role !== "assistant" &&
-            <div className="flex justify-start">
+                ))}
+                {/* Loading indicator */}
+                {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
+                  <div className="flex justify-start">
                     <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
                       <div className="flex gap-1">
                         <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
@@ -304,47 +632,69 @@ export function AIChatbot() {
                       </div>
                     </div>
                   </div>
-            }
+                )}
               </div>
-          }
+            )}
+
+            {/* Inline booking form */}
+            {showBookingForm && <InlineBookingForm />}
           </ScrollArea>
 
-          {/* Input */}
+          {/* ── Pending image preview ──────────────────────────── */}
+          {pendingImage && (
+            <div className="px-3 py-2 border-t border-border/50 flex items-center gap-2 bg-secondary/30">
+              <img src={pendingImage.preview} alt="pending" className="w-10 h-10 rounded-lg object-cover border border-border" />
+              <span className="text-[10px] text-muted-foreground flex-1 truncate">{pendingImage.file.name}</span>
+              <button onClick={removePendingImage} className="text-muted-foreground hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* ── Input ──────────────────────────────────────────── */}
           <div className="p-3 border-t border-border">
-            <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage(input);
-            }}
-            className="flex gap-2">
-            
+            <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
+              {/* Hidden file input */}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+
+              {/* Image upload button */}
+              <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0"
+                onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              </Button>
+
               <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about our CA services..."
-              className="text-sm h-9"
-              disabled={isLoading} />
-            
-              <Button
-              type="submit"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              disabled={isLoading || !input.trim()}>
-              
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={isHindi ? "CA सेवाओं के बारे में पूछें..." : "Ask about our CA services..."}
+                className="text-sm h-9"
+                disabled={isLoading}
+              />
+
+              {/* Voice button */}
+              <Button type="button" variant="ghost" size="icon"
+                className={cn("h-9 w-9 shrink-0", isListening && "text-red-500 animate-pulse")}
+                onClick={isListening ? stopListening : startListening} disabled={isLoading}>
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+
+              {/* Send */}
+              <Button type="submit" size="icon" className="h-9 w-9 shrink-0"
+                disabled={isLoading || (!input.trim() && !pendingImage)}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
-            {!user &&
-          <p className="text-[10px] text-muted-foreground mt-1 text-center">
+            {!user && (
+              <p className="text-[10px] text-muted-foreground mt-1 text-center">
                 <button onClick={() => navigate("/auth")} className="underline hover:text-foreground">
-                  Sign in
+                  {isHindi ? "साइन इन करें" : "Sign in"}
                 </button>{" "}
-                to save chat history
+                {isHindi ? "चैट इतिहास सहेजने के लिए" : "to save chat history"}
               </p>
-          }
+            )}
           </div>
         </div>
-      }
-    </>);
-
+      )}
+    </>
+  );
 }

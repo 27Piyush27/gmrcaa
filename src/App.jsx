@@ -8,6 +8,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { Navigation } from "./components/Navigation";
 import { AIChatbot } from "./components/AIChatbot";
 import { Footer } from "./components/Footer";
+import { CookieConsent } from "./components/CookieConsent";
+import { AnnouncementBanner } from "./components/AnnouncementBanner";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -20,6 +22,24 @@ import Payments from "./pages/Payments";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
+import TaxCalculator from "./pages/TaxCalculator";
+import FAQ from "./pages/FAQ";
+import Blog from "./pages/Blog";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Appointments from "./pages/Appointments";
+import Analytics from "./pages/Analytics";
+import Testimonials from "./pages/Testimonials";
+import Team from "./pages/Team";
+import ClientManagement from "./pages/ClientManagement";
+import AppointmentManagement from "./pages/AppointmentManagement";
+import MyAppointments from "./pages/MyAppointments";
+import InvoiceHistory from "./pages/InvoiceHistory";
+import DocumentVault from "./pages/DocumentVault";
+import BlogManagement from "./pages/BlogManagement";
+import TestimonialApproval from "./pages/TestimonialApproval";
+import ClientProfile from "./pages/ClientProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +66,24 @@ const AnimatedRoutes = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/tax-calculator" element={<TaxCalculator />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/appointments" element={<Appointments />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/testimonials" element={<Testimonials />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/clients" element={<ClientManagement />} />
+        <Route path="/admin/appointments" element={<AppointmentManagement />} />
+        <Route path="/admin/blog" element={<BlogManagement />} />
+        <Route path="/admin/testimonials" element={<TestimonialApproval />} />
+        <Route path="/admin/client/:userId" element={<ClientProfile />} />
+        <Route path="/my-appointments" element={<MyAppointments />} />
+        <Route path="/invoices" element={<InvoiceHistory />} />
+        <Route path="/documents" element={<DocumentVault />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -60,6 +98,7 @@ const App = () =>
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <AnnouncementBanner />
           {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
           <Navigation />
           <div className="pt-16 min-h-screen flex flex-col">
@@ -69,6 +108,7 @@ const App = () =>
             <Footer />
           </div>
           <AIChatbot />
+          <CookieConsent />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

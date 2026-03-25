@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -12,93 +12,79 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
-
-
-
-
-
-
-
-
-
-const STATUS_CONFIG = {
-  pending: { label: "Pending", color: "bg-yellow-500" },
-  in_progress: { label: "In Progress", color: "bg-blue-500" },
-  completed: { label: "Ready to Pay", color: "bg-green-500" },
-  paid: { label: "Paid", color: "bg-green-600" },
-  cancelled: { label: "Cancelled", color: "bg-destructive" }
+const TYPE_CONFIG = {
+  service_update:     { color: "bg-blue-500" },
+  payment_received:   { color: "bg-green-600" },
+  document_uploaded:  { color: "bg-violet-500" },
+  document_reviewed:  { color: "bg-teal-500" },
+  system:             { color: "bg-yellow-500" },
+  chat:               { color: "bg-orange-400" },
 };
 
 export function NotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
-  const fetchRecentRequests = useCallback(async () => {
+  // ── Fetch from the real notifications table ─────────────────────────────
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
-
-    const { data, error } = await supabase.
-    from("service_requests").
-    select("id, service_id, status, progress, updated_at, services(name)").
-    eq("user_id", user.id).
-    order("updated_at", { ascending: false }).
-    limit(10);
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("id, type, title, body, read, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(15);
 
     if (error) {
       console.error("Error fetching notifications:", error);
       return;
     }
-
-    
-    const mapped = (data || []).map((r) => ({
-      id: r.id,
-      serviceId: r.service_id,
-      serviceName: r.services?.name || r.service_id,
-      status: r.status,
-      progress: r.progress,
-      updatedAt: r.updated_at
-    }));
-
-    setNotifications(mapped);
+    setNotifications(data || []);
   }, [user]);
 
   useEffect(() => {
-    fetchRecentRequests();
-  }, [fetchRecentRequests]);
+    fetchNotifications();
+  }, [fetchNotifications]);
 
-  // Listen for realtime updates to refresh notifications
+  // ── Realtime subscription on notifications table ────────────────────────
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase.
-    channel(`notification-bell-${user.id}`).
-    on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "service_requests",
-        filter: `user_id=eq.${user.id}`
-      },
-      () => {
-        fetchRecentRequests();
-        setUnreadCount((prev) => prev + 1);
-      }
-    ).
-    subscribe();
+    const channel = supabase
+      .channel(`notif-bell-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => { fetchNotifications(); }
+      )
+      .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, fetchRecentRequests]);
+    return () => { supabase.removeChannel(channel); };
+  }, [user, fetchNotifications]);
+
+  // ── Mark all as read ─────────────────────────────────────────────────────
+  const markAllRead = async () => {
+    if (!user) return;
+    const now = new Date().toISOString();
+    await supabase
+      .from("notifications")
+      .update({ read: true, read_at: now })
+      .eq("user_id", user.id)
+      .eq("read", false);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true, read_at: now })));
+  };
 
   const handleOpen = (isOpen) => {
     setOpen(isOpen);
-    if (isOpen) {
-      setUnreadCount(0);
-    }
   };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const formatTime = (dateStr) => {
     const date = new Date(dateStr);
@@ -130,11 +116,19 @@ export function NotificationBell() {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
-        <div className="border-b px-4 py-3">
-          <h4 className="text-sm font-semibold">Notifications</h4>
-          <p className="text-xs text-muted-foreground">
-            Your recent service request updates
-          </p>
+        <div className="border-b px-4 py-3 flex items-center justify-between">
+          <div>
+            <h4 className="text-sm font-semibold">Notifications</h4>
+            <p className="text-xs text-muted-foreground">
+              {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+            </p>
+          </div>
+          {unreadCount > 0 && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={markAllRead}>
+              <CheckCheck className="w-3.5 h-3.5" />
+              Mark all read
+            </Button>
+          )}
         </div>
         <ScrollArea className="max-h-80">
           {notifications.length === 0 ?
@@ -145,14 +139,14 @@ export function NotificationBell() {
 
           <div className="divide-y">
               {notifications.map((n) => {
-              const config = STATUS_CONFIG[n.status] || {
-                label: n.status,
-                color: "bg-muted"
-              };
+              const config = TYPE_CONFIG[n.type] || { color: "bg-muted" };
               return (
                 <div
                   key={n.id}
-                  className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
+                  className={cn(
+                    "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50",
+                    !n.read && "bg-muted/30"
+                  )}>
                   
                     <div
                     className={cn(
@@ -161,25 +155,15 @@ export function NotificationBell() {
                     )} />
                   
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {n.serviceName}
+                      <p className={cn("text-sm truncate", !n.read && "font-semibold")}>
+                        {n.title}
                       </p>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        <Badge
-                        variant="outline"
-                        className="text-[10px] px-1.5 py-0">
-                        
-                          {config.label}
-                        </Badge>
-                        {n.progress > 0 && n.status !== "cancelled" &&
-                      <span className="text-[10px] text-muted-foreground">
-                            {n.progress}%
-                          </span>
-                      }
-                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {n.body}
+                      </p>
                     </div>
                     <span className="shrink-0 text-[10px] text-muted-foreground">
-                      {formatTime(n.updatedAt)}
+                      {formatTime(n.created_at)}
                     </span>
                   </div>);
 

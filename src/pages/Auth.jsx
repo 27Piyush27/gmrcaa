@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { User, Briefcase, Shield, Loader2, ArrowRight } from "lucide-react";
+import { User, Briefcase, Shield, Loader2, ArrowRight, Eye, EyeOff, Check, X as XIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const roles = [
@@ -25,12 +26,55 @@ const nameSchema = z.string().trim().min(1, { message: "Name is required" }).max
 
 const easing = [0.22, 1, 0.36, 1];
 
+// Password strength calculator
+function getPasswordStrength(password) {
+  if (!password) return { score: 0, label: "", checks: {} };
+  const checks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
+  };
+  const score = Object.values(checks).filter(Boolean).length;
+  const labels = ["", "Weak", "Fair", "Good", "Strong", "Very Strong"];
+  const colors = ["", "bg-red-500", "bg-orange-500", "bg-amber-500", "bg-emerald-500", "bg-emerald-600"];
+  return { score, label: labels[score], color: colors[score], checks };
+}
+
+function PasswordStrengthMeter({ password }) {
+  const { score, label, color, checks } = getPasswordStrength(password);
+  if (!password) return null;
+
+  return (
+    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 mt-2">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-300 ${i <= score ? color : "bg-secondary"}`} />
+        ))}
+      </div>
+      <p className={`text-[11px] font-medium ${score <= 2 ? "text-red-500" : score <= 3 ? "text-amber-500" : "text-emerald-500"}`}>{label}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+        {Object.entries({ length: "8+ chars", uppercase: "Uppercase", lowercase: "Lowercase", number: "Number", special: "Special char" }).map(([key, label]) => (
+          <span key={key} className={`text-[10px] flex items-center gap-1 ${checks[key] ? "text-emerald-500" : "text-muted-foreground"}`}>
+            {checks[key] ? <Check className="w-2.5 h-2.5" /> : <XIcon className="w-2.5 h-2.5" />} {label}
+          </span>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, loading: authLoading, signIn, signUp } = useAuth();
+  const { user, role, loading: authLoading, signIn, signUp } = useAuth();
   const [activeTab, setActiveTab] = useState(searchParams.get("signup") ? "signup" : "login");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
 
   const [loginData, setLoginData] = useState({ email: "", password: "", role: "client" });
   const [signupData, setSignupData] = useState({
@@ -43,9 +87,13 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/dashboard");
+      if (role === "admin" || role === "ca") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     }
-  }, [user, authLoading, navigate]);
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -76,6 +124,24 @@ export default function Auth() {
     }
 
     setIsSubmitting(false);
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail) { toast.error("Please enter your email"); return; }
+    setSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent! Check your inbox.");
+      setShowForgotPassword(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to send reset email");
+    } finally {
+      setSendingReset(false);
+    }
   };
 
   const handleSignup = async (e) => {
@@ -252,6 +318,28 @@ export default function Auth() {
                     
                     </motion.div>
 
+                    {/* Forgot Password Link */}
+                    <motion.div custom={1.5} variants={fieldVariants} initial="hidden" animate="visible" className="text-right">
+                      <button type="button" onClick={() => setShowForgotPassword(!showForgotPassword)}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                        Forgot password?
+                      </button>
+                    </motion.div>
+
+                    {showForgotPassword && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+                        className="p-3 rounded-xl border border-border/50 bg-secondary/20 space-y-2">
+                        <p className="text-xs text-muted-foreground">Enter your email and we'll send a reset link.</p>
+                        <div className="flex gap-2">
+                          <Input type="email" placeholder="your@email.com" value={forgotEmail}
+                            onChange={e => setForgotEmail(e.target.value)} className="premium-input text-sm h-9" />
+                          <Button size="sm" onClick={handleForgotPassword} disabled={sendingReset} className="rounded-lg h-9 px-4 text-xs">
+                            {sendingReset ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
                     <motion.div custom={2} variants={fieldVariants} initial="hidden" animate="visible">
                       <Button
                       type="submit"
@@ -348,6 +436,7 @@ export default function Auth() {
                       disabled={isSubmitting} />
                     
                     </motion.div>
+                    <PasswordStrengthMeter password={signupData.password} />
 
                     <motion.div className="space-y-2" custom={3} variants={fieldVariants} initial="hidden" animate="visible">
                       <Label htmlFor="signup-confirm" className="text-sm font-medium">Confirm Password</Label>
