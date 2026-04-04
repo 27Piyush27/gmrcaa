@@ -2,55 +2,15 @@
  * Payment API Client
  *
  * In development: routes to local Vite dev server endpoints (/api/...)
- * In production:  routes to Supabase edge functions
+ * In production:  routes to Vercel serverless functions (/api/...)
  *
- * This allows payment flows to work immediately without Supabase CLI.
+ * Both dev and prod use the same /api/ path convention, so the client
+ * code is identical — the routing is handled by the platform.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+// ─── API fetcher ──────────────────────────────────────────────────────────────
 
-const isDev = import.meta.env.DEV;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ─── Local API fetcher (dev only) ─────────────────────────────────────────────
-
-async function localFetch(endpoint, body) {
+async function apiFetch(endpoint, body) {
   try {
     const res = await fetch(endpoint, {
       method: "POST",
@@ -70,42 +30,10 @@ async function localFetch(endpoint, body) {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export async function createRazorpayOrder(
-req)
-{
-  if (isDev) {
-    return localFetch("/api/create-razorpay-order", req);
-  }
-
-  // Production: use Supabase edge function
-  const { data, error } = await supabase.functions.invoke("create-razorpay-order", { body: req });
-  if (error) {
-    const msg =
-    error?.context?.json?.error ||
-    error.message ||
-    "Failed to create payment order";
-    return { data: null, error: new Error(msg) };
-  }
-  if (data?.error) return { data: null, error: new Error(data.error) };
-  return { data: data, error: null };
+export async function createRazorpayOrder(req) {
+  return apiFetch("/api/create-razorpay-order", req);
 }
 
-export async function verifyRazorpayPayment(
-req)
-{
-  if (isDev) {
-    return localFetch("/api/verify-razorpay-payment", req);
-  }
-
-  // Production: use Supabase edge function
-  const { data, error } = await supabase.functions.invoke("verify-razorpay-payment", { body: req });
-  if (error) {
-    const msg =
-    error?.context?.json?.error ||
-    error.message ||
-    "Payment verification failed";
-    return { data: null, error: new Error(msg) };
-  }
-  if (data?.error) return { data: null, error: new Error(data.error) };
-  return { data: data, error: null };
+export async function verifyRazorpayPayment(req) {
+  return apiFetch("/api/verify-razorpay-payment", req);
 }
