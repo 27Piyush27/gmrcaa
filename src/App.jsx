@@ -47,6 +47,12 @@ import FinancialCalculators from "./pages/FinancialCalculators";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Feedback from "./pages/Feedback";
 import NotificationPreferences from "./pages/NotificationPreferences";
+import RevenueDashboard from "./pages/RevenueDashboard";
+import TaskKanban from "./pages/TaskKanban";
+import TaxCalendar from "./pages/TaxCalendar";
+import LiveChat from "./pages/LiveChat";
+import ComplianceScore from "./pages/ComplianceScore";
+import Referrals from "./pages/Referrals";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +103,12 @@ const AnimatedRoutes = () => {
         <Route path="/resources" element={<KnowledgeBase />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/notifications" element={<NotificationPreferences />} />
+        <Route path="/admin/revenue" element={<RevenueDashboard />} />
+        <Route path="/admin/tasks" element={<TaskKanban />} />
+        <Route path="/tax-calendar" element={<TaxCalendar />} />
+        <Route path="/messages" element={<LiveChat />} />
+        <Route path="/compliance" element={<ComplianceScore />} />
+        <Route path="/referrals" element={<Referrals />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
