@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X, Languages } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { NotificationBell } from "@/components/NotificationBell";
 
 export const Navigation = () => {
@@ -15,6 +16,7 @@ export const Navigation = () => {
   const lastScrollY = useRef(0);
   const rafId = useRef(0);
   const { user, profile, role, signOut, loading } = useAuth();
+  const { language, toggleLanguage } = useLanguage();
 
   useEffect(() => {
     const darkMode = localStorage.getItem("darkMode") === "true";
@@ -62,6 +64,8 @@ export const Navigation = () => {
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
     ...(!isStaff ? [{ name: "Tax Calculator", path: "/tax-calculator" }] : []),
+    ...(!isStaff ? [{ name: "Calculators", path: "/calculators" }] : []),
+    { name: "Resources", path: "/resources" },
     { name: "Contact", path: "/contact" },
     ...(!isStaff ? [
       { name: "My Dashboard", path: "/dashboard" },
@@ -143,6 +147,17 @@ export const Navigation = () => {
                   {isDark ? <Sun className="h-[15px] w-[15px]" /> : <Moon className="h-[15px] w-[15px]" />}
                 </motion.div>
               </AnimatePresence>
+            </motion.button>
+
+            {/* Language Toggle */}
+            <motion.button
+              onClick={toggleLanguage}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="h-8 px-2.5 flex items-center gap-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200 text-xs font-medium"
+              aria-label="Toggle language">
+              <Languages className="h-[14px] w-[14px]" />
+              {language === "en" ? "HI" : "EN"}
             </motion.button>
 
             {!loading && user ?

@@ -15,12 +15,16 @@ export const Footer = () => {
     { name: "Blog", path: "/blog" },
     { name: "FAQ", path: "/faq" },
     { name: "Team", path: "/team" },
-    { name: "Testimonials", path: "/testimonials" }],
+    { name: "Testimonials", path: "/testimonials" },
+    { name: "Feedback", path: "/feedback" }],
 
     services: [
     { name: "Tax Calculator", path: "/tax-calculator" },
+    { name: "Financial Calculators", path: "/calculators" },
+    { name: "GST Tracker", path: "/gst-tracker" },
+    { name: "Expense Tracker", path: "/expenses" },
+    { name: "Resource Center", path: "/resources" },
     { name: "Book Consultation", path: "/appointments" },
-    { name: "Tax Advisory", path: "/services" },
     { name: "View All Services", path: "/services" }],
 
     legal: [

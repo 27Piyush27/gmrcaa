@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "./contexts/AuthContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import { Navigation } from "./components/Navigation";
 import { AIChatbot } from "./components/AIChatbot";
 import { Footer } from "./components/Footer";
@@ -40,6 +41,12 @@ import DocumentVault from "./pages/DocumentVault";
 import BlogManagement from "./pages/BlogManagement";
 import TestimonialApproval from "./pages/TestimonialApproval";
 import ClientProfile from "./pages/ClientProfile";
+import GSTTracker from "./pages/GSTTracker";
+import ExpenseTracker from "./pages/ExpenseTracker";
+import FinancialCalculators from "./pages/FinancialCalculators";
+import KnowledgeBase from "./pages/KnowledgeBase";
+import Feedback from "./pages/Feedback";
+import NotificationPreferences from "./pages/NotificationPreferences";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +91,12 @@ const AnimatedRoutes = () => {
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/invoices" element={<InvoiceHistory />} />
         <Route path="/documents" element={<DocumentVault />} />
+        <Route path="/gst-tracker" element={<GSTTracker />} />
+        <Route path="/expenses" element={<ExpenseTracker />} />
+        <Route path="/calculators" element={<FinancialCalculators />} />
+        <Route path="/resources" element={<KnowledgeBase />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/notifications" element={<NotificationPreferences />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -98,6 +111,7 @@ const App = () =>
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <LanguageProvider>
           <AnnouncementBanner />
           {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
           <Navigation />
@@ -109,6 +123,7 @@ const App = () =>
           </div>
           <AIChatbot />
           <CookieConsent />
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
