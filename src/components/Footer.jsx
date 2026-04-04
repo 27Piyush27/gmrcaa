@@ -135,13 +135,40 @@ export const Footer = () => {
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-muted-foreground">
-              © {year} GMR & Associates. All rights reserved. Chartered Accountants.
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-xs text-muted-foreground">Available for new clients</p>
+          <div className="pt-8 border-t border-border/40 flex flex-col items-center gap-4">
+            <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
+              <p className="text-xs text-muted-foreground">
+                © {year} GMR & Associates. All rights reserved. Chartered Accountants.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-xs text-muted-foreground">Available for new clients</p>
+              </div>
+            </div>
+
+            {/* University project credit */}
+            <div className="w-full pt-4 border-t border-border/20 flex flex-col items-center gap-1.5">
+              <p className="text-[11px] text-muted-foreground/70 tracking-wide">
+                A Major Project by students of{" "}
+                <span className="font-medium text-muted-foreground">
+                  Jaypee University of Information Technology, Solan
+                </span>
+              </p>
+              <p className="text-[11px] text-muted-foreground/70 flex items-center gap-1 flex-wrap justify-center">
+                Built by{" "}
+                <a
+                  href="https://www.linkedin.com/in/piyushthakur2727"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground/60 hover:text-accent transition-colors underline underline-offset-2 decoration-accent/30 hover:decoration-accent"
+                >
+                  Piyush Thakur
+                </a>
+                <span className="text-border">•</span>
+                <span className="font-medium text-foreground/60">Pranav Roy</span>
+                <span className="text-border">•</span>
+                <span className="font-medium text-foreground/60">Aakarsh Sharma</span>
+              </p>
             </div>
           </div>
         </div>

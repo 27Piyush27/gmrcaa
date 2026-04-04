@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,9 @@ import { RevenueCharts } from "@/components/RevenueCharts";
 import { ExportButton } from "@/components/ExportButton";
 import { SkeletonDashboard } from "@/components/SkeletonLoaders";
 import { LayoutGrid, List, BarChart3 } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
+
+const easing = [0.22, 1, 0.36, 1];
 
 
 
@@ -295,10 +299,13 @@ export default function AdminDashboard() {
   }
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b border-border/50 bg-foreground text-background py-10">
         <div className="container mx-auto px-6">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: easing }}>
           <div className="flex items-center gap-3 mb-2">
             {role === "admin" ?
             <Shield className="h-6 w-6" /> :
@@ -335,12 +342,15 @@ export default function AdminDashboard() {
             <Users className="w-4 h-4" />
             Manage Reviews
           </button>
+          </motion.div>
         </div>
       </div>
 
       <div className="container mx-auto px-6 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5, ease: easing }}
+          className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           {[
           { label: "All", count: requests.length, filter: "all" },
           { label: "Pending", count: requests.filter((r) => r.status === "pending").length, filter: "pending" },
@@ -362,10 +372,12 @@ export default function AdminDashboard() {
               </p>
             </button>
           )}
-        </div>
+        </motion.div>
 
         {/* View Toggle + Export */}
-        <div className="flex items-center justify-between mb-6">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4, ease: easing }}
+          className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-1 bg-secondary/50 rounded-xl p-1">
             <button onClick={() => setViewMode("list")}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "list" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
@@ -385,7 +397,7 @@ export default function AdminDashboard() {
             filename="gmr_service_requests"
             columns={[{ key: "Service", label: "Service" }, { key: "Client", label: "Client" }, { key: "Status", label: "Status" }, { key: "Progress", label: "Progress" }, { key: "Amount", label: "Amount" }, { key: "Date", label: "Date" }]}
             label="Export CSV" />
-        </div>
+        </motion.div>
 
         {/* Analytics view */}
         {viewMode === "analytics" && (
@@ -613,6 +625,7 @@ export default function AdminDashboard() {
       </>
       )}
       </div>
-    </div>);
+    </div>
+    </PageTransition>);
 
 }

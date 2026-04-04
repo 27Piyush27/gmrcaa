@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   MessageSquare, X, Send, Trash2, ArrowRight, Mic, MicOff,
-  Image as ImageIcon, Globe, Calendar, Calculator, Bell, Sparkles, Loader2
+  Image as ImageIcon, Globe, Calendar, Calculator, Bell, Sparkles,
+  Loader2, Copy, Check, RefreshCw, ThumbsUp, ThumbsDown,
+  Moon, Sun, History, ChevronLeft, Search, FileText, Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +25,6 @@ const QUICK_OPTIONS_EN = [
   "I'm starting a new company",
   "What services do you offer?",
 ];
-
 const QUICK_OPTIONS_HI = [
   "मुझे इनकम टैक्स रिटर्न दाखिल करने में मदद चाहिए",
   "मुझे GST के लिए रजिस्ट्रेशन करना है",
@@ -39,11 +40,41 @@ const TAX_DEADLINES = [
   { label: "Company Annual Filing (ROC)", date: "2026-10-31", labelHi: "कंपनी वार्षिक फाइलिंग (ROC)" },
 ];
 
+// ── Smart suggestion mapping ───────────────────────────────────────────
+const SUGGESTION_MAP = {
+  en: [
+    { keywords: ["gst", "goods and service", "gstr"], suggestions: ["GST filing process", "GST registration documents", "Book GST consultation"] },
+    { keywords: ["itr", "income tax", "return", "filing"], suggestions: ["ITR filing deadline", "Documents needed for ITR", "Calculate my tax"] },
+    { keywords: ["company", "incorporat", "pvt", "llp", "opc", "startup"], suggestions: ["Company types comparison", "Registration process", "Annual compliance checklist"] },
+    { keywords: ["tds", "deduct"], suggestions: ["TDS return dates", "Current TDS rates", "File TDS return"] },
+    { keywords: ["audit", "assurance"], suggestions: ["Types of audit", "Audit preparation checklist", "Book audit consultation"] },
+    { keywords: ["payroll", "salary", "pf", "esi"], suggestions: ["PF/ESI contribution rates", "Payroll services details", "TDS on salary"] },
+    { keywords: ["book", "appointment", "consult", "meet"], suggestions: ["View available slots", "Types of consultation", "Office location"] },
+    { keywords: ["tax", "save", "deduction", "80c", "80d"], suggestions: ["Tax saving investments", "Section 80C limit", "Compare old vs new regime"] },
+  ],
+  hi: [
+    { keywords: ["gst", "जीएसटी"], suggestions: ["GST फाइलिंग प्रक्रिया", "GST पंजीकरण दस्तावेज़", "GST परामर्श बुक करें"] },
+    { keywords: ["itr", "आयकर", "रिटर्न"], suggestions: ["ITR फाइलिंग की अंतिम तिथि", "ITR के लिए दस्तावेज़", "मेरा टैक्स कैलकुलेट करें"] },
+    { keywords: ["कंपनी", "निगमन", "स्टार्टअप"], suggestions: ["कंपनी प्रकार तुलना", "पंजीकरण प्रक्रिया", "वार्षिक अनुपालन"] },
+    { keywords: ["टैक्स", "बचत", "कटौती"], suggestions: ["टैक्स बचत निवेश", "धारा 80C सीमा", "पुरानी vs नई व्यवस्था"] },
+  ],
+};
+
+function getSuggestions(text, lang) {
+  const q = text.toLowerCase();
+  const map = SUGGESTION_MAP[lang] || SUGGESTION_MAP.en;
+  for (const entry of map) {
+    if (entry.keywords.some((k) => q.includes(k))) {
+      return entry.suggestions;
+    }
+  }
+  return [];
+}
+
 // ── helpers ─────────────────────────────────────────────────────────────
 function getDaysUntil(dateStr) {
   const target = new Date(dateStr + "T23:59:59");
-  const now = new Date();
-  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+  return Math.ceil((target - new Date()) / (1000 * 60 * 60 * 24));
 }
 
 function getUpcomingDeadlines(lang = "en") {
@@ -68,6 +99,33 @@ function fileToBase64(file) {
   });
 }
 
+// Tax calculation helper for inline widget
+function calculateTax(income) {
+  const inc = Number(income) || 0;
+  // Old Regime
+  let oldTax = 0;
+  if (inc > 1000000) oldTax = 12500 + 100000 + (inc - 1000000) * 0.30;
+  else if (inc > 500000) oldTax = 12500 + (inc - 500000) * 0.20;
+  else if (inc > 250000) oldTax = (inc - 250000) * 0.05;
+  if (inc <= 500000) oldTax = 0; // 87A rebate
+
+  // New Regime
+  let newTax = 0;
+  const slabs = [[400000,0],[800000,0.05],[1200000,0.10],[1600000,0.15],[2000000,0.20],[2400000,0.25],[Infinity,0.30]];
+  let prev = 0;
+  for (const [limit, rate] of slabs) {
+    if (inc <= prev) break;
+    const taxable = Math.min(inc, limit) - prev;
+    newTax += taxable * rate;
+    prev = limit;
+  }
+  if (inc <= 1200000) newTax = 0; // 87A rebate
+
+  oldTax = Math.round(oldTax * 1.04); // 4% cess
+  newTax = Math.round(newTax * 1.04);
+  return { oldTax, newTax, better: newTax <= oldTax ? "new" : "old" };
+}
+
 // ── component ──────────────────────────────────────────────────────────
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -75,12 +133,21 @@ export function AIChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
-  const [lang, setLang] = useState("en"); // en | hi
+  const [lang, setLang] = useState("en");
   const [isListening, setIsListening] = useState(false);
   const [showDeadlines, setShowDeadlines] = useState(false);
-  const [pendingImage, setPendingImage] = useState(null); // { file, preview, base64 }
+  const [pendingFiles, setPendingFiles] = useState([]); // multi-file
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [deadlineBadge, setDeadlineBadge] = useState(false);
+  // New feature states
+  const [ratings, setRatings] = useState({}); // { msgIndex: 'up'|'down' }
+  const [copiedIdx, setCopiedIdx] = useState(null);
+  const [chatTheme, setChatTheme] = useState("auto"); // auto | dark | light
+  const [showHistory, setShowHistory] = useState(false);
+  const [pastConversations, setPastConversations] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [showTaxLookup, setShowTaxLookup] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -92,22 +159,23 @@ export function AIChatbot() {
   const quickOptions = isHindi ? QUICK_OPTIONS_HI : QUICK_OPTIONS_EN;
   const upcomingDeadlines = getUpcomingDeadlines(lang);
 
-  // Show deadline badge on open if deadlines are upcoming
+  // Resolve theme class
+  const themeClass = chatTheme === "dark" ? "dark" : chatTheme === "light" ? "light-forced" : "";
+
   useEffect(() => {
     if (isOpen && upcomingDeadlines.length > 0 && messages.length === 0) {
       setDeadlineBadge(true);
     }
   }, [isOpen, upcomingDeadlines.length, messages.length]);
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       const el = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]") || scrollRef.current;
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages, showDeadlines, showBookingForm]);
+  }, [messages, showDeadlines, showBookingForm, showTaxLookup]);
 
-  // ── Voice (Web Speech API) ────────────────────────────────────────
+  // ── Voice ─────────────────────────────────────────────────────────
   const startListening = useCallback(() => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
       alert(isHindi ? "आपका ब्राउज़र वॉइस इनपुट सपोर्ट नहीं करता" : "Your browser doesn't support voice input");
@@ -118,16 +186,11 @@ export function AIChatbot() {
     recognition.lang = isHindi ? "hi-IN" : "en-IN";
     recognition.interimResults = true;
     recognition.continuous = false;
-
     recognition.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map((r) => r[0].transcript)
-        .join("");
-      setInput(transcript);
+      setInput(Array.from(e.results).map((r) => r[0].transcript).join(""));
     };
     recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);
-
     recognition.start();
     recognitionRef.current = recognition;
     setIsListening(true);
@@ -138,30 +201,73 @@ export function AIChatbot() {
     setIsListening(false);
   }, []);
 
-  // ── Image handling ────────────────────────────────────────────────
-  const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      alert(isHindi ? "कृपया एक इमेज फ़ाइल चुनें" : "Please select an image file");
-      return;
+  // ── Multi-file handling ───────────────────────────────────────────
+  const handleFileSelect = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const newFiles = [];
+    for (const file of files.slice(0, 3 - pendingFiles.length)) {
+      if (!file.type.startsWith("image/")) {
+        alert(isHindi ? "कृपया एक इमेज फ़ाइल चुनें" : "Please select an image file");
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert(isHindi ? "फ़ाइल 10MB से छोटी होनी चाहिए" : "File must be smaller than 10MB");
+        continue;
+      }
+      const base64 = await fileToBase64(file);
+      newFiles.push({ file, preview: URL.createObjectURL(file), base64, mimeType: file.type });
     }
-    if (file.size > 10 * 1024 * 1024) {
-      alert(isHindi ? "फ़ाइल 10MB से छोटी होनी चाहिए" : "File must be smaller than 10MB");
-      return;
-    }
-    const base64 = await fileToBase64(file);
-    setPendingImage({
-      file,
-      preview: URL.createObjectURL(file),
-      base64,
-      mimeType: file.type,
+    setPendingFiles((prev) => [...prev, ...newFiles].slice(0, 3));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeFile = (idx) => {
+    setPendingFiles((prev) => {
+      if (prev[idx]?.preview) URL.revokeObjectURL(prev[idx].preview);
+      return prev.filter((_, i) => i !== idx);
     });
   };
 
-  const removePendingImage = () => {
-    if (pendingImage?.preview) URL.revokeObjectURL(pendingImage.preview);
-    setPendingImage(null);
+  const clearPendingFiles = () => {
+    pendingFiles.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
+    setPendingFiles([]);
+  };
+
+  // ── Chat History ──────────────────────────────────────────────────
+  const loadHistory = useCallback(async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    try {
+      const { data } = await supabase
+        .from("chat_conversations")
+        .select("id, title, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      setPastConversations(data || []);
+    } catch (err) {
+      console.error("History load error:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [user]);
+
+  const loadConversation = async (convId) => {
+    try {
+      const { data } = await supabase
+        .from("chat_messages")
+        .select("role, content")
+        .eq("conversation_id", convId)
+        .order("created_at", { ascending: true });
+      if (data?.length) {
+        setMessages(data.map((m) => ({ role: m.role, content: m.content })));
+        setConversationId(convId);
+      }
+      setShowHistory(false);
+    } catch (err) {
+      console.error("Load conversation error:", err);
+    }
   };
 
   // ── Conversation persistence ──────────────────────────────────────
@@ -179,42 +285,62 @@ export function AIChatbot() {
     return null;
   }, [user, conversationId]);
 
+  // ── Copy message ──────────────────────────────────────────────────
+  const copyMessage = async (text, idx) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
+    } catch { /* ignore */ }
+  };
+
+  // ── Regenerate ────────────────────────────────────────────────────
+  const regenerateLastResponse = () => {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+    if (!lastUserMsg) return;
+    // Remove last assistant message
+    setMessages((prev) => {
+      const idx = prev.length - 1;
+      if (prev[idx]?.role === "assistant") return prev.slice(0, idx);
+      return prev;
+    });
+    setTimeout(() => sendMessage(lastUserMsg.content, true), 100);
+  };
+
   // ── Send message ──────────────────────────────────────────────────
-  const sendMessage = async (text) => {
-    if ((!text.trim() && !pendingImage) || isLoading) return;
+  const sendMessage = async (text, isRegen = false) => {
+    if ((!text.trim() && !pendingFiles.length) || isLoading) return;
 
     const userMsg = {
       role: "user",
       content: text.trim() || (isHindi ? "इस डॉक्यूमेंट का विश्लेषण करें" : "Analyze this document"),
     };
-    if (pendingImage) {
+    // Attach first image for API (multi-file: send first image, show all in UI)
+    if (pendingFiles.length > 0) {
       userMsg.image = {
-        base64: pendingImage.base64,
-        mimeType: pendingImage.mimeType,
-        preview: pendingImage.preview,
+        base64: pendingFiles[0].base64,
+        mimeType: pendingFiles[0].mimeType,
+        preview: pendingFiles[0].preview,
       };
+      userMsg.allFiles = pendingFiles.map((f) => ({ preview: f.preview, name: f.file.name }));
     }
 
-    const updatedMessages = [...messages, userMsg];
+    const updatedMessages = isRegen ? [...messages, userMsg] : [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
     setShowBookingForm(false);
+    setSuggestions([]);
 
     let convId = conversationId;
-    if (user) {
-      convId = await ensureConversation();
-    }
+    if (user) convId = await ensureConversation();
 
     let assistantContent = "";
 
     try {
-      // Build API payload
       const apiMessages = updatedMessages.map((m) => {
         const msg = { role: m.role, content: m.content };
-        if (m.image) {
-          msg.image = { base64: m.image.base64, mimeType: m.image.mimeType };
-        }
+        if (m.image) msg.image = { base64: m.image.base64, mimeType: m.image.mimeType };
         return msg;
       });
 
@@ -224,18 +350,13 @@ export function AIChatbot() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${SUPABASE_CLIENT_KEY}`,
         },
-        body: JSON.stringify({
-          messages: apiMessages,
-          conversationId: convId,
-          lang,
-        }),
+        body: JSON.stringify({ messages: apiMessages, conversationId: convId, lang }),
       });
 
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
         throw new Error(errData.error || "Failed to get response");
       }
-
       if (!resp.body) throw new Error("No response body");
 
       const reader = resp.body.getReader();
@@ -246,9 +367,7 @@ export function AIChatbot() {
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === "assistant") {
-            return prev.map((m, i) =>
-              i === prev.length - 1 ? { ...m, content } : m
-            );
+            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content } : m));
           }
           return [...prev, { role: "assistant", content }];
         });
@@ -258,7 +377,6 @@ export function AIChatbot() {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-
         let newlineIndex;
         while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
           let line = buffer.slice(0, newlineIndex);
@@ -271,30 +389,23 @@ export function AIChatbot() {
           try {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              upsertAssistant(assistantContent);
-            }
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
+            if (delta) { assistantContent += delta; upsertAssistant(assistantContent); }
+          } catch { buffer = line + "\n" + buffer; break; }
         }
       }
 
-      // Check if assistant wants to show booking form
       if (assistantContent.includes("[SHOW_BOOKING_FORM]")) {
         setShowBookingForm(true);
         assistantContent = assistantContent.replace(/\[SHOW_BOOKING_FORM\]/g, "");
         upsertAssistant(assistantContent);
       }
 
-      // Save assistant message
+      // Generate smart suggestions
+      setSuggestions(getSuggestions(assistantContent, lang));
+
       if (user && convId && assistantContent) {
         await supabase.from("chat_messages").insert({
-          conversation_id: convId,
-          role: "assistant",
-          content: assistantContent,
+          conversation_id: convId, role: "assistant", content: assistantContent,
         });
       }
     } catch (err) {
@@ -302,71 +413,50 @@ export function AIChatbot() {
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
       const fallback =
         /rate limit|429/i.test(errorMsg)
-          ? isHindi
-            ? "मैं अभी उच्च ट्रैफ़िक पर हूँ। कृपया कुछ सेकंड बाद पुनः प्रयास करें।"
+          ? isHindi ? "मैं अभी उच्च ट्रैफ़िक पर हूँ। कृपया कुछ सेकंड बाद पुनः प्रयास करें।"
             : "I'm getting high traffic right now. Please try again in a few seconds."
           : `Sorry, ${errorMsg}. Please try again.`;
       setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
     } finally {
       setIsLoading(false);
-      removePendingImage();
+      clearPendingFiles();
     }
   };
 
   const clearChat = () => {
-    setMessages([]);
-    setConversationId(null);
-    setShowBookingForm(false);
-    setShowDeadlines(false);
-    removePendingImage();
+    setMessages([]); setConversationId(null); setShowBookingForm(false);
+    setShowDeadlines(false); setShowTaxLookup(false); clearPendingFiles();
+    setRatings({}); setSuggestions([]);
   };
 
-  // ── Inline booking form submit ────────────────────────────────────
+  // ── Inline booking ────────────────────────────────────────────────
   const handleInlineBooking = async (formData) => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     try {
       const { error } = await supabase.from("appointments").insert({
-        user_id: user.id,
-        date: formData.date,
-        time_slot: formData.time,
-        type: formData.type,
-        topic: formData.topic,
-        notes: formData.notes || null,
-        status: "pending",
+        user_id: user.id, date: formData.date, time_slot: formData.time,
+        type: formData.type, topic: formData.topic, notes: formData.notes || null, status: "pending",
       });
       if (error) throw error;
       setShowBookingForm(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: isHindi
-            ? `✅ आपकी अपॉइंटमेंट **${formData.date}** को **${formData.time}** पर बुक हो गई है! हम जल्द ही पुष्टि करेंगे।`
-            : `✅ Your appointment has been booked for **${formData.date}** at **${formData.time}**! We'll confirm shortly.`,
-        },
-      ]);
-    } catch (err) {
-      console.error("Booking error:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: isHindi
-            ? "❌ बुकिंग में त्रुटि हुई। कृपया पुनः प्रयास करें।"
-            : "❌ Booking failed. Please try again.",
-        },
-      ]);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: isHindi
+          ? `✅ आपकी अपॉइंटमेंट **${formData.date}** को **${formData.time}** पर बुक हो गई है!`
+          : `✅ Your appointment has been booked for **${formData.date}** at **${formData.time}**! We'll confirm shortly.`,
+      }]);
+    } catch {
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: isHindi ? "❌ बुकिंग में त्रुटि हुई। कृपया पुनः प्रयास करें।" : "❌ Booking failed. Please try again.",
+      }]);
     }
   };
 
-  // ── Render helpers ────────────────────────────────────────────────
+  // ── Render markdown ───────────────────────────────────────────────
   const renderContent = (content) => {
     const serviceRegex = /\[SERVICE:([\w-]+)\]/g;
     const parts = content.split(serviceRegex);
-
     const mdComponents = {
       p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
       ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
@@ -374,144 +464,160 @@ export function AIChatbot() {
       li: ({ children }) => <li className="mb-1">{children}</li>,
       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
     };
-
-    if (parts.length === 1) {
-      return <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>;
-    }
-
+    if (parts.length === 1) return <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>;
     return parts.map((part, i) => {
-      if (i % 2 === 1) {
-        return (
-          <Button
-            key={i}
-            size="sm"
-            variant="accent"
-            className="my-1 text-xs"
-            onClick={() => navigate(`/services/${part}`)}
-          >
-            {isHindi ? "सेवा देखें" : "View Service"} <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>
-        );
-      }
-      return part ? (
-        <ReactMarkdown key={i} components={mdComponents}>
-          {part}
-        </ReactMarkdown>
-      ) : null;
+      if (i % 2 === 1) return (
+        <Button key={i} size="sm" variant="accent" className="my-1 text-xs" onClick={() => navigate(`/services/${part}`)}>
+          {isHindi ? "सेवा देखें" : "View Service"} <ArrowRight className="ml-1 h-3 w-3" />
+        </Button>
+      );
+      return part ? <ReactMarkdown key={i} components={mdComponents}>{part}</ReactMarkdown> : null;
     });
   };
 
-  // ── Inline booking form ───────────────────────────────────────────
+  // ── Sub-components ────────────────────────────────────────────────
+
   const InlineBookingForm = () => {
     const [bk, setBk] = useState({ date: "", time: "", type: "video", topic: "advisory", notes: "" });
     const today = new Date();
     const dates = [];
     for (let i = 1; i <= 14 && dates.length < 7; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
+      const d = new Date(today); d.setDate(today.getDate() + i);
       if (d.getDay() !== 0) dates.push(d.toISOString().split("T")[0]);
     }
     const times = ["10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
-
     return (
       <div className="mx-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
         <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />
-          {isHindi ? "त्वरित अपॉइंटमेंट बुक करें" : "Quick Book Appointment"}
+          <Calendar className="h-3.5 w-3.5" />{isHindi ? "त्वरित अपॉइंटमेंट बुक करें" : "Quick Book Appointment"}
         </p>
-
-        {/* Date */}
         <div className="flex flex-wrap gap-1.5">
           {dates.map((d) => (
-            <button key={d} onClick={() => setBk((prev) => ({ ...prev, date: d }))}
+            <button key={d} onClick={() => setBk((p) => ({ ...p, date: d }))}
               className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
-                bk.date === d ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
-              )}>
-              {new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-            </button>
+                bk.date === d ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</button>
           ))}
         </div>
+        {bk.date && <div className="flex flex-wrap gap-1.5 animate-in fade-in duration-200">
+          {times.map((t) => (
+            <button key={t} onClick={() => setBk((p) => ({ ...p, time: t }))}
+              className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
+                bk.time === t ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{t}</button>
+          ))}
+        </div>}
+        {bk.time && <div className="flex gap-1.5 animate-in fade-in duration-200">
+          {[{ val: "video", lbl: "Video" }, { val: "phone", lbl: isHindi ? "फ़ोन" : "Phone" }, { val: "in_person", lbl: isHindi ? "ऑफ़िस" : "Office" }].map((t) => (
+            <button key={t.val} onClick={() => setBk((p) => ({ ...p, type: t.val }))}
+              className={cn("text-[10px] px-2.5 py-1 rounded-lg border transition-all",
+                bk.type === t.val ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{t.lbl}</button>
+          ))}
+        </div>}
+        {bk.date && bk.time && <Button size="sm" className="w-full h-8 text-xs rounded-lg gap-1.5" onClick={() => handleInlineBooking(bk)}>
+          <Calendar className="h-3 w-3" />{isHindi ? "बुक करें" : "Confirm Booking"}
+        </Button>}
+      </div>
+    );
+  };
 
-        {/* Time */}
-        {bk.date && (
-          <div className="flex flex-wrap gap-1.5 animate-in fade-in duration-200">
-            {times.map((t) => (
-              <button key={t} onClick={() => setBk((prev) => ({ ...prev, time: t }))}
-                className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
-                  bk.time === t ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
-                )}>
-                {t}
-              </button>
-            ))}
-          </div>
-        )}
+  const DeadlinePanel = () => (
+    <div className="mx-2 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2 animate-in slide-in-from-bottom-2 duration-300">
+      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+        <Bell className="h-3.5 w-3.5 text-amber-500" />{isHindi ? "आगामी कर समयसीमाएँ" : "Upcoming Tax Deadlines"}
+      </p>
+      {upcomingDeadlines.length === 0
+        ? <p className="text-[11px] text-muted-foreground">{isHindi ? "अगले 60 दिनों में कोई समयसीमा नहीं" : "No deadlines in the next 60 days"}</p>
+        : upcomingDeadlines.map((d, i) => (
+          <div key={i} className={cn("text-[11px] px-2.5 py-1.5 rounded-lg border",
+            d.daysLeft <= 15 ? "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400" :
+            d.daysLeft <= 30 ? "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400" :
+            "border-border/50 text-muted-foreground")}>{d.text}</div>
+        ))}
+      <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
+        onClick={() => { setShowDeadlines(false); sendMessage(isHindi ? "मुझे कर समयसीमाओं के बारे में विस्तार से बताएं" : "Tell me more about upcoming tax deadlines and what I need to prepare"); }}>
+        {isHindi ? "AI से और जानें →" : "Ask AI for details →"}
+      </Button>
+    </div>
+  );
 
-        {/* Type */}
-        {bk.time && (
-          <div className="flex gap-1.5 animate-in fade-in duration-200">
-            {[
-              { val: "video", lbl: "Video" },
-              { val: "phone", lbl: isHindi ? "फ़ोन" : "Phone" },
-              { val: "in_person", lbl: isHindi ? "ऑफ़िस" : "Office" },
-            ].map((t) => (
-              <button key={t.val} onClick={() => setBk((prev) => ({ ...prev, type: t.val }))}
-                className={cn("text-[10px] px-2.5 py-1 rounded-lg border transition-all",
-                  bk.type === t.val ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40"
-                )}>
-                {t.lbl}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {bk.date && bk.time && (
-          <Button size="sm" className="w-full h-8 text-xs rounded-lg gap-1.5"
-            onClick={() => handleInlineBooking(bk)}>
-            <Calendar className="h-3 w-3" />
-            {isHindi ? "बुक करें" : "Confirm Booking"}
+  // ── Tax Lookup Widget ─────────────────────────────────────────────
+  const TaxLookupWidget = () => {
+    const [income, setIncome] = useState("");
+    const [result, setResult] = useState(null);
+    const calc = () => {
+      const inc = Number(income);
+      if (!inc || inc < 0) return;
+      setResult(calculateTax(inc));
+    };
+    return (
+      <div className="mx-2 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
+        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+          <Calculator className="h-3.5 w-3.5 text-blue-500" />{isHindi ? "त्वरित टैक्स लुकअप" : "Quick Tax Lookup"}
+        </p>
+        <div className="flex gap-2">
+          <input type="number" placeholder={isHindi ? "वार्षिक आय (₹)" : "Annual Income (₹)"}
+            value={income} onChange={(e) => setIncome(e.target.value)}
+            className="flex-1 h-8 text-xs px-3 rounded-lg border border-border/50 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30" />
+          <Button size="sm" className="h-8 text-xs px-3 rounded-lg" onClick={calc}>
+            {isHindi ? "गणना" : "Calculate"}
           </Button>
+        </div>
+        {result && (
+          <div className="space-y-1.5 animate-in fade-in duration-200">
+            <div className={cn("flex justify-between text-[11px] px-2.5 py-1.5 rounded-lg border",
+              result.better === "old" ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50")}>
+              <span>{isHindi ? "पुरानी व्यवस्था" : "Old Regime"}</span>
+              <span className="font-semibold">₹{result.oldTax.toLocaleString("en-IN")}</span>
+            </div>
+            <div className={cn("flex justify-between text-[11px] px-2.5 py-1.5 rounded-lg border",
+              result.better === "new" ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50")}>
+              <span>{isHindi ? "नई व्यवस्था" : "New Regime"}</span>
+              <span className="font-semibold">₹{result.newTax.toLocaleString("en-IN")}</span>
+            </div>
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium text-center">
+              ✓ {result.better === "new" ? (isHindi ? "नई व्यवस्था बेहतर" : "New Regime saves more") : (isHindi ? "पुरानी व्यवस्था बेहतर" : "Old Regime saves more")}
+              {" — "}₹{Math.abs(result.oldTax - result.newTax).toLocaleString("en-IN")} {isHindi ? "बचत" : "saved"}
+            </p>
+            <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
+              onClick={() => { setShowTaxLookup(false); sendMessage(isHindi ? `मेरी आय ₹${income} है, विस्तृत टैक्स प्लानिंग बताएं` : `My income is ₹${income}, give me detailed tax planning advice`); }}>
+              {isHindi ? "AI से विस्तृत सलाह लें →" : "Get detailed AI advice →"}
+            </Button>
+          </div>
         )}
       </div>
     );
   };
 
-  // ── Deadline panel ────────────────────────────────────────────────
-  const DeadlinePanel = () => (
-    <div className="mx-2 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2 animate-in slide-in-from-bottom-2 duration-300">
-      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-        <Bell className="h-3.5 w-3.5 text-amber-500" />
-        {isHindi ? "आगामी कर समयसीमाएँ" : "Upcoming Tax Deadlines"}
-      </p>
-      {upcomingDeadlines.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground">
-          {isHindi ? "अगले 60 दिनों में कोई समयसीमा नहीं" : "No deadlines in the next 60 days"}
-        </p>
-      ) : (
-        upcomingDeadlines.map((d, i) => (
-          <div key={i}
-            className={cn("text-[11px] px-2.5 py-1.5 rounded-lg border",
-              d.daysLeft <= 15 ? "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400" :
-              d.daysLeft <= 30 ? "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400" :
-              "border-border/50 text-muted-foreground"
-            )}>
-            {d.text}
+  // ── Chat History Panel ────────────────────────────────────────────
+  const HistoryPanel = () => (
+    <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm flex flex-col rounded-3xl overflow-hidden animate-in slide-in-from-left-4 duration-200">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+        <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" /></button>
+        <h3 className="font-semibold text-sm flex-1">{isHindi ? "चैट इतिहास" : "Chat History"}</h3>
+      </div>
+      <ScrollArea className="flex-1 p-3">
+        {historyLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : pastConversations.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-8">{isHindi ? "कोई पिछली चैट नहीं" : "No past conversations"}</p>
+        ) : (
+          <div className="space-y-1.5">
+            {pastConversations.map((conv) => (
+              <button key={conv.id} onClick={() => loadConversation(conv.id)}
+                className="w-full text-left px-3 py-2.5 rounded-xl border border-border/50 hover:bg-secondary/50 hover:border-foreground/10 transition-all text-xs space-y-0.5">
+                <p className="font-medium text-foreground truncate">{conv.title}</p>
+                <p className="text-[10px] text-muted-foreground">{new Date(conv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+              </button>
+            ))}
           </div>
-        ))
-      )}
-      <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
-        onClick={() => {
-          setShowDeadlines(false);
-          sendMessage(isHindi ? "मुझे कर समयसीमाओं के बारे में विस्तार से बताएं" : "Tell me more about upcoming tax deadlines and what I need to prepare");
-        }}>
-        {isHindi ? "AI से और जानें →" : "Ask AI for details →"}
-      </Button>
+        )}
+      </ScrollArea>
     </div>
   );
 
   // ═══════════════════════════════════════════════════════════════════
   return (
     <>
-      {/* ── Floating button ───────────────────────────────────────── */}
+      {/* Floating button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -523,48 +629,66 @@ export function AIChatbot() {
         aria-label="Open AI Assistant"
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
-        {/* Deadline notification dot */}
         {!isOpen && upcomingDeadlines.length > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-background animate-pulse" />
         )}
       </button>
 
-      {/* ── Chat panel ────────────────────────────────────────────── */}
+      {/* Chat panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] flex flex-col rounded-3xl border border-border/50 glass-frosted shadow-hero overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
-          
-          {/* ── Header ─────────────────────────────────────────── */}
+        <div className={cn(
+          "fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] flex flex-col rounded-3xl border border-border/50 glass-frosted shadow-hero overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300",
+          themeClass
+        )}>
+
+          {/* History overlay */}
+          {showHistory && <HistoryPanel />}
+
+          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <h3 className="font-semibold text-sm text-foreground flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                {isHindi ? "GMR AI सहायक" : "GMR AI Assistant"}
-              </h3>
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <Sparkles className="h-3 w-3 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm text-foreground leading-none">
+                  {isHindi ? "GMR AI सहायक" : "GMR AI Assistant"}
+                </h3>
+                <span className="text-[9px] text-emerald-500 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                  {isHindi ? "ऑनलाइन" : "Online"}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1">
-              {/* Language toggle */}
+            <div className="flex items-center gap-0.5">
               <Button variant="ghost" size="icon" className="h-7 w-7" title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
                 onClick={() => setLang(lang === "en" ? "hi" : "en")}>
                 <Globe className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
-              {/* Deadlines */}
+              {/* Theme toggle */}
+              <Button variant="ghost" size="icon" className="h-7 w-7"
+                title={chatTheme === "dark" ? "Light mode" : "Dark mode"}
+                onClick={() => setChatTheme((t) => t === "dark" ? "light" : "dark")}>
+                {chatTheme === "dark" ? <Sun className="h-3.5 w-3.5 text-muted-foreground" /> : <Moon className="h-3.5 w-3.5 text-muted-foreground" />}
+              </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 relative"
                 onClick={() => { setShowDeadlines(!showDeadlines); setDeadlineBadge(false); }}
                 title={isHindi ? "कर समयसीमाएँ" : "Tax Deadlines"}>
                 <Bell className="h-3.5 w-3.5 text-muted-foreground" />
-                {deadlineBadge && upcomingDeadlines.length > 0 && (
-                  <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-500" />
-                )}
+                {deadlineBadge && upcomingDeadlines.length > 0 && <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-500" />}
               </Button>
-              {/* Clear */}
+              {/* History */}
+              {user && <Button variant="ghost" size="icon" className="h-7 w-7"
+                onClick={() => { setShowHistory(true); loadHistory(); }} title={isHindi ? "इतिहास" : "History"}>
+                <History className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>}
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
                 <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
             </div>
           </div>
 
-          {/* ── Feature pills ──────────────────────────────────── */}
+          {/* Feature pills */}
           <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50 overflow-x-auto scrollbar-hide">
             <button onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
@@ -573,6 +697,10 @@ export function AIChatbot() {
             <button onClick={() => sendMessage(isHindi ? "मेरा टैक्स कैलकुलेट करो" : "Calculate my tax")}
               className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
               <Calculator className="h-3 w-3" /> {isHindi ? "टैक्स गणना" : "Tax Calc"}
+            </button>
+            <button onClick={() => { setShowTaxLookup(!showTaxLookup); setShowDeadlines(false); }}
+              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors whitespace-nowrap text-blue-600 dark:text-blue-400 hover:text-blue-700">
+              <Search className="h-3 w-3" /> {isHindi ? "टैक्स लुकअप" : "Tax Lookup"}
             </button>
             <button onClick={() => sendMessage(isHindi ? "मुझे अपॉइंटमेंट बुक करनी है" : "I want to book an appointment")}
               className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
@@ -583,113 +711,174 @@ export function AIChatbot() {
             </span>
           </div>
 
-          {/* ── Messages ───────────────────────────────────────── */}
+          {/* Messages */}
           <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            {/* Deadlines panel */}
             {showDeadlines && <DeadlinePanel />}
+            {showTaxLookup && <TaxLookupWidget />}
 
             {messages.length === 0 ? (
               <div className="space-y-4">
+                <div className="flex justify-center mb-2">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
                 <p className="text-sm text-muted-foreground text-center">
-                  {isHindi
-                    ? "👋 नमस्ते! मैं आपका CA सहायक हूँ। मैं कैसे मदद कर सकता हूँ?"
-                    : "👋 Hello! I'm your CA assistant. How can I help you today?"}
+                  {isHindi ? "👋 नमस्ते! मैं आपका CA सहायक हूँ। मैं कैसे मदद कर सकता हूँ?" : "👋 Hello! I'm your CA assistant. How can I help you today?"}
                 </p>
                 <div className="grid gap-2">
                   {quickOptions.map((opt) => (
                     <button key={opt} onClick={() => sendMessage(opt)}
-                      className="text-left text-xs px-3.5 py-2.5 rounded-xl border border-border/60 bg-secondary/40 hover:bg-secondary hover:border-foreground/20 hover:scale-[1.02] transition-all duration-200 text-foreground">
-                      {opt}
-                    </button>
+                      className="text-left text-xs px-3.5 py-2.5 rounded-xl border border-border/60 bg-secondary/40 hover:bg-secondary hover:border-foreground/20 hover:scale-[1.02] transition-all duration-200 text-foreground">{opt}</button>
                   ))}
                 </div>
               </div>
             ) : (
               <div className="space-y-3">
                 {messages.map((msg, i) => (
-                  <div key={i} className={cn("flex", msg.role === "user" ? "justify-end" : "justify-start")}>
-                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm",
+                  <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
+                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm relative group",
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-br-md"
                         : "bg-secondary text-secondary-foreground rounded-bl-md"
                     )}>
-                      {/* Show image thumbnail if user sent one */}
-                      {msg.image?.preview && (
+                      {/* Bot avatar for assistant */}
+                      {msg.role === "assistant" && (
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center">
+                            <Sparkles className="h-2.5 w-2.5 text-primary" />
+                          </div>
+                          <span className="text-[9px] font-medium text-muted-foreground">GMR AI</span>
+                        </div>
+                      )}
+                      {/* Multi-file thumbnails */}
+                      {msg.allFiles && (
+                        <div className="flex gap-1.5 mb-2">
+                          {msg.allFiles.map((f, fi) => (
+                            <img key={fi} src={f.preview} alt={f.name} className="w-12 h-12 rounded-lg object-cover border border-white/20" />
+                          ))}
+                        </div>
+                      )}
+                      {msg.image?.preview && !msg.allFiles && (
                         <img src={msg.image.preview} alt="uploaded" className="w-full max-w-[200px] rounded-lg mb-2" />
                       )}
                       {msg.role === "assistant" ? renderContent(msg.content) : msg.content}
                     </div>
+
+                    {/* Message actions for assistant */}
+                    {msg.role === "assistant" && msg.content && (
+                      <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Copy */}
+                        <button onClick={() => copyMessage(msg.content, i)}
+                          className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                          title={isHindi ? "कॉपी करें" : "Copy"}>
+                          {copiedIdx === i ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                        </button>
+                        {/* Regenerate (only on last assistant msg) */}
+                        {i === messages.length - 1 && (
+                          <button onClick={regenerateLastResponse}
+                            className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                            title={isHindi ? "पुनः उत्तर दें" : "Regenerate"}>
+                            <RefreshCw className="h-3 w-3" />
+                          </button>
+                        )}
+                        {/* Rating */}
+                        <button onClick={() => setRatings((p) => ({ ...p, [i]: p[i] === "up" ? null : "up" }))}
+                          className={cn("p-1 rounded-md hover:bg-secondary transition-colors",
+                            ratings[i] === "up" ? "text-emerald-500" : "text-muted-foreground hover:text-foreground")}
+                          title={isHindi ? "अच्छा" : "Good response"}>
+                          <ThumbsUp className="h-3 w-3" />
+                        </button>
+                        <button onClick={() => setRatings((p) => ({ ...p, [i]: p[i] === "down" ? null : "down" }))}
+                          className={cn("p-1 rounded-md hover:bg-secondary transition-colors",
+                            ratings[i] === "down" ? "text-red-500" : "text-muted-foreground hover:text-foreground")}
+                          title={isHindi ? "बुरा" : "Poor response"}>
+                          <ThumbsDown className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
-                {/* Loading indicator */}
+
+                {/* Premium typing indicator */}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-                  <div className="flex justify-start">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                    </div>
                     <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                        <span className="text-[10px] text-muted-foreground italic animate-pulse">
+                          {isHindi ? "GMR AI सोच रहा है..." : "GMR AI is thinking..."}
+                        </span>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Smart suggestions */}
+                {!isLoading && suggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {suggestions.map((s, i) => (
+                      <button key={i} onClick={() => { setSuggestions([]); sendMessage(s); }}
+                        className="text-[10px] px-2.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:border-primary/40 transition-all duration-200">
+                        {s}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Inline booking form */}
             {showBookingForm && <InlineBookingForm />}
           </ScrollArea>
 
-          {/* ── Pending image preview ──────────────────────────── */}
-          {pendingImage && (
-            <div className="px-3 py-2 border-t border-border/50 flex items-center gap-2 bg-secondary/30">
-              <img src={pendingImage.preview} alt="pending" className="w-10 h-10 rounded-lg object-cover border border-border" />
-              <span className="text-[10px] text-muted-foreground flex-1 truncate">{pendingImage.file.name}</span>
-              <button onClick={removePendingImage} className="text-muted-foreground hover:text-foreground">
-                <X className="h-3.5 w-3.5" />
-              </button>
+          {/* Pending file previews */}
+          {pendingFiles.length > 0 && (
+            <div className="px-3 py-2 border-t border-border/50 flex items-center gap-2 bg-secondary/30 overflow-x-auto">
+              {pendingFiles.map((f, i) => (
+                <div key={i} className="relative flex-shrink-0">
+                  <img src={f.preview} alt={f.file.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
+                  <button onClick={() => removeFile(i)}
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[8px]">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              ))}
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{pendingFiles.length}/3</span>
             </div>
           )}
 
-          {/* ── Input ──────────────────────────────────────────── */}
+          {/* Input */}
           <div className="p-3 border-t border-border">
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
-              {/* Hidden file input */}
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
-
-              {/* Image upload button */}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} multiple />
               <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0"
-                onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-                <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                onClick={() => fileInputRef.current?.click()} disabled={isLoading || pendingFiles.length >= 3}>
+                <Paperclip className="h-4 w-4 text-muted-foreground" />
               </Button>
-
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
+              <Input value={input} onChange={(e) => setInput(e.target.value)}
                 placeholder={isHindi ? "CA सेवाओं के बारे में पूछें..." : "Ask about our CA services..."}
-                className="text-sm h-9"
-                disabled={isLoading}
-              />
-
-              {/* Voice button */}
+                className="text-sm h-9" disabled={isLoading} />
               <Button type="button" variant="ghost" size="icon"
                 className={cn("h-9 w-9 shrink-0", isListening && "text-red-500 animate-pulse")}
                 onClick={isListening ? stopListening : startListening} disabled={isLoading}>
                 {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
-
-              {/* Send */}
               <Button type="submit" size="icon" className="h-9 w-9 shrink-0"
-                disabled={isLoading || (!input.trim() && !pendingImage)}>
+                disabled={isLoading || (!input.trim() && !pendingFiles.length)}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
             {!user && (
               <p className="text-[10px] text-muted-foreground mt-1 text-center">
-                <button onClick={() => navigate("/auth")} className="underline hover:text-foreground">
-                  {isHindi ? "साइन इन करें" : "Sign in"}
-                </button>{" "}
-                {isHindi ? "चैट इतिहास सहेजने के लिए" : "to save chat history"}
+                <button onClick={() => navigate("/auth")} className="underline hover:text-foreground">{isHindi ? "साइन इन करें" : "Sign in"}</button>{" "}
+                {isHindi ? "चैट इतिहास सहेजने के लिए" : "to save chat history & access all features"}
               </p>
             )}
           </div>
