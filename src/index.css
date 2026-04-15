@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Apple-Inspired Design System ─────────────────────────────────────────── */
+/* ─── Apple × Google Inspired Design System ────────────────────────────────── */
 
 @layer base {
   :root {
@@ -161,164 +161,191 @@
 }
 
 /* ─── Keyframes ─────────────────────────────────────────────────────────────── */
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(32px);
-  }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Core animations */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(32px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
 
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.6;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to { background-position: 200% center; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 hsl(var(--accent) / 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px hsl(var(--accent) / 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(200px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(200px) rotate(-360deg); }
+}
+
+/* ── NEW: Apple/Google-Tier Premium Animations ──────────────────────────────── */
+
+/* Text reveal — Letter-by-letter clip reveal like Apple product pages */
+@keyframes text-reveal-up {
+  0% {
+    opacity: 0;
+    transform: translateY(100%) rotateX(-80deg);
+    filter: blur(4px);
   }
+  60% {
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0%) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
 
-  50% {
-    transform: scale(1.08);
+/* Smooth mask reveal from bottom */
+@keyframes mask-reveal {
+  from {
+    clip-path: inset(100% 0 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 }
 
-@keyframes orbit {
-  from {
-    transform: rotate(0deg) translateX(200px) rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg) translateX(200px) rotate(-360deg);
-  }
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
-@keyframes shimmer {
-  from {
-    background-position: -200% center;
-  }
-
-  to {
-    background-position: 200% center;
-  }
-}
-
-@keyframes pulse-ring {
+/* Aurora subtle glow — Google's ambient light effect */
+@keyframes aurora-shift {
   0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 hsl(var(--accent) / 0.4);
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 0.4;
   }
-
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 10px hsl(var(--accent) / 0);
+  33% {
+    transform: translate(-40%, -60%) rotate(120deg) scale(1.1);
+    opacity: 0.6;
   }
-
+  66% {
+    transform: translate(-60%, -40%) rotate(240deg) scale(0.9);
+    opacity: 0.5;
+  }
   100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 hsl(var(--accent) / 0);
+    transform: translate(-50%, -50%) rotate(360deg) scale(1);
+    opacity: 0.4;
   }
 }
 
-@keyframes gradient-shift {
+/* Subtle rotate glow on cards */
+@keyframes glow-rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-  0%,
-  100% {
-    background-position: 0% 50%;
+/* Line draw animation — like Apple keynote transitions */
+@keyframes line-draw {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Stagger fade in from various directions */
+@keyframes slide-up-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
   }
-
-  50% {
-    background-position: 100% 50%;
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes ticker {
-  from {
-    transform: translateX(0);
-  }
+/* Apple-style bounce settle */
+@keyframes bounce-settle {
+  0% { transform: translateY(40px); opacity: 0; }
+  60% { transform: translateY(-4px); opacity: 1; }
+  80% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
 
-  to {
-    transform: translateX(-50%);
-  }
+/* Horizontal expand line — like Google's Material reveal */
+@keyframes line-expand {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Counter glow pulse on reveal */
+@keyframes number-glow {
+  0% { text-shadow: 0 0 0 transparent; }
+  50% { text-shadow: 0 0 30px hsl(var(--accent) / 0.3); }
+  100% { text-shadow: 0 0 0 transparent; }
+}
+
+/* Grain/noise subtle movement */
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -2%); }
+  20% { transform: translate(2%, 2%); }
+  30% { transform: translate(-1%, 3%); }
+  40% { transform: translate(3%, -1%); }
+  50% { transform: translate(-3%, 1%); }
+  60% { transform: translate(1%, -3%); }
+  70% { transform: translate(-2%, 2%); }
+  80% { transform: translate(2%, -2%); }
+  90% { transform: translate(-1%, 1%); }
+}
+
+/* Spotlight track on mouse (applied via JS) */
+@keyframes spotlight-pulse {
+  0%, 100% { opacity: 0.05; }
+  50% { opacity: 0.12; }
 }
 
 /* ─── Utilities ─────────────────────────────────────────────────────────────── */
 @layer utilities {
 
   /* Shadows */
-  .shadow-xs {
-    box-shadow: var(--shadow-xs);
-  }
-
-  .shadow-soft {
-    box-shadow: var(--shadow-sm);
-  }
-
-  .shadow-card {
-    box-shadow: var(--shadow-md);
-  }
-
-  .shadow-float {
-    box-shadow: var(--shadow-lg);
-  }
-
-  .shadow-hero {
-    box-shadow: var(--shadow-xl);
-  }
-
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
+  .shadow-xs { box-shadow: var(--shadow-xs); }
+  .shadow-soft { box-shadow: var(--shadow-sm); }
+  .shadow-card { box-shadow: var(--shadow-md); }
+  .shadow-float { box-shadow: var(--shadow-lg); }
+  .shadow-hero { box-shadow: var(--shadow-xl); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
 
   /* Glass morphism — deep visual elevation with inner shadows */
   .glass {
@@ -343,7 +370,7 @@
     box-shadow: inset 0 1px 0 0 hsl(220 10% 100% / 0.3);
   }
 
-  /* Gradient text */
+  /* ── Gradient text ────────────────────────────────────────────────── */
   .gradient-text {
     background: linear-gradient(135deg,
         hsl(var(--foreground)) 0%,
@@ -383,7 +410,40 @@
     will-change: background-position;
   }
 
-  /* Gradient backgrounds */
+  /* ── NEW: Ultra-premium gradient text — Chrome-like iridescent */
+  .gradient-text-iridescent {
+    background: linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 25%,
+      #f093fb 50%,
+      #4facfe 75%,
+      #667eea 100%
+    );
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 8s linear infinite;
+  }
+
+  .dark .gradient-text-iridescent {
+    background: linear-gradient(
+      135deg,
+      #a8c0ff 0%,
+      #c4b5fd 25%,
+      #f9a8d4 50%,
+      #93c5fd 75%,
+      #a8c0ff 100%
+    );
+    background-size: 300% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 8s linear infinite;
+  }
+
+  /* ── Gradient backgrounds ─────────────────────────────────────────── */
   .bg-hero-gradient {
     background: radial-gradient(ellipse 80% 60% at 50% -10%,
         hsl(var(--accent) / 0.08) 0%,
@@ -396,7 +456,55 @@
     background-size: 256px 256px;
   }
 
-  /* Animation classes */
+  /* ── NEW: Aurora ambient glow background */
+  .bg-aurora {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bg-aurora::before,
+  .bg-aurora::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    animation: aurora-shift 20s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .bg-aurora::before {
+    width: 600px;
+    height: 600px;
+    top: 20%;
+    left: 30%;
+    background: hsl(var(--accent) / 0.06);
+  }
+
+  .bg-aurora::after {
+    width: 500px;
+    height: 500px;
+    bottom: 10%;
+    right: 20%;
+    background: hsl(280 80% 60% / 0.04);
+    animation-delay: -7s;
+  }
+
+  /* ── NEW: Animated grain overlay for premium texture */
+  .bg-grain::before {
+    content: '';
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.5;
+    animation: grain 8s steps(10) infinite;
+  }
+
+  /* ── Animation classes ─────────────────────────────────────────────── */
   .animate-fade-up {
     animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -429,40 +537,43 @@
     will-change: transform;
   }
 
-  /* Delay utilities */
-  .delay-100 {
-    animation-delay: 0.1s;
+  /* NEW: Premium animation utilities */
+  .animate-text-reveal {
+    animation: text-reveal-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .delay-200 {
-    animation-delay: 0.2s;
+  .animate-mask-reveal {
+    animation: mask-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .delay-300 {
-    animation-delay: 0.3s;
+  .animate-slide-up {
+    animation: slide-up-fade 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .delay-400 {
-    animation-delay: 0.4s;
+  .animate-bounce-settle {
+    animation: bounce-settle 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .delay-500 {
-    animation-delay: 0.5s;
+  .animate-line-expand {
+    animation: line-expand 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: left;
   }
 
-  .delay-600 {
-    animation-delay: 0.6s;
+  .animate-number-glow {
+    animation: number-glow 2s ease-in-out;
   }
 
-  .delay-700 {
-    animation-delay: 0.7s;
-  }
+  /* ── Delay utilities ──────────────────────────────────────────────── */
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+  .delay-400 { animation-delay: 0.4s; }
+  .delay-500 { animation-delay: 0.5s; }
+  .delay-600 { animation-delay: 0.6s; }
+  .delay-700 { animation-delay: 0.7s; }
+  .delay-800 { animation-delay: 0.8s; }
 
-  .delay-800 {
-    animation-delay: 0.8s;
-  }
-
-  /* Hover lift - Snappy start, smooth finish */
+  /* ── Hover lift — Spring-like ──────────────────────────────────────── */
   .hover-lift {
     transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
       box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1),
@@ -480,7 +591,7 @@
     filter: brightness(1.15);
   }
 
-  /* Apple-style card */
+  /* ── Apple-style card ─────────────────────────────────────────────── */
   .apple-card {
     @apply bg-card rounded-2xl border border-border/50;
     box-shadow: var(--shadow-sm);
@@ -495,7 +606,56 @@
     transform: translateY(-2px) scale(1.005);
   }
 
-  /* Link underline slide */
+  /* ── NEW: 3D Perspective card — Google Material-inspired ──────────── */
+  .perspective-card {
+    @apply bg-card rounded-2xl border border-border/50 overflow-hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .perspective-card:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: hsl(var(--accent) / 0.2);
+  }
+
+  /* ── NEW: Spotlight card — tracks mouse position */
+  .spotlight-card {
+    @apply relative bg-card rounded-2xl border border-border/40 overflow-hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .spotlight-card::before {
+    content: '';
+    position: absolute;
+    top: var(--mouse-y, 50%);
+    left: var(--mouse-x, 50%);
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent) / 0.08) 0%,
+      transparent 70%
+    );
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .spotlight-card:hover::before {
+    opacity: 1;
+  }
+
+  .spotlight-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: hsl(var(--accent) / 0.15);
+  }
+
+  /* ── Link underline slide ──────────────────────────────────────────── */
   .link-underline {
     position: relative;
   }
@@ -523,7 +683,7 @@
     text-wrap: balance;
   }
 
-  /* Gradient border */
+  /* ── Gradient border ──────────────────────────────────────────────── */
   .gradient-border {
     position: relative;
     background: hsl(var(--card));
@@ -542,7 +702,41 @@
     z-index: -1;
   }
 
-  /* Premium card — elevated, inner glow, smooth transitions */
+  /* ── NEW: Animated gradient border — rotating conic gradient glow */
+  .gradient-border-glow {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .gradient-border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: calc(var(--radius) + 2px);
+    background: conic-gradient(
+      from 0deg,
+      hsl(var(--accent) / 0.3),
+      transparent 30%,
+      hsl(280 80% 60% / 0.2),
+      transparent 60%,
+      hsl(var(--accent) / 0.3)
+    );
+    animation: glow-rotate 6s linear infinite;
+    background-size: 200% 200%;
+    z-index: -1;
+  }
+
+  .gradient-border-glow::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border-radius: calc(var(--radius) - 1px);
+    background: hsl(var(--card));
+    z-index: -1;
+  }
+
+  /* ── Premium card — elevated, inner glow, smooth transitions ──────── */
   .premium-card {
     @apply relative bg-card rounded-2xl border border-border/50 overflow-hidden;
     box-shadow: var(--shadow-sm), inset 0 1px 0 0 hsl(220 10% 100% / 0.4);
@@ -565,7 +759,7 @@
     box-shadow: var(--shadow-xl), inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
   }
 
-  /* Premium input */
+  /* ── Premium input ────────────────────────────────────────────────── */
   .premium-input {
     @apply h-12 rounded-xl bg-secondary/50 border border-border/60 text-base;
     transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
@@ -576,7 +770,7 @@
     transform: scale(1.005);
   }
 
-  /* Gradient text — warm gold */
+  /* ── Gradient text — warm gold ────────────────────────────────────── */
   .text-gradient-gold {
     background: linear-gradient(135deg, #d4a574 0%, #c49a6c 30%, #b8860b 60%, #d4a574 100%);
     background-size: 200% auto;
@@ -587,7 +781,7 @@
     will-change: background-position;
   }
 
-  /* Section spacing */
+  /* ── Section spacing ──────────────────────────────────────────────── */
   .section-padding {
     @apply py-24 md:py-36;
   }
@@ -596,7 +790,7 @@
     @apply py-16 md:py-24;
   }
 
-  /* Ticker — contain layout to isolate reflow */
+  /* ── Ticker ───────────────────────────────────────────────────────── */
   .ticker-wrap {
     overflow: hidden;
     contain: layout style;
@@ -606,6 +800,90 @@
     display: flex;
     width: max-content;
     transform: translateZ(0);
+  }
+
+  /* ── NEW: Magnetic hover (pure CSS approximation) ──────────────────── */
+  .magnetic {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .magnetic:hover {
+    transform: scale(1.05);
+  }
+
+  .magnetic:active {
+    transform: scale(0.97);
+    transition-duration: 0.1s;
+  }
+
+  /* ── NEW: Smooth reveal line divider ──────────────────────────────── */
+  .reveal-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--border)) 20%,
+      hsl(var(--accent) / 0.3) 50%,
+      hsl(var(--border)) 80%,
+      transparent 100%
+    );
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal-line.visible {
+    transform: scaleX(1);
+  }
+
+  /* ── NEW: Bento grid card — inspired by Apple bento boxes ─────────── */
+  .bento-card {
+    @apply relative bg-card rounded-3xl border border-border/40 overflow-hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .bento-card:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: hsl(var(--accent) / 0.15);
+    transform: translateY(-4px);
+  }
+
+  .dark .bento-card {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .dark .bento-card:hover {
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  /* ── NEW: Scroll-triggered text highlight ─────────────────────────── */
+  .text-highlight-scroll {
+    background-size: 200% 100%;
+    background-position: 100% 0;
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--accent) / 0.15) 50%,
+      transparent 50%
+    );
+    transition: background-position 0.8s ease;
+    padding: 0.1em 0.2em;
+    border-radius: 0.15em;
+    margin: -0.1em -0.2em;
+  }
+
+  .text-highlight-scroll.active {
+    background-position: 0 0;
+  }
+
+  /* ── NEW: Smooth stagger reveal with clip-path ────────────────────── */
+  .clip-reveal {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+    transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .clip-reveal.visible {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   }
 }
 
@@ -649,9 +927,7 @@
 }
 
 /* ─── Reduced motion ─────────────────────────────────────────────────────────── */
-/* Strips all animations for users who prefer no motion (accessibility + perf on low-power devices) */
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {

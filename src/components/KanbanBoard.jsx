@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Clock, AlertTriangle, ArrowRight, User, Calendar } from "lucide-react";
+import { resolveServiceName } from "@/lib/resolveServiceName";
 
 const STATUS_COLORS = {
   pending: "bg-amber-100 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800",
@@ -67,7 +68,7 @@ export function KanbanBoard({ requests = [], onSelectRequest }) {
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h4 className="text-xs font-medium leading-snug line-clamp-2">
-                        {req.services?.name || req.service_id}
+                        {resolveServiceName(req)}
                       </h4>
                       {req.priority && req.priority !== "normal" && (
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap ${PRIORITY_BADGES[req.priority] || ""}`}>

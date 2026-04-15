@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
   Gift, Users, Copy, Share2, ArrowRight, CheckCircle, Trophy,
   Star, IndianRupee, Heart, Link2
@@ -31,7 +31,7 @@ const REFERRAL_HISTORY = [
 
 export default function Referrals() {
   const { user } = useAuth();
-  const { toast } = useToast();
+
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -43,13 +43,13 @@ export default function Referrals() {
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
     setCopied(true);
-    toast({ title: "Link copied!", description: "Share it with friends and family." });
+    toast.success("Link copied! Share it with friends and family.");
     setTimeout(() => setCopied(false), 2000);
   };
 
   const sendInvite = () => {
     if (!email) return;
-    toast({ title: "Invitation sent!", description: `An invite was sent to ${email}` });
+    toast.success(`Invitation sent to ${email}`);
     setEmail("");
   };
 

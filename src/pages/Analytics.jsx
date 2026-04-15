@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PageTransition } from "@/components/PageTransition";
+import { resolveServiceName } from "@/lib/resolveServiceName";
 
 const easing = [0.22, 1, 0.36, 1];
 const COLORS = ["#6366f1", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6"];
@@ -64,7 +65,7 @@ export default function Analytics() {
     // Service distribution
     const serviceMap = {};
     requests.forEach(r => {
-      const name = r.services?.name || "Other";
+      const name = resolveServiceName(r);
       serviceMap[name] = (serviceMap[name] || 0) + 1;
     });
     const serviceDistribution = Object.entries(serviceMap).map(([name, count]) => ({ name, count }));

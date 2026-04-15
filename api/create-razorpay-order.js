@@ -18,7 +18,8 @@ export default async function handler(req, res) {
   const KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
 
   if (!KEY_ID || !KEY_SECRET) {
-    console.error("[Payment API] Razorpay credentials missing");
+    console.error("[Payment API] Razorpay credentials missing from environment variables.");
+    console.error("[Payment API] KEY_ID present:", !!KEY_ID, "KEY_SECRET present:", !!KEY_SECRET);
     return res.status(500).json({
       error: "Payment gateway not configured. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to Vercel environment variables."
     });
@@ -47,7 +48,7 @@ export default async function handler(req, res) {
     }
   };
 
-  console.log("[Payment API] Creating Razorpay order:", { amountPaise, currency, receipt });
+  console.log("[Payment API] Creating Razorpay order:", { amountPaise, currency, receipt, keyPrefix: KEY_ID.substring(0, 10) });
 
   try {
     const rzpRes = await fetch("https://api.razorpay.com/v1/orders", {
@@ -62,8 +63,14 @@ export default async function handler(req, res) {
     if (!rzpRes.ok) {
       const errText = await rzpRes.text();
       console.error("[Payment API] Razorpay error:", rzpRes.status, errText);
+      let razorpayError = "Failed to create payment order.";
+      try {
+        const errJson = JSON.parse(errText);
+        razorpayError = errJson.error?.description || errJson.error?.reason || razorpayError;
+      } catch {}
       return res.status(500).json({
-        error: "Failed to create payment order. Check your Razorpay credentials."
+        error: razorpayError,
+        razorpay_status: rzpRes.status
       });
     }
 
@@ -81,7 +88,7 @@ export default async function handler(req, res) {
       total: totalAmount
     });
   } catch (err) {
-    console.error("[Payment API] Network error:", err);
-    return res.status(500).json({ error: "Network error reaching Razorpay." });
+    console.error("[Payment API] Network error:", err.message || err);
+    return res.status(500).json({ error: "Network error reaching Razorpay. Please try again." });
   }
 }

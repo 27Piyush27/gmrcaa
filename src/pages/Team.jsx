@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
+import { Link } from "react-router-dom";
 import { Linkedin, Mail, Award, Users } from "lucide-react";
 
 const easing = [0.22, 1, 0.36, 1];
@@ -108,10 +109,16 @@ export default function Team() {
               <p className="text-background/60 mb-8 max-w-md mx-auto">
                 We're always looking for talented CAs and finance professionals to join our growing practice.
               </p>
-              <a href="mailto:careers@gmrindia.com"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-background text-foreground text-sm font-medium hover:bg-background/90 transition-colors">
-                <Mail className="w-4 h-4" /> careers@gmrindia.com
-              </a>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/careers"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-background text-foreground text-sm font-medium hover:bg-background/90 transition-colors">
+                  <Users className="w-4 h-4" /> View Open Positions
+                </Link>
+                <a href="mailto:careers@gmrindia.com"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-background/30 text-background text-sm font-medium hover:bg-background/10 transition-colors">
+                  <Mail className="w-4 h-4" /> careers@gmrindia.com
+                </a>
+              </div>
             </ScrollReveal>
           </div>
         </section>

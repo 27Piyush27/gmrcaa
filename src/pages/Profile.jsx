@@ -56,6 +56,10 @@ export default function Profile() {
         .update({
           name: formData.name,
           phone: formData.phone,
+          address: formData.address,
+          pan_number: formData.pan_number,
+          gstin: formData.gstin,
+          company_name: formData.company_name,
           avatar_url: formData.avatar_url
         })
         .eq("user_id", user.id);

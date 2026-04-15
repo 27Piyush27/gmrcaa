@@ -18,6 +18,12 @@ import { useState, useRef, useMemo } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import {
+  TextReveal,
+  BlurFadeIn,
+  MagneticWrap,
+  AnimatedDivider,
+} from "@/components/PremiumAnimations";
+import {
   Calculator,
   FileCheck,
   Percent,
@@ -161,62 +167,58 @@ export default function Services() {
         {/* ── Clean Hero ─────────────────────────────────────────────── */}
         <section className="relative pt-28 pb-16 md:pt-40 md:pb-24 overflow-hidden">
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
-          <div className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-violet-400/[0.06] blur-3xl pointer-events-none animate-breathe" />
-          <div className="absolute top-1/2 right-1/5 w-96 h-96 rounded-full bg-blue-400/[0.05] blur-3xl pointer-events-none animate-float" />
+          <motion.div
+            className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-violet-400/[0.06] blur-3xl pointer-events-none"
+            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute top-1/2 right-[20%] w-96 h-96 rounded-full bg-blue-400/[0.05] blur-3xl pointer-events-none"
+            animate={{ x: [0, -25, 15, 0], y: [0, 15, -25, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          />
 
           <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center relative">
             {/* Pill badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: easing }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/60 bg-secondary/60 backdrop-blur-sm text-xs text-muted-foreground tracking-widest uppercase mb-8">
-              
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {servicesData.length} Professional Services
-            </motion.div>
+            <BlurFadeIn>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/60 bg-secondary/60 backdrop-blur-sm text-xs text-muted-foreground tracking-widest uppercase mb-8">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {servicesData.length} Professional Services
+              </div>
+            </BlurFadeIn>
 
             {/* Headline */}
-            <motion.h1
-              className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-balance mb-6"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: easing, delay: 0.12 }}>
-              
-              Expert Financial
-              <br />
-              <span className="italic gradient-text-premium">Solutions.</span>
-            </motion.h1>
+            <TextReveal delay={0.1}>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-balance mb-6">
+                Expert Financial
+                <br />
+                <span className="italic gradient-text-premium">Solutions.</span>
+              </h1>
+            </TextReveal>
 
-            <motion.p
-              className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10"
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: easing, delay: 0.28 }}>
-              
-              Request a service and pay only after our CA team completes the work.{" "}
-              <span className="text-foreground font-medium">Zero risk. Full transparency.</span>
-            </motion.p>
+            <BlurFadeIn delay={0.3}>
+              <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
+                Request a service and pay only after our CA team completes the work.{" "}
+                <span className="text-foreground font-medium">Zero risk. Full transparency.</span>
+              </p>
+            </BlurFadeIn>
 
             {/* Compact process steps */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42, duration: 0.5 }}
-              className="flex flex-wrap justify-center items-center gap-3">
-              
-              {["Request", "We Work", "You Pay"].map((step, i) =>
-              <div key={step} className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm text-xs text-muted-foreground font-medium">
-                    <span className="w-5 h-5 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold flex-shrink-0">
-                      {i + 1}
+            <BlurFadeIn delay={0.45}>
+              <div className="flex flex-wrap justify-center items-center gap-3">
+                {["Request", "We Work", "You Pay"].map((step, i) =>
+                <div key={step} className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm text-xs text-muted-foreground font-medium">
+                      <span className="w-5 h-5 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold flex-shrink-0">
+                        {i + 1}
+                      </span>
+                      {step}
                     </span>
-                    {step}
-                  </span>
-                  {i < 2 && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 hidden sm:block" />}
-                </div>
-              )}
-            </motion.div>
+                    {i < 2 && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 hidden sm:block" />}
+                  </div>
+                )}
+              </div>
+            </BlurFadeIn>
           </div>
         </section>
 
@@ -371,7 +373,9 @@ export default function Services() {
                             </div>
 
                             {/* Title & description */}
-                            <h3 className="text-xl font-semibold leading-snug mb-2">{service.title}</h3>
+                            <Link to={`/services/${service.id}`} className="text-xl font-semibold leading-snug mb-2 hover:text-accent transition-colors block">
+                              {service.title}
+                            </Link>
                             <p className="text-sm text-muted-foreground leading-relaxed mb-6 line-clamp-2">{service.shortDesc}</p>
 
                             {/* Key features — 3 max, clean */}
@@ -445,30 +449,42 @@ export default function Services() {
 
         {/* ── CTA Section ──────────────────────────────────────────── */}
         <section className="py-20 md:py-32 bg-foreground text-background relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent pointer-events-none" />
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full bg-white/[0.03] blur-3xl pointer-events-none" />
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-br from-accent/15 to-transparent pointer-events-none"
+            animate={{ opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/[0.04] blur-[100px] pointer-events-none"
+            animate={{ scale: [1, 1.15, 1], x: [0, -30, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          />
 
           <div className="max-w-3xl mx-auto px-6 lg:px-12 text-center relative">
-            <ScrollReveal>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-6 leading-tight tracking-tight">
+            <TextReveal>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-6 leading-tight tracking-tight text-background">
                 Don't see what you need?
               </h2>
+            </TextReveal>
 
+            <BlurFadeIn delay={0.2}>
               <p className="text-background/60 mb-10 max-w-xl mx-auto text-base leading-relaxed">
                 Every business is unique. Let's discuss how we can tailor our services to your exact requirements.
               </p>
+            </BlurFadeIn>
 
+            <BlurFadeIn delay={0.35}>
               <div className="flex flex-wrap justify-center gap-4">
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 300, damping: 22 }}>
-                  <Button asChild size="lg" variant="secondary" className="h-12 px-8 rounded-xl text-sm font-medium gap-2">
+                <MagneticWrap strength={0.12}>
+                  <Button asChild size="lg" variant="secondary" className="h-12 px-8 rounded-xl text-sm font-medium gap-2 transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] hover:shadow-xl">
                     <Link to="/contact">
                       Get in Touch
                       <ArrowRight className="w-4 h-4" />
                     </Link>
                   </Button>
-                </motion.div>
+                </MagneticWrap>
               </div>
-            </ScrollReveal>
+            </BlurFadeIn>
           </div>
         </section>
 

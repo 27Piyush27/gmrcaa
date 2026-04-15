@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import {
   Moon, Sun, Menu, X, Languages, ChevronDown,
   Calculator, FileText, Wallet, BookOpen, MessageSquare, Bell,
-  LayoutDashboard, CalendarDays, User, LogOut, Shield,
+  LayoutDashboard, CalendarDays, User, LogOut, Shield, Briefcase,
   Calendar, MessageCircle, Gift, TrendingUp, Columns3, ShieldCheck
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -39,6 +39,7 @@ const ADMIN_ITEMS = [
   { name: "Task Board", path: "/admin/tasks", icon: Columns3 },
   { name: "Blog Manager", path: "/admin/blog", icon: FileText },
   { name: "Reviews", path: "/admin/testimonials", icon: MessageSquare },
+  { name: "Manage Careers", path: "/admin/careers", icon: Briefcase },
 ];
 
 // Reusable dropdown wrapper
@@ -137,6 +138,7 @@ export const Navigation = () => {
     { name: "Home", path: "/" },
     { name: "About", path: "/about" },
     { name: "Services", path: "/services" },
+    { name: "Careers", path: "/careers" },
     { name: "Contact", path: "/contact" },
   ];
 

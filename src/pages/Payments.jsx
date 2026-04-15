@@ -166,6 +166,12 @@ export default function Payments() {
       return;
     }
 
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount <= 0) {
+      toast.error("Please enter a valid payment amount greater than ₹0");
+      return;
+    }
+
     setIsLoading(true);
 
     try {

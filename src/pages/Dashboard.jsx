@@ -36,6 +36,8 @@ import { InvoiceButton } from "@/components/InvoiceButton";
 import { TaxDeadlineCalendar } from "@/components/TaxDeadlineCalendar";
 import { SkeletonDashboard } from "@/components/SkeletonLoaders";
 import { Link } from "react-router-dom";
+import { servicesData } from "@/lib/servicesData";
+import { resolveServiceName } from "@/lib/resolveServiceName";
 
 
 
@@ -413,7 +415,7 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <h3 className="font-semibold text-base md:text-lg leading-tight">
-                              {request.services?.name || request.service_id}
+                              {resolveServiceName(request)}
                             </h3>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -518,7 +520,7 @@ export default function Dashboard() {
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
                         <ServicePaymentButton
                         serviceRequestId={request.id}
-                        serviceName={request.services?.name || request.service_id}
+                        serviceName={resolveServiceName(request)}
                         amount={request.amount}
                         status={request.status}
                         onPaymentSuccess={fetchServiceRequests} />
@@ -537,7 +539,7 @@ export default function Dashboard() {
                             <ServiceRating serviceRequestId={request.id} serviceName={request.services?.name} />
                             <InvoiceButton
                               paymentId={request.payment_id || request.id}
-                              serviceTitle={request.services?.name || request.service_id}
+                              serviceTitle={resolveServiceName(request)}
                               baseAmount={Math.round((request.amount || 0) / 1.18)}
                               gstAmount={Math.round((request.amount || 0) - (request.amount || 0) / 1.18)}
                               totalAmount={request.amount || 0}
@@ -587,7 +589,7 @@ export default function Dashboard() {
               icon: Calendar,
               title: "Tax Deadlines",
               desc: "Stay on top of upcoming ITR, GST, and TDS filing deadlines for clients.",
-              action: () => {},
+              action: () => navigate("/tax-calendar"),
               label: "View Deadlines",
               gradient: "from-emerald-500/10 to-green-500/5"
             },

@@ -53,6 +53,8 @@ import TaxCalendar from "./pages/TaxCalendar";
 import LiveChat from "./pages/LiveChat";
 import ComplianceScore from "./pages/ComplianceScore";
 import Referrals from "./pages/Referrals";
+import Careers from "./pages/Careers";
+import CareerManagement from "./pages/CareerManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -109,6 +111,8 @@ const AnimatedRoutes = () => {
         <Route path="/messages" element={<LiveChat />} />
         <Route path="/compliance" element={<ComplianceScore />} />
         <Route path="/referrals" element={<Referrals />} />
+        <Route path="/careers" element={<Careers />} />
+        <Route path="/admin/careers" element={<CareerManagement />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { resolveServiceName } from "@/lib/resolveServiceName";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -171,7 +172,7 @@ export default function ClientProfile() {
                         <div className="flex items-center justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{req.services?.name || req.service_id}</span>
+                              <span className="font-medium text-sm">{resolveServiceName(req)}</span>
                               <Badge variant={cfg.badge} className="text-[10px]">{cfg.label}</Badge>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">

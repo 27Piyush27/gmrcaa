@@ -122,12 +122,29 @@ export default function ServiceCheckout() {
         
         handler: async function (response) {
           try {
-            // Step 3: Verify payment signature
+            // Step 3: Check for existing service request first
+            const serviceIdForDb = await resolveServiceIdForDb(service.backendServiceId, service.title);
+            let existingRequestId = null;
+
+            const { data: existingReqs } = await supabase
+              .from("service_requests")
+              .select("id, status")
+              .eq("user_id", user.id)
+              .eq("service_id", serviceIdForDb)
+              .in("status", ["pending", "in_progress", "completed"])
+              .limit(1);
+
+            if (existingReqs && existingReqs.length > 0) {
+              existingRequestId = existingReqs[0].id;
+            }
+
+            // Step 4: Verify payment signature (also updates DB status to "paid")
             const { data: verifyData, error: verifyError } = await verifyRazorpayPayment({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              payment_id: data.payment_id
+              payment_id: data.payment_id,
+              service_request_id: existingRequestId
             });
 
             if (verifyError) {
@@ -142,26 +159,26 @@ export default function ServiceCheckout() {
               return;
             }
 
-            // Step 4: Create service request AFTER successful payment
-            const serviceIdForDb = await resolveServiceIdForDb(service.backendServiceId, service.title);
-            const { error: requestError } = await supabase.
-            from("service_requests").
-            insert({
-              user_id: user.id,
-              service_id: serviceIdForDb,
-              status: "in_progress",
-              progress: 10,
-              notes: `Payment initialized: ${response.razorpay_payment_id}`
-            }).
-            select("id").
-            single();
+            // Step 5: Create service request only if no existing one was found
+            if (!existingRequestId) {
+              const { error: requestError } = await supabase
+                .from("service_requests")
+                .insert({
+                  user_id: user.id,
+                  service_id: serviceIdForDb,
+                  status: "paid",
+                  progress: 10,
+                  payment_id: response.razorpay_payment_id,
+                  paid_at: new Date().toISOString(),
+                  notes: `Paid via checkout: ${response.razorpay_payment_id}`
+                });
 
-            if (requestError) {
-              console.error("Service request error post-payment:", requestError);
-              // Payment did succeed — still navigate to success page
+              if (requestError) {
+                console.error("Service request error post-payment:", requestError);
+              }
             }
 
-            // Step 5: Navigate to confirmation page
+            // Step 6: Navigate to confirmation page
             navigate(`/payment-success`, {
               state: {
                 service,

@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { resolveServiceName } from "@/lib/resolveServiceName";
 import {
   Shield,
   Briefcase,
@@ -198,7 +199,7 @@ export default function AdminDashboard() {
             body: {
               clientEmail,
               clientName,
-              serviceName: selectedRequest.services?.name || selectedRequest.service_id || "Service",
+              serviceName: resolveServiceName(selectedRequest),
               newStatus: updateStatus,
               notes: updateNotes || undefined,
               amount: updateAmount ? parseFloat(updateAmount) : undefined,
@@ -233,11 +234,6 @@ export default function AdminDashboard() {
       upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
-
-      // Update service request with document URL
-      const { data: urlData } = supabase.storage.
-      from("service-documents").
-      getPublicUrl(filePath);
 
       const { error: updateError } = await supabase.
       from("service_requests").
@@ -342,6 +338,12 @@ export default function AdminDashboard() {
             <Users className="w-4 h-4" />
             Manage Reviews
           </button>
+          <button
+            onClick={() => navigate("/admin/careers")}
+            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
+            <Briefcase className="w-4 h-4" />
+            Manage Careers
+          </button>
           </motion.div>
         </div>
       </div>
@@ -393,7 +395,7 @@ export default function AdminDashboard() {
             </button>
           </div>
           <ExportButton
-            data={requests.map(r => ({ Service: r.services?.name || r.service_id, Client: r.profiles?.name || "", Status: r.status, Progress: `${r.progress}%`, Amount: r.amount || "", Date: new Date(r.created_at).toLocaleDateString("en-IN") }))}
+            data={requests.map(r => ({ Service: resolveServiceName(r), Client: r.profiles?.name || "", Status: r.status, Progress: `${r.progress}%`, Amount: r.amount || "", Date: new Date(r.created_at).toLocaleDateString("en-IN") }))}
             filename="gmr_service_requests"
             columns={[{ key: "Service", label: "Service" }, { key: "Client", label: "Client" }, { key: "Status", label: "Status" }, { key: "Progress", label: "Progress" }, { key: "Amount", label: "Amount" }, { key: "Date", label: "Date" }]}
             label="Export CSV" />
@@ -434,7 +436,7 @@ export default function AdminDashboard() {
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3">
                         <h3 className="font-semibold text-lg">
-                          {request.services?.name || request.service_id}
+                          {resolveServiceName(request)}
                         </h3>
                         {getStatusBadge(request.status)}
                         {request.status === "paid" &&
@@ -507,7 +509,7 @@ export default function AdminDashboard() {
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                Manage: {selectedRequest?.services?.name || selectedRequest?.service_id}
+                Manage: {selectedRequest ? resolveServiceName(selectedRequest) : ""}
               </DialogTitle>
               <DialogDescription>
                 Client: {selectedRequest?.profiles?.name} ({selectedRequest?.profiles?.email})

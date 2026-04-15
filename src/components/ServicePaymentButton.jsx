@@ -121,7 +121,8 @@ export function ServicePaymentButton({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              payment_id: data.payment_id
+              payment_id: data.payment_id,
+              service_request_id: serviceRequestId
             });
 
             if (verifyError) {

@@ -120,7 +120,7 @@ export default function Auth() {
       }
     } else {
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      // Role-based redirect is handled by the useEffect above
     }
 
     setIsSubmitting(false);
@@ -260,31 +260,11 @@ export default function Auth() {
               </TabsList>
 
               <TabsContent value="login" className="space-y-6">
-                  {/* Role Selection */}
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {roles.map((role) => {
-                    const Icon = role.icon;
-                    const isActive = loginData.role === role.value;
-                    return (
-                      <motion.button
-                        key={role.value}
-                        type="button"
-                        onClick={() => setLoginData({ ...loginData, role: role.value })}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300 ${
-                        isActive ?
-                        "border-foreground bg-foreground/5 shadow-sm" :
-                        "border-border/60 hover:border-foreground/30"}`
-                        }>
-                        
-                          <Icon className={`w-5 h-5 ${isActive ? "text-foreground" : "text-muted-foreground"}`} />
-                          <span className={`text-xs font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                            {role.value === "ca" ? "CA" : role.label}
-                          </span>
-                        </motion.button>);
-
-                  })}
+                  {/* Role info note */}
+                  <div className="text-center py-2 px-4 rounded-lg bg-secondary/40 border border-border/30">
+                    <p className="text-xs text-muted-foreground">
+                      Your dashboard is determined by your account role (Client, CA, or Admin).
+                    </p>
                   </div>
 
                   <form onSubmit={handleLogin} className="space-y-4">
@@ -354,7 +334,7 @@ export default function Auth() {
                           </> :
 
                       <>
-                            Sign In as {roles.find((r) => r.value === loginData.role)?.label}
+                            Sign In
                             <ArrowRight className="h-4 w-4" />
                           </>
                       }

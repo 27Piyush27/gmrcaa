@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -85,7 +85,7 @@ const NOTIFICATION_GROUPS = [
 
 export default function NotificationPreferences() {
   const { user } = useAuth();
-  const { toast } = useToast();
+
   const [preferences, setPreferences] = useState(() => {
     const saved = localStorage.getItem("notification-preferences");
     if (saved) return JSON.parse(saved);
@@ -107,7 +107,7 @@ export default function NotificationPreferences() {
   const handleSave = () => {
     localStorage.setItem("notification-preferences", JSON.stringify(preferences));
     setSaved(true);
-    toast({ title: "Preferences saved", description: "Your notification preferences have been updated." });
+    toast.success("Notification preferences saved!");
   };
 
   const enabledCount = Object.values(preferences).filter(Boolean).length;

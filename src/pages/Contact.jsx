@@ -9,6 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
+import {
+  TextReveal,
+  BlurFadeIn,
+  SpotlightCard,
+  AnimatedDivider,
+  StaggerGrid,
+  StaggerGridItem,
+} from "@/components/PremiumAnimations";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -84,36 +92,35 @@ export default function Contact() {
         <section className="relative pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
           {/* Ambient gradients */}
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
-          <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/[0.06] blur-[80px] pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-purple-400/[0.05] blur-[60px] pointer-events-none" />
+          <motion.div
+            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/[0.06] blur-[80px] pointer-events-none"
+            animate={{ x: [0, 25, -15, 0], y: [0, -15, 25, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          />
+          <motion.div
+            className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-purple-400/[0.05] blur-[60px] pointer-events-none"
+            animate={{ x: [0, -20, 15, 0], y: [0, 20, -15, 0] }}
+            transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          />
 
           <div className="max-w-5xl mx-auto px-6 lg:px-12 relative">
-            <motion.p
-              className="text-xs tracking-widest text-muted-foreground uppercase mb-6"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: easing, delay: 0.1 }}>
-              
-              Contact
-            </motion.p>
-            <motion.h1
-              className="text-5xl md:text-7xl lg:text-8xl mb-8 text-balance max-w-4xl"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: easing, delay: 0.2 }}>
-              
-              Get in{" "}
-              <span className="italic gradient-text-premium">touch.</span>
-            </motion.h1>
-            <motion.p
-              className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: easing, delay: 0.38 }}>
-              
-              We're ready to answer your questions and help you get started
-              with the right financial strategy.
-            </motion.p>
+            <BlurFadeIn>
+              <p className="text-xs tracking-widest text-muted-foreground uppercase mb-6">
+                Contact
+              </p>
+            </BlurFadeIn>
+            <TextReveal delay={0.15}>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl mb-8 text-balance max-w-4xl">
+                Get in{" "}
+                <span className="italic gradient-text-premium">touch.</span>
+              </h1>
+            </TextReveal>
+            <BlurFadeIn delay={0.4}>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
+                We're ready to answer your questions and help you get started
+                with the right financial strategy.
+              </p>
+            </BlurFadeIn>
           </div>
         </section>
 
@@ -316,9 +323,10 @@ export default function Contact() {
           </div>
         </section>
 
-        {/* ── Map ────────────────────────────────────────────────────── */}
+        {/* ── Map ───────────────────────────────────────────────────── */}
         <section className="py-12 md:py-16">
-          <ScrollReveal>
+          <AnimatedDivider className="max-w-7xl mx-auto px-6 lg:px-12 mb-12" />
+          <BlurFadeIn>
             <div className="max-w-7xl mx-auto px-6 lg:px-12">
               <div className="premium-card overflow-hidden">
                 <iframe
@@ -333,7 +341,7 @@ export default function Contact() {
                 
               </div>
             </div>
-          </ScrollReveal>
+          </BlurFadeIn>
         </section>
 
         {/* ── Business Hours ──────────────────────────────────────────── */}
