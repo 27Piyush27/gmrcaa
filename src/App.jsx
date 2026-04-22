@@ -12,6 +12,7 @@ import { CookieConsent } from "./components/CookieConsent";
 import { AnnouncementBanner } from "./components/AnnouncementBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
+import { ScrollProgressBar, CustomCursor, BackToTop } from "./components/InteractiveEffects";
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────
 // Only the visited page's code is downloaded — saves ~70% initial JS.
@@ -176,6 +177,9 @@ const App = () =>
           <Suspense fallback={null}>
             <AIChatbotLazy />
           </Suspense>
+          <ScrollProgressBar />
+          <CustomCursor />
+          <BackToTop />
           <CookieConsent />
           </ErrorBoundary>
           </LanguageProvider>
