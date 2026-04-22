@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
   <link rel="manifest" href="/manifest.json" />
@@ -13,11 +13,20 @@
     content="Premium chartered accountancy services. Expert financial solutions for discerning businesses." />
   <meta name="author" content="GMR & Associates" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Preconnect to critical origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://xyzcompany.supabase.co" />
+
+  <!-- Non-blocking Google Fonts — loads async, no render blocking -->
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap"
-    rel="stylesheet">
+    rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap"
+      rel="stylesheet" />
+  </noscript>
 
   <meta property="og:title" content="GMR & Associates — Chartered Accountants" />
   <meta property="og:description" content="Expert financial solutions for discerning businesses" />
@@ -26,6 +35,11 @@
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="/og-image.png" />
+
+  <!-- iOS safe areas -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
 
   <!-- Prevent theme flash: apply dark class before first paint -->
   <script>
@@ -42,15 +56,27 @@
 </head>
 
 <body>
+  <noscript>
+    <div style="padding:2rem;text-align:center;font-family:sans-serif">
+      <h1>JavaScript Required</h1>
+      <p>Please enable JavaScript to use GMR & Associates.</p>
+    </div>
+  </noscript>
   <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <!-- Force-clear any cached service workers BEFORE loading the app -->
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        registrations.forEach(function(r) { r.unregister(); });
       });
+      if (typeof caches !== 'undefined') {
+        caches.keys().then(function(keys) {
+          keys.forEach(function(k) { caches.delete(k); });
+        });
+      }
     }
   </script>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>

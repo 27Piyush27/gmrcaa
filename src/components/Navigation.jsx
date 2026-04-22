@@ -4,7 +4,8 @@ import {
   Moon, Sun, Menu, X, Languages, ChevronDown,
   Calculator, FileText, Wallet, BookOpen, MessageSquare, Bell,
   LayoutDashboard, CalendarDays, User, LogOut, Shield, Briefcase,
-  Calendar, MessageCircle, Gift, TrendingUp, Columns3, ShieldCheck
+  Calendar, MessageCircle, Gift, TrendingUp, Columns3, ShieldCheck,
+  Brain, FileSearch, BarChart3, Activity, Receipt, Search, Users, Layers, AlertTriangle, Sparkles
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +24,17 @@ const TOOLS_ITEMS = [
   { name: "Resource Center", path: "/resources", icon: BookOpen, desc: "Checklists & guides" },
 ];
 
+const AI_TOOLS_ITEMS = [
+  { name: "AI Tax Optimizer", path: "/ai-tax-optimizer", icon: Brain, desc: "Smart regime & deduction AI" },
+  { name: "Smart Doc Analyzer", path: "/smart-docs", icon: FileSearch, desc: "AI document classification" },
+  { name: "Financial Insights", path: "/financial-insights", icon: BarChart3, desc: "Predictive analytics & ML" },
+  { name: "Risk Assessment", path: "/risk-assessment", icon: ShieldCheck, desc: "ML compliance risk scoring" },
+  { name: "Cash Flow Forecaster", path: "/cash-flow-forecast", icon: Activity, desc: "Monte Carlo simulations" },
+  { name: "Invoice Scanner", path: "/invoice-scanner", icon: Receipt, desc: "AI invoice extraction" },
+  { name: "Deduction Finder", path: "/deduction-finder", icon: Search, desc: "Find missed deductions" },
+  { name: "AI Hub", path: "/ai-tools", icon: Sparkles, desc: "All AI tools overview" },
+];
+
 const ACCOUNT_ITEMS = [
   { name: "My Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { name: "Messages", path: "/messages", icon: MessageCircle },
@@ -37,19 +49,28 @@ const ADMIN_ITEMS = [
   { name: "Admin Panel", path: "/admin", icon: Shield },
   { name: "Revenue Dashboard", path: "/admin/revenue", icon: TrendingUp },
   { name: "Task Board", path: "/admin/tasks", icon: Columns3 },
+  { name: "Client Insights", path: "/admin/ai-insights", icon: Users },
+  { name: "Workload Optimizer", path: "/admin/workload", icon: Layers },
+  { name: "Anomaly Console", path: "/admin/anomalies", icon: AlertTriangle },
   { name: "Blog Manager", path: "/admin/blog", icon: FileText },
   { name: "Reviews", path: "/admin/testimonials", icon: MessageSquare },
   { name: "Manage Careers", path: "/admin/careers", icon: Briefcase },
 ];
 
 // Reusable dropdown wrapper
-function NavDropdown({ label, children, isActive }) {
+function NavDropdown({ label, children, isActive, align = "center" }) {
   const [open, setOpen] = useState(false);
   const timeout = useRef(null);
   const ref = useRef(null);
 
   const handleEnter = () => { clearTimeout(timeout.current); setOpen(true); };
   const handleLeave = () => { timeout.current = setTimeout(() => setOpen(false), 150); };
+
+  const alignClass = align === "right"
+    ? "right-0"
+    : align === "left"
+      ? "left-0"
+      : "left-1/2 -translate-x-1/2";
 
   return (
     <div ref={ref} className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
@@ -69,7 +90,7 @@ function NavDropdown({ label, children, isActive }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: easing }}
-            className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50"
+            className={`absolute top-full ${alignClass} pt-2 z-50`}
           >
             <div className="min-w-[260px] rounded-2xl border border-border/60 bg-popover/95 backdrop-blur-xl shadow-lg overflow-hidden">
               {children}
@@ -145,7 +166,7 @@ export const Navigation = () => {
   const displayName = profile?.name || user?.email?.split("@")[0] || "";
   const initials = displayName ? displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "U";
 
-  const toolsPaths = TOOLS_ITEMS.map(t => t.path);
+  const toolsPaths = [...TOOLS_ITEMS.map(t => t.path), ...AI_TOOLS_ITEMS.map(t => t.path)];
   const isToolsActive = toolsPaths.includes(location.pathname);
 
   const accountPaths = [...ACCOUNT_ITEMS.map(a => a.path), ...ADMIN_ITEMS.map(a => a.path)];
@@ -165,11 +186,9 @@ export const Navigation = () => {
         <div className="flex items-center justify-between h-[64px]">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-            <motion.div whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-              <span className="text-[17px] font-semibold tracking-tight">
-                GMR<span className="text-accent">&</span>Associates
-              </span>
-            </motion.div>
+            <span className="text-[17px] font-semibold tracking-tight group-hover:opacity-80 transition-opacity duration-200">
+              GMR<span className="text-accent">&</span>Associates
+            </span>
           </Link>
 
           {/* Desktop Navigation — clean & grouped */}
@@ -186,11 +205,8 @@ export const Navigation = () => {
               >
                 {link.name}
                 {location.pathname === link.path && (
-                  <motion.div
-                    layoutId="nav-pill"
-                    className="absolute inset-0 -z-10 rounded-full bg-secondary"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    style={{ paddingLeft: "12px", paddingRight: "12px", margin: "0 -12px" }}
+                  <span
+                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full"
                   />
                 )}
               </Link>
@@ -216,6 +232,37 @@ export const Navigation = () => {
                           location.pathname === item.path
                             ? "bg-accent/10 text-accent"
                             : "bg-secondary/80 group-hover:bg-accent/10 group-hover:text-accent"
+                        }`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-medium leading-tight">{item.name}</p>
+                          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{item.desc}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {/* AI Tools Section */}
+                  <div className="h-px bg-border/50 my-2 mx-3" />
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 pt-1 pb-2 flex items-center gap-1.5">
+                    <Brain className="w-3 h-3" /> AI & ML Tools
+                  </p>
+                  {AI_TOOLS_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 group ${
+                          location.pathname === item.path
+                            ? "bg-secondary text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                          location.pathname === item.path
+                            ? "bg-violet-500/10 text-violet-500"
+                            : "bg-secondary/80 group-hover:bg-violet-500/10 group-hover:text-violet-500"
                         }`}>
                           <Icon className="w-4 h-4" />
                         </div>
@@ -297,6 +344,7 @@ export const Navigation = () => {
                 <NotificationBell />
                 {/* User Avatar Dropdown */}
                 <NavDropdown
+                  align="right"
                   label={
                     <span className="flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-[11px] font-bold">
@@ -428,6 +476,28 @@ export const Navigation = () => {
                       >
                         <div className="pl-3 flex flex-col gap-0.5 pb-1">
                           {TOOLS_ITEMS.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <Link
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => setIsMenuOpen(false)}
+                                className={`flex items-center gap-3 text-[14px] py-2 px-3 rounded-xl transition-all ${
+                                  location.pathname === item.path
+                                    ? "text-foreground font-medium bg-secondary"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                }`}
+                              >
+                                <Icon className="w-4 h-4" />
+                                {item.name}
+                              </Link>
+                            );
+                          })}
+                          <div className="h-px bg-border/50 my-1 mx-3" />
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground px-3 py-1 flex items-center gap-1.5">
+                            <Brain className="w-3 h-3" /> AI & ML
+                          </p>
+                          {AI_TOOLS_ITEMS.map((item) => {
                             const Icon = item.icon;
                             return (
                               <Link

@@ -1,60 +1,82 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { Navigation } from "./components/Navigation";
-import { AIChatbot } from "./components/AIChatbot";
 import { Footer } from "./components/Footer";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnnouncementBanner } from "./components/AnnouncementBanner";
-import Home from "./pages/Home";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import ServiceDetail from "./pages/ServiceDetail";
-import ServiceCheckout from "./pages/ServiceCheckout";
-import Contact from "./pages/Contact";
-import Dashboard from "./pages/Dashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import Payments from "./pages/Payments";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import Profile from "./pages/Profile";
-import TaxCalculator from "./pages/TaxCalculator";
-import FAQ from "./pages/FAQ";
-import Blog from "./pages/Blog";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Appointments from "./pages/Appointments";
-import Analytics from "./pages/Analytics";
-import Testimonials from "./pages/Testimonials";
-import Team from "./pages/Team";
-import ClientManagement from "./pages/ClientManagement";
-import AppointmentManagement from "./pages/AppointmentManagement";
-import MyAppointments from "./pages/MyAppointments";
-import InvoiceHistory from "./pages/InvoiceHistory";
-import DocumentVault from "./pages/DocumentVault";
-import BlogManagement from "./pages/BlogManagement";
-import TestimonialApproval from "./pages/TestimonialApproval";
-import ClientProfile from "./pages/ClientProfile";
-import GSTTracker from "./pages/GSTTracker";
-import ExpenseTracker from "./pages/ExpenseTracker";
-import FinancialCalculators from "./pages/FinancialCalculators";
-import KnowledgeBase from "./pages/KnowledgeBase";
-import Feedback from "./pages/Feedback";
-import NotificationPreferences from "./pages/NotificationPreferences";
-import RevenueDashboard from "./pages/RevenueDashboard";
-import TaskKanban from "./pages/TaskKanban";
-import TaxCalendar from "./pages/TaxCalendar";
-import LiveChat from "./pages/LiveChat";
-import ComplianceScore from "./pages/ComplianceScore";
-import Referrals from "./pages/Referrals";
-import Careers from "./pages/Careers";
-import CareerManagement from "./pages/CareerManagement";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import PageLoader from "./components/PageLoader";
+
+// ── Lazy-loaded pages ──────────────────────────────────────────────────
+// Only the visited page's code is downloaded — saves ~70% initial JS.
+const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
+const Services = lazy(() => import("./pages/Services"));
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
+const ServiceCheckout = lazy(() => import("./pages/ServiceCheckout"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Payments = lazy(() => import("./pages/Payments"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Profile = lazy(() => import("./pages/Profile"));
+const TaxCalculator = lazy(() => import("./pages/TaxCalculator"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Blog = lazy(() => import("./pages/Blog"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Appointments = lazy(() => import("./pages/Appointments"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Testimonials = lazy(() => import("./pages/Testimonials"));
+const Team = lazy(() => import("./pages/Team"));
+const ClientManagement = lazy(() => import("./pages/ClientManagement"));
+const AppointmentManagement = lazy(() => import("./pages/AppointmentManagement"));
+const MyAppointments = lazy(() => import("./pages/MyAppointments"));
+const InvoiceHistory = lazy(() => import("./pages/InvoiceHistory"));
+const DocumentVault = lazy(() => import("./pages/DocumentVault"));
+const BlogManagement = lazy(() => import("./pages/BlogManagement"));
+const TestimonialApproval = lazy(() => import("./pages/TestimonialApproval"));
+const ClientProfile = lazy(() => import("./pages/ClientProfile"));
+const GSTTracker = lazy(() => import("./pages/GSTTracker"));
+const ExpenseTracker = lazy(() => import("./pages/ExpenseTracker"));
+const FinancialCalculators = lazy(() => import("./pages/FinancialCalculators"));
+const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
+const Feedback = lazy(() => import("./pages/Feedback"));
+const NotificationPreferences = lazy(() => import("./pages/NotificationPreferences"));
+const RevenueDashboard = lazy(() => import("./pages/RevenueDashboard"));
+const TaskKanban = lazy(() => import("./pages/TaskKanban"));
+const TaxCalendar = lazy(() => import("./pages/TaxCalendar"));
+const LiveChat = lazy(() => import("./pages/LiveChat"));
+const ComplianceScore = lazy(() => import("./pages/ComplianceScore"));
+const Referrals = lazy(() => import("./pages/Referrals"));
+const Careers = lazy(() => import("./pages/Careers"));
+const CareerManagement = lazy(() => import("./pages/CareerManagement"));
+
+// AI / ML / Data Science pages
+const AITaxOptimizer = lazy(() => import("./pages/AITaxOptimizer"));
+const SmartDocAnalyzer = lazy(() => import("./pages/SmartDocAnalyzer"));
+const FinancialInsights = lazy(() => import("./pages/FinancialInsights"));
+const RiskAssessment = lazy(() => import("./pages/RiskAssessment"));
+const CashFlowForecaster = lazy(() => import("./pages/CashFlowForecaster"));
+const InvoiceScanner = lazy(() => import("./pages/InvoiceScanner"));
+const DeductionFinder = lazy(() => import("./pages/DeductionFinder"));
+const AIClientInsights = lazy(() => import("./pages/AIClientInsights"));
+const WorkloadOptimizer = lazy(() => import("./pages/WorkloadOptimizer"));
+const AnomalyConsole = lazy(() => import("./pages/AnomalyConsole"));
+const AIHub = lazy(() => import("./pages/AIHub"));
+
+// Lazy-load AIChatbot — it's 49KB and only needed when user clicks the fab
+const AIChatbotLazy = lazy(() =>
+  import("./components/AIChatbot").then((m) => ({ default: m.AIChatbot }))
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,10 +88,9 @@ const queryClient = new QueryClient({
 });
 
 const AnimatedRoutes = () => {
-  const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
@@ -113,32 +134,50 @@ const AnimatedRoutes = () => {
         <Route path="/referrals" element={<Referrals />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/admin/careers" element={<CareerManagement />} />
+        {/* AI / ML / DS Feature Routes */}
+        <Route path="/ai-tax-optimizer" element={<AITaxOptimizer />} />
+        <Route path="/smart-docs" element={<SmartDocAnalyzer />} />
+        <Route path="/financial-insights" element={<FinancialInsights />} />
+        <Route path="/risk-assessment" element={<RiskAssessment />} />
+        <Route path="/cash-flow-forecast" element={<CashFlowForecaster />} />
+        <Route path="/invoice-scanner" element={<InvoiceScanner />} />
+        <Route path="/deduction-finder" element={<DeductionFinder />} />
+        <Route path="/admin/ai-insights" element={<AIClientInsights />} />
+        <Route path="/admin/workload" element={<WorkloadOptimizer />} />
+        <Route path="/admin/anomalies" element={<AnomalyConsole />} />
+        <Route path="/ai-tools" element={<AIHub />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </AnimatePresence>);
-
+    </Suspense>
+  );
 };
 
 const App = () =>
 <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
         <AuthProvider>
           <LanguageProvider>
+          <ErrorBoundary>
+          <Toaster />
+          <Sonner />
           <AnnouncementBanner />
           {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
           <Navigation />
           <div className="pt-16 min-h-screen flex flex-col">
             <main className="flex-1">
-              <AnimatedRoutes />
+              <ErrorBoundary>
+                <AnimatedRoutes />
+              </ErrorBoundary>
             </main>
             <Footer />
           </div>
-          <AIChatbot />
+          <Suspense fallback={null}>
+            <AIChatbotLazy />
+          </Suspense>
           <CookieConsent />
+          </ErrorBoundary>
           </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>

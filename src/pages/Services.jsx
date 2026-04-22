@@ -24,6 +24,13 @@ import {
   AnimatedDivider,
 } from "@/components/PremiumAnimations";
 import {
+  FloatingCube,
+  FloatingRing,
+  FloatingSphere,
+  FloatingDots,
+  RotatingEmblem,
+} from "@/components/ThreeDElements";
+import {
   Calculator,
   FileCheck,
   Percent,
@@ -167,16 +174,55 @@ export default function Services() {
         {/* ── Clean Hero ─────────────────────────────────────────────── */}
         <section className="relative pt-28 pb-16 md:pt-40 md:pb-24 overflow-hidden">
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
-          <motion.div
-            className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-violet-400/[0.06] blur-3xl pointer-events-none"
-            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute top-1/3 left-1/4 w-72 h-72 rounded-full bg-violet-400/[0.06] blur-3xl pointer-events-none animate-breathe"
+            style={{ willChange: "transform", transform: "translateZ(0)" }}
           />
-          <motion.div
-            className="absolute top-1/2 right-[20%] w-96 h-96 rounded-full bg-blue-400/[0.05] blur-3xl pointer-events-none"
-            animate={{ x: [0, -25, 15, 0], y: [0, 15, -25, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute top-1/2 right-[20%] w-96 h-96 rounded-full bg-blue-400/[0.05] blur-3xl pointer-events-none animate-breathe"
+            style={{ willChange: "transform", transform: "translateZ(0)", animationDelay: "-3s" }}
           />
+
+          {/* ── 3D Hero Decorations ──────────────────────────────────── */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <RotatingEmblem
+              size={200}
+              className="top-[8%] right-[5%] hidden lg:block"
+            />
+            <FloatingCube
+              size={50}
+              className="bottom-[15%] left-[6%] hidden md:block"
+              delay={0.4}
+              duration={22}
+              opacity={0.06}
+            />
+            <FloatingCube
+              size={30}
+              className="top-[20%] left-[15%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={0.8}
+              duration={28}
+              opacity={0.05}
+            />
+            <FloatingRing
+              size={110}
+              className="bottom-[10%] right-[12%] hidden lg:block"
+              delay={0.5}
+              duration={20}
+              opacity={0.07}
+            />
+            <FloatingSphere
+              size={40}
+              className="top-[25%] right-[30%] hidden lg:block"
+              delay={0.3}
+              glowIntensity={0.06}
+            />
+            <FloatingDots
+              count={12}
+              className="top-[5%] left-[25%] hidden xl:block"
+              spread={250}
+            />
+          </div>
 
           <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center relative">
             {/* Pill badge */}
@@ -223,7 +269,7 @@ export default function Services() {
         </section>
 
         {/* ── Sticky filter bar ────────────────────────────────────── */}
-        <div className="sticky top-16 z-30 bg-background/80 backdrop-blur-xl border-b border-border/40">
+        <div className="sticky top-16 z-30 bg-background/85 backdrop-blur-md border-b border-border/40" style={{ willChange: "transform", transform: "translateZ(0)" }}>
           <div className="max-w-7xl mx-auto px-6 lg:px-12 py-3">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
 
@@ -449,16 +495,39 @@ export default function Services() {
 
         {/* ── CTA Section ──────────────────────────────────────────── */}
         <section className="py-20 md:py-32 bg-foreground text-background relative overflow-hidden">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-br from-accent/15 to-transparent pointer-events-none"
-            animate={{ opacity: [0.5, 0.8, 0.5] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/15 to-transparent pointer-events-none" />
+          <div
+            className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-white/[0.04] pointer-events-none"
+            style={{ filter: "blur(80px)", willChange: "transform", transform: "translateZ(0)" }}
           />
-          <motion.div
-            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-white/[0.04] blur-[100px] pointer-events-none"
-            animate={{ scale: [1, 1.15, 1], x: [0, -30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          />
+
+          {/* 3D elements in dark CTA */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingCube
+              size={35}
+              className="top-[15%] left-[8%] hidden md:block"
+              color="hsl(0 0% 100%)"
+              delay={0.3}
+              duration={22}
+              opacity={0.05}
+            />
+            <FloatingRing
+              size={80}
+              className="bottom-[12%] right-[10%] hidden md:block"
+              color="hsl(0 0% 100%)"
+              delay={0.5}
+              duration={18}
+              opacity={0.04}
+              strokeWidth={1}
+            />
+            <FloatingSphere
+              size={25}
+              className="top-[20%] right-[20%] hidden lg:block"
+              color="hsl(0 0% 100%)"
+              delay={0.7}
+              glowIntensity={0.04}
+            />
+          </div>
 
           <div className="max-w-3xl mx-auto px-6 lg:px-12 text-center relative">
             <TextReveal>

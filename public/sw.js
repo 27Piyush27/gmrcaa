@@ -1,47 +1,20 @@
-const CACHE_NAME = 'gmr-associates-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/favicon.png',
-  '/manifest.json',
-];
+// Self-destructing service worker — clears all caches and unregisters itself
+// This fixes the blank screen issue caused by stale cached JS files
 
-// Install: cache shell assets
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
-
-// Fetch: network-first with cache fallback
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  
-  // Skip non-http requests
-  if (!event.request.url.startsWith('http')) return;
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Clone and cache successful responses
-        if (response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
-        }
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+      Promise.all(keys.map((k) => caches.delete(k)))
+    ).then(() => {
+      return self.registration.unregister();
+    }).then(() => {
+      return self.clients.matchAll();
+    }).then((clients) => {
+      clients.forEach((client) => client.navigate(client.url));
+    })
   );
 });

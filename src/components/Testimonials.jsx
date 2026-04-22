@@ -51,13 +51,15 @@ export function Testimonials() {
   return (
     <section
       ref={sectionRef}
-      className="py-24 overflow-hidden relative border-y border-border/40 bg-background/50"
+      className="py-24 overflow-hidden relative border-y border-border/40 bg-background/50 content-defer"
     >
-      {/* Background ambient glow */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-accent/5 blur-[120px] rounded-full pointer-events-none"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.7, 0.4] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      {/* Static ambient glow — no JS animation, GPU-promoted */}
+      <div
+        className="absolute top-1/2 left-1/2 w-[500px] h-[250px] bg-accent/5 rounded-full pointer-events-none"
+        style={{
+          transform: "translate(-50%, -50%) translateZ(0)",
+          filter: "blur(80px)",
+        }}
       />
 
       <div className="mb-16 text-center px-6">
@@ -74,25 +76,20 @@ export function Testimonials() {
       <div className="ticker-wrap w-[200vw] sm:w-[150vw] md:w-[150vw] lg:w-[120vw] xl:w-screen mx-auto">
         {/* Pause animation on hover for better UX */}
         <div className="ticker-track animate-ticker flex hover:[animation-play-state:paused] gap-6 px-3">
+          {/* Use plain divs instead of motion.div for ticker items — 
+              they don't need individual animation, the CSS ticker handles movement */}
           {[...testimonials, ...testimonials, ...testimonials].map(
             (testimonial, i) => (
-              <motion.div
+              <div
                 key={i}
                 className="premium-card p-8 flex-shrink-0 w-[350px] md:w-[400px] flex flex-col justify-between min-h-[260px] group"
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
-                transition={{
-                  duration: 0.5,
-                  delay: (i % testimonials.length) * 0.1,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                whileHover={{
-                  y: -6,
-                  boxShadow: "0 24px 64px hsl(0 0% 0% / 0.12), 0 8px 24px hsl(0 0% 0% / 0.06)",
-                  transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+                style={{
+                  opacity: isInView ? 1 : 0,
+                  transform: isInView ? "translateY(0)" : "translateY(20px)",
+                  transition: `opacity 0.5s ease ${(i % testimonials.length) * 0.1}s, transform 0.5s ease ${(i % testimonials.length) * 0.1}s`,
                 }}
               >
-                {/* Top gradient accent — animated on hover */}
+                {/* Top gradient accent */}
                 <div
                   className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${COLORS[i % COLORS.length]} opacity-60 group-hover:opacity-100 transition-opacity duration-500`}
                 />
@@ -115,7 +112,7 @@ export function Testimonials() {
                 </div>
 
                 <div className="mt-6 flex items-center gap-3">
-                  {/* Avatar with animated glow ring */}
+                  {/* Avatar */}
                   <div
                     className={`relative w-10 h-10 rounded-full bg-gradient-to-br ${COLORS[i % COLORS.length]} border border-border/30 flex items-center justify-center flex-shrink-0 group-hover:border-accent/30 transition-colors duration-500`}
                   >
@@ -132,7 +129,7 @@ export function Testimonials() {
                     </p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             )
           )}
         </div>

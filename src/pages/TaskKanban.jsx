@@ -83,9 +83,6 @@ export default function TaskKanban() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", client: "", assignee: "CA Ravi", priority: "medium", dueDate: "", service: "ITR Filing" });
 
-  const isStaff = role === "admin" || role === "ca";
-  if (!isStaff) return <Navigate to="/dashboard" replace />;
-
   const moveTask = useCallback((taskId, targetColumn) => {
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, column: targetColumn } : t));
   }, []);
@@ -100,6 +97,10 @@ export default function TaskKanban() {
     setNewTask({ title: "", client: "", assignee: "CA Ravi", priority: "medium", dueDate: "", service: "ITR Filing" });
     setShowAddForm(false);
   };
+
+  // Guard must come AFTER all hooks to comply with React's rules of hooks
+  const isStaff = role === "admin" || role === "ca";
+  if (!isStaff) return <Navigate to="/dashboard" replace />;
 
   return (
     <PageTransition>

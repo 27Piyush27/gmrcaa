@@ -14,9 +14,9 @@ export const ScrollReveal = ({
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
   const dirMap = {
-    up: { y: 24, x: 0 },
-    left: { y: 0, x: -24 },
-    right: { y: 0, x: 24 },
+    up: { y: 20, x: 0 },
+    left: { y: 0, x: -20 },
+    right: { y: 0, x: 20 },
     none: { y: 0, x: 0 },
   };
 
@@ -24,10 +24,9 @@ export const ScrollReveal = ({
     <motion.div
       ref={ref}
       className={className}
-      style={{ willChange: "opacity, transform, filter" }}
-      initial={{ opacity: 0, filter: "blur(6px)", ...dirMap[direction] }}
-      animate={inView ? { opacity: 1, filter: "blur(0px)", y: 0, x: 0 } : {}}
-      transition={{ duration: 0.6, ease: easing, delay }}
+      initial={{ opacity: 0, ...dirMap[direction] }}
+      animate={inView ? { opacity: 1, y: 0, x: 0 } : {}}
+      transition={{ duration: 0.5, ease: easing, delay }}
     >
       {children}
     </motion.div>
@@ -62,18 +61,16 @@ export const StaggerContainer = ({
   );
 };
 
-// Blur-fade stagger item — premium reveal
+// Stagger item — opacity + transform only (no blur for mobile perf)
 export const StaggerItem = ({ children, className = "" }) => (
   <motion.div
     className={className}
-    style={{ willChange: "opacity, transform, filter" }}
     variants={{
-      hidden: { opacity: 0, y: 22, filter: "blur(6px)" },
+      hidden: { opacity: 0, y: 18 },
       visible: {
         opacity: 1,
         y: 0,
-        filter: "blur(0px)",
-        transition: { duration: 0.55, ease: easing },
+        transition: { duration: 0.45, ease: easing },
       },
     }}
   >

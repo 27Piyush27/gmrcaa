@@ -1,28 +1,26 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 
-// Apple-style page transition: blur + fade + subtle upward slide
+// GPU-optimized page transition: opacity + transform only (no filter:blur).
+// Snappy 0.35s duration for responsive feel across all devices.
 const pageVariants = {
   initial: {
     opacity: 0,
-    y: 16,
-    filter: "blur(6px)",
+    y: 12,
   },
   animate: {
     opacity: 1,
     y: 0,
-    filter: "blur(0px)",
     transition: {
-      duration: 0.55,
+      duration: 0.35,
       ease: [0.22, 1, 0.36, 1],
     },
   },
   exit: {
     opacity: 0,
-    y: -10,
-    filter: "blur(4px)",
+    y: -8,
     transition: {
-      duration: 0.3,
+      duration: 0.2,
       ease: [0.22, 1, 0.36, 1],
     },
   },
@@ -39,7 +37,6 @@ export const PageTransition = ({ children }) => {
         initial="initial"
         animate="animate"
         exit="exit"
-        style={{ willChange: "opacity, transform, filter" }}
       >
         {children}
       </motion.div>

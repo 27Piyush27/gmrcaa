@@ -38,6 +38,7 @@ import { SkeletonDashboard } from "@/components/SkeletonLoaders";
 import { Link } from "react-router-dom";
 import { servicesData } from "@/lib/servicesData";
 import { resolveServiceName } from "@/lib/resolveServiceName";
+import { AIInsightsWidget } from "@/components/AIInsightsWidget";
 
 
 
@@ -559,6 +560,57 @@ export default function Dashboard() {
             })}
             </motion.div>
           }
+        </motion.div>
+
+        {/* ── AI Insights Widget ──────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          <AIInsightsWidget serviceRequests={requests} />
+        </motion.div>
+
+        {/* ── AI Tools Quick Access ────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.48, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-violet-500" />
+              <h2 className="text-lg font-semibold tracking-tight">AI-Powered Tools</h2>
+            </div>
+            <Link to="/ai-tools" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+              View all <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(isStaff ? [
+              { icon: Activity, title: "Client Insights", desc: "Health scoring & churn prediction", path: "/admin/ai-insights", gradient: "from-violet-500/10 to-purple-500/5" },
+              { icon: Shield, title: "Workload Optimizer", desc: "AI task prioritization", path: "/admin/workload", gradient: "from-blue-500/10 to-cyan-500/5" },
+              { icon: AlertCircle, title: "Anomaly Console", desc: "Detect financial anomalies", path: "/admin/anomalies", gradient: "from-red-500/10 to-rose-500/5" },
+              { icon: TrendingUp, title: "Financial Insights", desc: "Predictive analytics", path: "/financial-insights", gradient: "from-emerald-500/10 to-green-500/5" },
+            ] : [
+              { icon: Activity, title: "Cash Flow Forecast", desc: "Monte Carlo simulations", path: "/cash-flow-forecast", gradient: "from-emerald-500/10 to-green-500/5" },
+              { icon: FileText, title: "Invoice Scanner", desc: "AI invoice extraction", path: "/invoice-scanner", gradient: "from-cyan-500/10 to-blue-500/5" },
+              { icon: TrendingUp, title: "Deduction Finder", desc: "Find missed tax savings", path: "/deduction-finder", gradient: "from-violet-500/10 to-purple-500/5" },
+              { icon: Shield, title: "Risk Assessment", desc: "Compliance risk scoring", path: "/risk-assessment", gradient: "from-amber-500/10 to-orange-500/5" },
+            ]).map(({ icon: Icon, title, desc, path, gradient }) => (
+              <motion.div
+                key={title}
+                whileHover={{ y: -3, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                onClick={() => navigate(path)}
+                className={`group cursor-pointer rounded-xl border border-border/50 bg-gradient-to-br ${gradient} bg-card p-4 hover:shadow-md transition-all duration-500`}>
+                <div className="w-9 h-9 rounded-lg bg-background border border-border/50 flex items-center justify-center mb-3 shadow-sm">
+                  <Icon className="w-4 h-4 text-foreground" />
+                </div>
+                <h4 className="text-sm font-semibold mb-0.5">{title}</h4>
+                <p className="text-[11px] text-muted-foreground leading-tight">{desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
 
         {/* ── Quick Actions ─────────────────────────────────────────────── */}

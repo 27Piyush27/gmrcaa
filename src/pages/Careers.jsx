@@ -206,15 +206,13 @@ export default function Careers() {
         {/* Hero */}
         <section className="relative pt-28 pb-16 md:pt-40 md:pb-24 overflow-hidden">
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
-          <motion.div
-            className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-orange-400/[0.05] blur-[80px]"
-            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-orange-400/[0.04] animate-breathe pointer-events-none"
+            style={{ filter: "blur(60px)", willChange: "transform", transform: "translateZ(0)" }}
           />
-          <motion.div
-            className="absolute bottom-[10%] left-[5%] w-[300px] h-[300px] rounded-full bg-purple-400/[0.04] blur-[60px]"
-            animate={{ x: [0, -20, 20, 0], y: [0, 20, -20, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute bottom-[10%] left-[5%] w-[300px] h-[300px] rounded-full bg-purple-400/[0.03] animate-breathe pointer-events-none"
+            style={{ filter: "blur(50px)", willChange: "transform", transform: "translateZ(0)", animationDelay: "-3s" }}
           />
           <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center relative">
             <motion.div
@@ -487,10 +485,9 @@ export default function Careers() {
 
         {/* CTA */}
         <section className="py-20 md:py-28 bg-foreground text-background relative overflow-hidden">
-          <motion.div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-accent/20 blur-[100px] pointer-events-none"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.3, 0.15] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          <div
+            className="absolute top-0 left-1/2 w-[500px] h-[250px] rounded-full bg-accent/15 pointer-events-none"
+            style={{ transform: "translateX(-50%) translateZ(0)", filter: "blur(80px)" }}
           />
           <div className="max-w-3xl mx-auto px-6 lg:px-12 text-center relative">
             <ScrollReveal>

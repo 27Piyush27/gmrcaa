@@ -16,6 +16,15 @@ import {
   MagneticWrap,
   ScaleOnScroll,
 } from "@/components/PremiumAnimations";
+import {
+  FloatingCube,
+  FloatingRing,
+  FloatingSphere,
+  FloatingDots,
+  Tilt3DCard,
+  RotatingEmblem,
+  IsometricGrid,
+} from "@/components/ThreeDElements";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -68,11 +77,60 @@ export default function About() {
         <section ref={heroRef} className="relative py-28 md:py-40 overflow-hidden">
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
           {/* Animated gradient orbs */}
-          <motion.div
-            className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-accent/[0.04] blur-[80px]"
-            animate={{ x: [0, 30, -20, 0], y: [0, -20, 30, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute top-[20%] right-[10%] w-[400px] h-[400px] rounded-full bg-accent/[0.04] animate-breathe pointer-events-none"
+            style={{ filter: "blur(60px)", willChange: "transform", transform: "translateZ(0)" }}
           />
+
+          {/* ── 3D Hero Decorations ──────────────────────────────────────── */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* Rotating emblem — top right */}
+            <RotatingEmblem
+              size={220}
+              className="top-[5%] right-[5%] hidden lg:block"
+            />
+
+            {/* Floating cubes */}
+            <FloatingCube
+              size={55}
+              className="top-[25%] right-[25%] hidden md:block"
+              delay={0.3}
+              duration={22}
+              opacity={0.07}
+            />
+            <FloatingCube
+              size={30}
+              className="bottom-[15%] left-[12%] hidden md:block"
+              color="hsl(280 80% 60%)"
+              delay={1}
+              duration={28}
+              opacity={0.05}
+            />
+
+            {/* 3D Rings */}
+            <FloatingRing
+              size={110}
+              className="bottom-[20%] right-[10%] hidden lg:block"
+              delay={0.5}
+              duration={20}
+              opacity={0.08}
+            />
+
+            {/* Spheres */}
+            <FloatingSphere
+              size={45}
+              className="top-[15%] left-[15%] hidden lg:block"
+              delay={0.2}
+              glowIntensity={0.07}
+            />
+
+            {/* Floating dots */}
+            <FloatingDots
+              count={12}
+              className="top-[5%] right-[20%] hidden xl:block"
+              spread={250}
+            />
+          </div>
 
           <motion.div
             className="max-w-7xl mx-auto px-6 lg:px-12 relative"
@@ -124,28 +182,47 @@ export default function About() {
         </section>
 
         {/* ── Mission & Vision ──────────────────────────────────────────────── */}
-        <section className="section-padding">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <section className="section-padding relative">
+          {/* Subtle isometric grid decoration */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <IsometricGrid
+              className="left-[-3%] top-[20%] hidden xl:block"
+              rows={4}
+              cols={5}
+              cellSize={30}
+              opacity={0.03}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
               <BlurFadeIn direction="left">
-                <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Mission</p>
-                <h2 className="text-2xl md:text-3xl mb-5 leading-tight">
-                  Empowering businesses with precision.
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  To empower businesses with precise financial insights and compliance
-                  solutions, delivered with the care and attention your enterprise deserves.
-                </p>
+                <Tilt3DCard tiltStrength={4} glareEnabled={false}>
+                  <div className="premium-card p-8 md:p-10">
+                    <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Mission</p>
+                    <h2 className="text-2xl md:text-3xl mb-5 leading-tight">
+                      Empowering businesses with precision.
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      To empower businesses with precise financial insights and compliance
+                      solutions, delivered with the care and attention your enterprise deserves.
+                    </p>
+                  </div>
+                </Tilt3DCard>
               </BlurFadeIn>
               <BlurFadeIn direction="right" delay={0.15}>
-                <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Vision</p>
-                <h2 className="text-2xl md:text-3xl mb-5 leading-tight">
-                  India's most trusted CA firm.
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  To be recognized as India's most trusted chartered accountancy firm —
-                  setting the standard for quality, integrity, and client dedication.
-                </p>
+                <Tilt3DCard tiltStrength={4} glareEnabled={false}>
+                  <div className="premium-card p-8 md:p-10">
+                    <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Vision</p>
+                    <h2 className="text-2xl md:text-3xl mb-5 leading-tight">
+                      India's most trusted CA firm.
+                    </h2>
+                    <p className="text-muted-foreground leading-relaxed">
+                      To be recognized as India's most trusted chartered accountancy firm —
+                      setting the standard for quality, integrity, and client dedication.
+                    </p>
+                  </div>
+                </Tilt3DCard>
               </BlurFadeIn>
             </div>
           </div>
@@ -153,9 +230,27 @@ export default function About() {
 
         <AnimatedDivider className="max-w-7xl mx-auto px-6 lg:px-12" />
 
-        {/* ── Values — Bento grid ────────────────────────────────────────────── */}
-        <section className="section-padding bg-aurora">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        {/* ── Values — 3D Bento grid ────────────────────────────────────────────── */}
+        <section className="section-padding bg-aurora relative">
+          {/* 3D decorative elements */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingRing
+              size={130}
+              className="top-[10%] right-[5%] hidden lg:block"
+              delay={0.3}
+              duration={22}
+              opacity={0.06}
+            />
+            <FloatingSphere
+              size={35}
+              className="bottom-[15%] left-[8%] hidden md:block"
+              color="hsl(280 80% 60%)"
+              delay={0.8}
+              glowIntensity={0.05}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="mb-16">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Our Values</p>
@@ -170,18 +265,20 @@ export default function About() {
             <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-4" staggerDelay={0.1}>
               {values.map((v, i) => (
                 <StaggerGridItem key={i}>
-                  <SpotlightCard className="p-8 md:p-10 h-full group">
-                    <div className="relative">
-                      <div className="flex items-center gap-3 mb-6">
-                        <span className="text-2xl">{v.icon}</span>
-                        <span className="text-xs text-muted-foreground tracking-widest">{v.num}</span>
+                  <Tilt3DCard tiltStrength={5} glareEnabled={true}>
+                    <SpotlightCard className="p-8 md:p-10 h-full group">
+                      <div className="relative">
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="text-2xl">{v.icon}</span>
+                          <span className="text-xs text-muted-foreground tracking-widest">{v.num}</span>
+                        </div>
+                        <h3 className="text-2xl mt-2 mb-3 group-hover:text-accent transition-colors duration-500">
+                          {v.title}
+                        </h3>
+                        <p className="text-muted-foreground leading-relaxed">{v.desc}</p>
                       </div>
-                      <h3 className="text-2xl mt-2 mb-3 group-hover:text-accent transition-colors duration-500">
-                        {v.title}
-                      </h3>
-                      <p className="text-muted-foreground leading-relaxed">{v.desc}</p>
-                    </div>
-                  </SpotlightCard>
+                    </SpotlightCard>
+                  </Tilt3DCard>
                 </StaggerGridItem>
               ))}
             </StaggerGrid>
@@ -189,8 +286,24 @@ export default function About() {
         </section>
 
         {/* ── Story / Timeline ──────────────────────────────────────────────── */}
-        <section className="section-padding">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <section className="section-padding relative">
+          {/* 3D accents for the timeline */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingCube
+              size={45}
+              className="top-[8%] right-[10%] hidden lg:block"
+              delay={0.4}
+              duration={26}
+              opacity={0.05}
+            />
+            <FloatingDots
+              count={10}
+              className="bottom-[10%] right-[5%] hidden xl:block"
+              spread={200}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="max-w-3xl mx-auto mb-20">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-8">Our Story</p>
@@ -253,9 +366,21 @@ export default function About() {
 
         <AnimatedDivider className="max-w-7xl mx-auto px-6 lg:px-12" />
 
-        {/* ── Partners ─────────────────────────────────────────────────────── */}
-        <section className="section-padding bg-secondary/20">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        {/* ── Partners — 3D Tilt Cards ─────────────────────────────────────── */}
+        <section className="section-padding bg-secondary/20 relative">
+          {/* 3D accents */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingRing
+              size={100}
+              className="top-[15%] left-[5%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={0.4}
+              duration={18}
+              opacity={0.06}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="text-center mb-16">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">Leadership</p>
@@ -268,22 +393,24 @@ export default function About() {
             <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto" staggerDelay={0.12}>
               {partners.map((p, i) => (
                 <StaggerGridItem key={i}>
-                  <SpotlightCard className="p-8 text-center h-full group">
-                    {/* Avatar with animated gradient border */}
-                    <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center relative`}>
-                      <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${p.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-700`} />
-                      <div className="absolute inset-[2px] rounded-full bg-card flex items-center justify-center">
-                        <span className="text-lg font-medium text-accent">{p.initials}</span>
+                  <Tilt3DCard tiltStrength={6} glareEnabled={true}>
+                    <SpotlightCard className="p-8 text-center h-full group">
+                      {/* Avatar with animated gradient border */}
+                      <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center relative`}>
+                        <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${p.gradient} opacity-20 group-hover:opacity-40 transition-opacity duration-700`} />
+                        <div className="absolute inset-[2px] rounded-full bg-card flex items-center justify-center">
+                          <span className="text-lg font-medium text-accent">{p.initials}</span>
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="text-xl font-medium mb-1 group-hover:text-accent transition-colors duration-500">
-                      {p.name}
-                    </h3>
-                    {p.title && (
-                      <p className="text-xs text-muted-foreground tracking-wide mb-4">{p.title}</p>
-                    )}
-                    <p className="text-muted-foreground text-sm leading-relaxed">{p.desc}</p>
-                  </SpotlightCard>
+                      <h3 className="text-xl font-medium mb-1 group-hover:text-accent transition-colors duration-500">
+                        {p.name}
+                      </h3>
+                      {p.title && (
+                        <p className="text-xs text-muted-foreground tracking-wide mb-4">{p.title}</p>
+                      )}
+                      <p className="text-muted-foreground text-sm leading-relaxed">{p.desc}</p>
+                    </SpotlightCard>
+                  </Tilt3DCard>
                 </StaggerGridItem>
               ))}
             </StaggerGrid>
@@ -291,8 +418,25 @@ export default function About() {
         </section>
 
         {/* ── CTA ──────────────────────────────────────────────────────────── */}
-        <section className="section-padding">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center">
+        <section className="section-padding relative">
+          {/* Subtle 3D decorations */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingCube
+              size={35}
+              className="top-[20%] left-[8%] hidden md:block"
+              delay={0.3}
+              duration={24}
+              opacity={0.04}
+            />
+            <FloatingSphere
+              size={30}
+              className="bottom-[15%] right-[12%] hidden md:block"
+              delay={0.6}
+              glowIntensity={0.04}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 text-center relative">
             <TextReveal>
               <h2 className="text-3xl md:text-5xl mb-6">
                 Ready to work together?

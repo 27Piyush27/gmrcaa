@@ -36,7 +36,7 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { RevenueCharts } from "@/components/RevenueCharts";
 import { ExportButton } from "@/components/ExportButton";
 import { SkeletonDashboard } from "@/components/SkeletonLoaders";
-import { LayoutGrid, List, BarChart3 } from "lucide-react";
+import { LayoutGrid, List, BarChart3, Brain, AlertTriangle, Layers } from "lucide-react";
 import { PageTransition } from "@/components/PageTransition";
 
 const easing = [0.22, 1, 0.36, 1];
@@ -344,6 +344,23 @@ export default function AdminDashboard() {
             <Briefcase className="w-4 h-4" />
             Manage Careers
           </button>
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-xs text-background/40 uppercase tracking-widest mb-3">AI & ML Tools</p>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => navigate("/admin/ai-insights")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-400/20 text-sm font-medium text-background transition-colors">
+                <Brain className="w-4 h-4" /> Client Insights
+              </button>
+              <button onClick={() => navigate("/admin/workload")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/20 text-sm font-medium text-background transition-colors">
+                <Layers className="w-4 h-4" /> Workload Optimizer
+              </button>
+              <button onClick={() => navigate("/admin/anomalies")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-400/20 text-sm font-medium text-background transition-colors">
+                <AlertTriangle className="w-4 h-4" /> Anomaly Console
+              </button>
+            </div>
+          </div>
           </motion.div>
         </div>
       </div>

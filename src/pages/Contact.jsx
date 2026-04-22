@@ -17,6 +17,14 @@ import {
   StaggerGrid,
   StaggerGridItem,
 } from "@/components/PremiumAnimations";
+import {
+  FloatingCube,
+  FloatingRing,
+  FloatingSphere,
+  FloatingDots,
+  Tilt3DCard,
+  RotatingEmblem,
+} from "@/components/ThreeDElements";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -92,16 +100,64 @@ export default function Contact() {
         <section className="relative pt-28 pb-20 md:pt-40 md:pb-28 overflow-hidden">
           {/* Ambient gradients */}
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
-          <motion.div
-            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/[0.06] blur-[80px] pointer-events-none"
-            animate={{ x: [0, 25, -15, 0], y: [0, -15, 25, 0] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-accent/[0.05] animate-breathe pointer-events-none"
+            style={{ filter: "blur(60px)", willChange: "transform", transform: "translateZ(0)" }}
           />
-          <motion.div
-            className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-purple-400/[0.05] blur-[60px] pointer-events-none"
-            animate={{ x: [0, -20, 15, 0], y: [0, 20, -15, 0] }}
-            transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          <div
+            className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-purple-400/[0.04] animate-breathe pointer-events-none"
+            style={{ filter: "blur(50px)", willChange: "transform", transform: "translateZ(0)", animationDelay: "-3s" }}
           />
+
+          {/* ── 3D Hero Decorations ──────────────────────────────────── */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* Rotating emblem */}
+            <RotatingEmblem
+              size={180}
+              className="top-[10%] right-[8%] hidden lg:block"
+            />
+
+            {/* Floating cubes */}
+            <FloatingCube
+              size={45}
+              className="bottom-[20%] left-[8%] hidden md:block"
+              delay={0.4}
+              duration={24}
+              opacity={0.06}
+            />
+            <FloatingCube
+              size={28}
+              className="top-[30%] right-[30%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={0.8}
+              duration={30}
+              opacity={0.05}
+            />
+
+            {/* 3D Ring */}
+            <FloatingRing
+              size={100}
+              className="bottom-[10%] right-[15%] hidden lg:block"
+              delay={0.6}
+              duration={18}
+              opacity={0.07}
+            />
+
+            {/* Sphere */}
+            <FloatingSphere
+              size={35}
+              className="top-[15%] left-[20%] hidden lg:block"
+              delay={0.3}
+              glowIntensity={0.06}
+            />
+
+            {/* Dots */}
+            <FloatingDots
+              count={10}
+              className="top-[5%] left-[30%] hidden xl:block"
+              spread={200}
+            />
+          </div>
 
           <div className="max-w-5xl mx-auto px-6 lg:px-12 relative">
             <BlurFadeIn>
@@ -125,136 +181,150 @@ export default function Contact() {
         </section>
 
         {/* ── Contact Form & Info ─────────────────────────────────────── */}
-        <section className="py-16 md:py-24">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        <section className="py-16 md:py-24 relative">
+          {/* Subtle 3D accents */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingRing
+              size={80}
+              className="top-[5%] left-[3%] hidden xl:block"
+              delay={0.3}
+              duration={20}
+              opacity={0.04}
+              color="hsl(280 80% 60%)"
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
 
-              {/* Contact Form */}
+              {/* Contact Form — with 3D tilt */}
               <ScrollReveal className="lg:col-span-3">
-                <div className="premium-card p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <Send className="h-5 w-5 text-accent" />
+                <Tilt3DCard tiltStrength={3} glareEnabled={true}>
+                  <div className="premium-card p-8 md:p-10">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <Send className="h-5 w-5 text-accent" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl md:text-2xl font-semibold">Send us a message</h2>
+                        <p className="text-sm text-muted-foreground">We'll respond within 24 hours</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-semibold">Send us a message</h2>
-                      <p className="text-sm text-muted-foreground">We'll respond within 24 hours</p>
-                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <motion.div
+                          className="space-y-2"
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3, duration: 0.4, ease: easing }}>
+                          
+                          <Label htmlFor="name" className="text-sm tracking-wide font-medium">
+                            Your Name
+                          </Label>
+                          <Input
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="Full name"
+                            className="premium-input"
+                            required />
+                          
+                        </motion.div>
+
+                        <motion.div
+                          className="space-y-2"
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.35, duration: 0.4, ease: easing }}>
+                          
+                          <Label htmlFor="email" className="text-sm tracking-wide font-medium">
+                            Email
+                          </Label>
+                          <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="name@example.com"
+                            className="premium-input"
+                            required />
+                          
+                        </motion.div>
+                      </div>
+
+                      <motion.div
+                        className="space-y-2"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 0.4, ease: easing }}>
+                        
+                        <Label htmlFor="subject" className="text-sm tracking-wide font-medium">
+                          Subject
+                        </Label>
+                        <Input
+                          id="subject"
+                          name="subject"
+                          value={formData.subject}
+                          onChange={handleChange}
+                          placeholder="How can we help?"
+                          className="premium-input"
+                          required />
+                        
+                      </motion.div>
+
+                      <motion.div
+                        className="space-y-2"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.45, duration: 0.4, ease: easing }}>
+                        
+                        <Label htmlFor="message" className="text-sm tracking-wide font-medium">
+                          Your Message
+                        </Label>
+                        <Textarea
+                          id="message"
+                          name="message"
+                          value={formData.message}
+                          onChange={handleChange}
+                          placeholder="Tell us about your requirements..."
+                          rows={5}
+                          className="premium-input resize-none !h-auto"
+                          required />
+                        
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5, duration: 0.4, ease: easing }}>
+                        
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className="h-12 px-8 rounded-xl text-sm font-medium gap-2 hover-lift w-full sm:w-auto">
+                          
+                          {isSubmitting ?
+                          <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Sending...
+                            </> :
+
+                          <>
+                              Send Message
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          }
+                        </Button>
+                      </motion.div>
+                    </form>
                   </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <motion.div
-                        className="space-y-2"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.4, ease: easing }}>
-                        
-                        <Label htmlFor="name" className="text-sm tracking-wide font-medium">
-                          Your Name
-                        </Label>
-                        <Input
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          placeholder="Full name"
-                          className="premium-input"
-                          required />
-                        
-                      </motion.div>
-
-                      <motion.div
-                        className="space-y-2"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.35, duration: 0.4, ease: easing }}>
-                        
-                        <Label htmlFor="email" className="text-sm tracking-wide font-medium">
-                          Email
-                        </Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          placeholder="name@example.com"
-                          className="premium-input"
-                          required />
-                        
-                      </motion.div>
-                    </div>
-
-                    <motion.div
-                      className="space-y-2"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4, duration: 0.4, ease: easing }}>
-                      
-                      <Label htmlFor="subject" className="text-sm tracking-wide font-medium">
-                        Subject
-                      </Label>
-                      <Input
-                        id="subject"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        placeholder="How can we help?"
-                        className="premium-input"
-                        required />
-                      
-                    </motion.div>
-
-                    <motion.div
-                      className="space-y-2"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.45, duration: 0.4, ease: easing }}>
-                      
-                      <Label htmlFor="message" className="text-sm tracking-wide font-medium">
-                        Your Message
-                      </Label>
-                      <Textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        placeholder="Tell us about your requirements..."
-                        rows={5}
-                        className="premium-input resize-none !h-auto"
-                        required />
-                      
-                    </motion.div>
-
-                    <motion.div
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5, duration: 0.4, ease: easing }}>
-                      
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="h-12 px-8 rounded-xl text-sm font-medium gap-2 hover-lift w-full sm:w-auto">
-                        
-                        {isSubmitting ?
-                        <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Sending...
-                          </> :
-
-                        <>
-                            Send Message
-                            <ArrowRight className="w-4 h-4" />
-                          </>
-                        }
-                      </Button>
-                    </motion.div>
-                  </form>
-                </div>
+                </Tilt3DCard>
               </ScrollReveal>
 
-              {/* Contact Information */}
+              {/* Contact Information — with 3D tilt cards */}
               <div className="lg:col-span-2 space-y-6">
                 <ScrollReveal delay={0.1}>
                   <p className="text-xs tracking-widest text-muted-foreground uppercase mb-6">
@@ -265,57 +335,61 @@ export default function Contact() {
                 <StaggerContainer className="space-y-4" staggerDelay={0.12}>
                   {offices.map((office) =>
                   <StaggerItem key={office.name}>
-                      <motion.div
-                      whileHover={{ y: -3 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className="premium-card p-6 group">
-                      
-                        {/* Gradient bg on hover */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${office.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                        <div className="relative">
-                          <h3 className="text-lg font-semibold mb-4">{office.name}</h3>
-                          <div className="space-y-3 text-sm text-muted-foreground">
-                            <div className="flex items-start gap-3 group/item">
-                              <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
-                                <MapPin className="h-3.5 w-3.5" />
-                              </span>
-                              <span className="pt-1.5">{office.address}</span>
-                            </div>
-                            <div className="flex items-center gap-3 group/item">
-                              <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
-                                <Phone className="h-3.5 w-3.5" />
-                              </span>
-                              <a
-                              href={`tel:${office.phone.replace(/\s/g, '')}`}
-                              className="hover:text-foreground transition-colors pt-0.5">
-                              
-                                {office.phone}
-                              </a>
+                      <Tilt3DCard tiltStrength={5} glareEnabled={false}>
+                        <motion.div
+                        whileHover={{ y: -3 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        className="premium-card p-6 group">
+                        
+                          {/* Gradient bg on hover */}
+                          <div className={`absolute inset-0 bg-gradient-to-br ${office.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                          <div className="relative">
+                            <h3 className="text-lg font-semibold mb-4">{office.name}</h3>
+                            <div className="space-y-3 text-sm text-muted-foreground">
+                              <div className="flex items-start gap-3 group/item">
+                                <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                </span>
+                                <span className="pt-1.5">{office.address}</span>
+                              </div>
+                              <div className="flex items-center gap-3 group/item">
+                                <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
+                                  <Phone className="h-3.5 w-3.5" />
+                                </span>
+                                <a
+                                href={`tel:${office.phone.replace(/\s/g, '')}`}
+                                className="hover:text-foreground transition-colors pt-0.5">
+                                
+                                  {office.phone}
+                                </a>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
+                      </Tilt3DCard>
                     </StaggerItem>
                   )}
 
                   {/* Email */}
                   <StaggerItem>
-                    <div className="premium-card p-6">
-                      <div className="flex items-center gap-3 group/item">
-                        <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
-                          <Mail className="h-3.5 w-3.5" />
-                        </span>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-0.5">Email Us</p>
-                          <a
-                            href="mailto:info@gmrindia.com"
-                            className="text-sm font-medium hover:text-accent transition-colors">
-                            
-                            info@gmrindia.com
-                          </a>
+                    <Tilt3DCard tiltStrength={5} glareEnabled={false}>
+                      <div className="premium-card p-6">
+                        <div className="flex items-center gap-3 group/item">
+                          <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 group-hover/item:bg-accent/10 transition-colors">
+                            <Mail className="h-3.5 w-3.5" />
+                          </span>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-0.5">Email Us</p>
+                            <a
+                              href="mailto:info@gmrindia.com"
+                              className="text-sm font-medium hover:text-accent transition-colors">
+                              
+                              info@gmrindia.com
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </Tilt3DCard>
                   </StaggerItem>
                 </StaggerContainer>
               </div>
@@ -344,10 +418,28 @@ export default function Contact() {
           </BlurFadeIn>
         </section>
 
-        {/* ── Business Hours ──────────────────────────────────────────── */}
-        <section className="section-padding-sm bg-secondary/20">
+        {/* ── Business Hours — with 3D tilt ──────────────────────────────────── */}
+        <section className="section-padding-sm bg-secondary/20 relative">
+          {/* 3D accents */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingSphere
+              size={30}
+              className="top-[10%] right-[10%] hidden md:block"
+              delay={0.4}
+              glowIntensity={0.04}
+            />
+            <FloatingCube
+              size={25}
+              className="bottom-[15%] left-[8%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={0.6}
+              duration={26}
+              opacity={0.04}
+            />
+          </div>
+
           <ScrollReveal>
-            <div className="max-w-5xl mx-auto px-6 lg:px-12 text-center">
+            <div className="max-w-5xl mx-auto px-6 lg:px-12 text-center relative">
               <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">
                 Business Hours
               </p>
@@ -359,22 +451,24 @@ export default function Contact() {
                 { day: "Saturday", sub: "Half Day", time: "9:00 AM – 1:00 PM", color: "from-emerald-500" }].
                 map((item) =>
                 <StaggerItem key={item.day}>
-                    <motion.div
-                    whileHover={{ y: -3 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="premium-card p-8 text-center group">
-                    
-                      {/* Top gradient accent */}
-                      <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${item.color} to-transparent`} />
-                      <div className="relative">
-                        <div className="w-10 h-10 rounded-xl bg-secondary mx-auto mb-4 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
-                          <Clock className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                    <Tilt3DCard tiltStrength={5} glareEnabled={true}>
+                      <motion.div
+                      whileHover={{ y: -3 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="premium-card p-8 text-center group">
+                      
+                        {/* Top gradient accent */}
+                        <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${item.color} to-transparent`} />
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-xl bg-secondary mx-auto mb-4 flex items-center justify-center group-hover:bg-accent/10 transition-colors">
+                            <Clock className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                          </div>
+                          <h3 className="text-lg font-semibold mb-1">{item.day}</h3>
+                          <p className="text-muted-foreground text-sm mb-3">{item.sub}</p>
+                          <p className="text-xl font-medium">{item.time}</p>
                         </div>
-                        <h3 className="text-lg font-semibold mb-1">{item.day}</h3>
-                        <p className="text-muted-foreground text-sm mb-3">{item.sub}</p>
-                        <p className="text-xl font-medium">{item.time}</p>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    </Tilt3DCard>
                   </StaggerItem>
                 )}
               </StaggerContainer>

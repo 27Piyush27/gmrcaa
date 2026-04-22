@@ -3,10 +3,14 @@
   "short_name": "GMR & Associates",
   "description": "Premium chartered accountancy services. Expert financial solutions for discerning businesses.",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#ffffff",
   "theme_color": "#0f172a",
   "orientation": "portrait-primary",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/favicon.png",

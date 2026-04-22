@@ -13,14 +13,14 @@ export function TextReveal({ children, className = "", delay = 0, as: Tag = "div
   return (
     <Tag ref={ref} className={`overflow-hidden ${className}`}>
       <motion.div
-        initial={{ y: "100%", opacity: 0, rotateX: -15 }}
-        animate={isInView ? { y: "0%", opacity: 1, rotateX: 0 } : {}}
+        initial={{ y: "100%", opacity: 0 }}
+        animate={isInView ? { y: "0%", opacity: 1 } : {}}
         transition={{
-          duration: 0.9,
+          duration: 0.75,
           ease,
           delay,
         }}
-        style={{ transformOrigin: "bottom center", willChange: "transform, opacity" }}
+        style={{ transformOrigin: "bottom center" }}
       >
         {children}
       </motion.div>
@@ -44,7 +44,7 @@ export function WordReveal({ text, className = "", delay = 0 }) {
             initial={{ y: "100%", opacity: 0 }}
             animate={isInView ? { y: "0%", opacity: 1 } : {}}
             transition={{
-              duration: 0.6,
+              duration: 0.5,
               ease,
               delay: delay + i * 0.04,
             }}
@@ -70,7 +70,7 @@ export function ParallaxSection({ children, className = "", speed = 0.3 }) {
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      <motion.div style={{ y }}>{children}</motion.div>
+      <motion.div style={{ y, willChange: "transform", transform: "translateZ(0)" }}>{children}</motion.div>
     </div>
   );
 }
@@ -88,7 +88,7 @@ export function ScaleOnScroll({ children, className = "" }) {
 
   return (
     <div ref={ref} className={className}>
-      <motion.div style={{ scale, opacity, willChange: "transform, opacity" }}>
+      <motion.div style={{ scale, opacity, willChange: "transform, opacity", transform: "translateZ(0)" }}>
         {children}
       </motion.div>
     </div>
@@ -192,7 +192,7 @@ export function AnimatedDivider({ className = "" }) {
         className="h-px bg-gradient-to-r from-transparent via-border to-transparent"
         initial={{ scaleX: 0 }}
         animate={isInView ? { scaleX: 1 } : {}}
-        transition={{ duration: 1.4, ease }}
+        transition={{ duration: 1.2, ease }}
         style={{ transformOrigin: "center" }}
       />
     </div>
@@ -239,26 +239,26 @@ export function GlowCounter({ target, suffix = "", prefix = "", className = "", 
     <motion.span
       ref={ref}
       className={`${className} ${glowing ? "animate-number-glow" : ""}`}
-      initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-      animate={isInView ? { opacity: 1, y: 0, filter: "blur(0px)" } : {}}
-      transition={{ duration: 0.8, ease }}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease }}
     >
       {prefix}{display}{suffix}
     </motion.span>
   );
 }
 
-// ─── Blur Fade In — Premium content reveal ──────────────────────────────────
+// ─── Blur Fade In — Premium content reveal (opacity + transform only) ────────
 
 export function BlurFadeIn({ children, className = "", delay = 0, direction = "up" }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
   const dirMap = {
-    up: { y: 24, x: 0 },
-    down: { y: -24, x: 0 },
-    left: { y: 0, x: -24 },
-    right: { y: 0, x: 24 },
+    up: { y: 20, x: 0 },
+    down: { y: -20, x: 0 },
+    left: { y: 0, x: -20 },
+    right: { y: 0, x: 20 },
     none: { y: 0, x: 0 },
   };
 
@@ -268,22 +268,21 @@ export function BlurFadeIn({ children, className = "", delay = 0, direction = "u
       className={className}
       initial={{
         opacity: 0,
-        filter: "blur(10px)",
         ...dirMap[direction],
       }}
       animate={
         isInView
-          ? { opacity: 1, filter: "blur(0px)", y: 0, x: 0 }
+          ? { opacity: 1, y: 0, x: 0 }
           : {}
       }
-      transition={{ duration: 0.7, ease, delay }}
+      transition={{ duration: 0.55, ease, delay }}
     >
       {children}
     </motion.div>
   );
 }
 
-// ─── Staggered Grid — Children animate in one-by-one with blur ──────────────
+// ─── Staggered Grid — Children animate in one-by-one ──────────────────────
 
 export function StaggerGrid({ children, className = "", staggerDelay = 0.08 }) {
   const ref = useRef(null);
@@ -314,12 +313,11 @@ export function StaggerGridItem({ children, className = "" }) {
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 30, filter: "blur(6px)" },
+        hidden: { opacity: 0, y: 24 },
         visible: {
           opacity: 1,
           y: 0,
-          filter: "blur(0px)",
-          transition: { duration: 0.6, ease },
+          transition: { duration: 0.5, ease },
         },
       }}
     >

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, BarChart3, FileCheck, Users, Sparkles } from "lucide-react";
+import { ArrowRight, Shield, BarChart3, FileCheck, Users } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
@@ -17,6 +17,15 @@ import {
   RotatingText,
   ScaleOnScroll,
 } from "@/components/PremiumAnimations";
+import {
+  FloatingCube,
+  FloatingRing,
+  FloatingSphere,
+  FloatingDots,
+  Tilt3DCard,
+  IsometricGrid,
+  RotatingEmblem,
+} from "@/components/ThreeDElements";
 import { useRef } from "react";
 
 const easing = [0.22, 1, 0.36, 1];
@@ -27,10 +36,11 @@ export default function Home() {
     target: heroRef,
     offset: ["start start", "end start"],
   });
+
+  // Only transform + opacity — no filter:blur (very expensive on scroll)
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.7], [1, 0.95]);
-  const heroBlur = useTransform(scrollYProgress, [0, 0.7], [0, 6]);
 
   const services = [
     {
@@ -93,53 +103,112 @@ export default function Home() {
           ref={heroRef}
           className="relative min-h-[100svh] flex items-center justify-center overflow-hidden"
         >
-          {/* Aurora ambient background */}
+          {/* Ambient background — CSS-only, no JS animation for scroll perf */}
           <motion.div
             style={{ y: heroY, willChange: "transform" }}
             className="absolute inset-0 pointer-events-none"
           >
-            {/* Primary ambient glow */}
+            {/* Primary ambient glow — static, GPU-promoted */}
             <div
-              className="absolute top-[-20%] left-1/2 w-[900px] h-[900px] rounded-full bg-accent/[0.07] blur-[100px]"
-              style={{ transform: "translateX(-50%) translateZ(0)" }}
-            />
-            {/* Purple accent glow — moves subtly */}
-            <motion.div
-              className="absolute top-[10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-purple-500/[0.05] blur-[80px]"
-              animate={{
-                x: [0, 30, -20, 0],
-                y: [0, -20, 30, 0],
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                ease: "linear",
+              className="absolute top-[-20%] left-1/2 w-[800px] h-[800px] rounded-full bg-accent/[0.06]"
+              style={{
+                transform: "translateX(-50%) translateZ(0)",
+                filter: "blur(80px)",
               }}
             />
-            {/* Cyan glow — subtle float */}
-            <motion.div
-              className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-cyan-500/[0.04] blur-[60px]"
-              animate={{
-                x: [0, -30, 20, 0],
-                y: [0, 20, -30, 0],
+            {/* Purple accent glow — CSS animation instead of framer-motion */}
+            <div
+              className="absolute top-[10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-500/[0.04] animate-breathe"
+              style={{
+                filter: "blur(60px)",
+                willChange: "transform",
+                transform: "translateZ(0)",
               }}
-              transition={{
-                duration: 25,
-                repeat: Infinity,
-                ease: "linear",
+            />
+            {/* Cyan glow — CSS animation instead of framer-motion */}
+            <div
+              className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-cyan-500/[0.03] animate-breathe"
+              style={{
+                filter: "blur(50px)",
+                willChange: "transform",
+                transform: "translateZ(0)",
+                animationDelay: "-3s",
               }}
             />
           </motion.div>
 
+          {/* ── 3D Floating Elements in Hero ──────────────────────────────── */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* Large rotating cube — top right */}
+            <FloatingCube
+              size={70}
+              className="top-[15%] right-[12%] hidden md:block"
+              delay={0.5}
+              duration={25}
+              opacity={0.08}
+            />
+
+            {/* Small cube — bottom left */}
+            <FloatingCube
+              size={35}
+              className="bottom-[20%] left-[8%] hidden md:block"
+              color="hsl(280 80% 60%)"
+              delay={1.2}
+              duration={30}
+              opacity={0.06}
+            />
+
+            {/* 3D Ring — left side */}
+            <FloatingRing
+              size={140}
+              className="top-[30%] left-[5%] hidden lg:block"
+              delay={0.8}
+              duration={18}
+              opacity={0.1}
+            />
+
+            {/* 3D Ring — right side, smaller */}
+            <FloatingRing
+              size={90}
+              className="bottom-[25%] right-[8%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={1.5}
+              duration={22}
+              opacity={0.08}
+              strokeWidth={1}
+            />
+
+            {/* Glowing spheres */}
+            <FloatingSphere
+              size={50}
+              className="top-[20%] left-[20%] hidden md:block"
+              delay={0.3}
+              glowIntensity={0.08}
+            />
+            <FloatingSphere
+              size={30}
+              className="bottom-[30%] right-[20%] hidden md:block"
+              color="hsl(280 80% 60%)"
+              delay={1}
+              glowIntensity={0.06}
+            />
+
+            {/* Floating dots ambience */}
+            <FloatingDots
+              count={15}
+              className="top-[10%] left-[10%] hidden lg:block"
+              spread={300}
+            />
+          </div>
+
           {/* Noise texture overlay */}
           <div className="absolute inset-0 bg-noise pointer-events-none opacity-40" />
 
-          {/* Hero content — fades + scales + blurs on scroll */}
+          {/* Hero content — fades + scales on scroll (no blur filter) */}
           <motion.div
             style={{
               opacity: heroOpacity,
               scale: heroScale,
-              filter: heroBlur.get ? undefined : undefined,
               willChange: "opacity, transform",
             }}
             className="relative max-w-5xl mx-auto px-6 lg:px-12 text-center"
@@ -204,7 +273,7 @@ export default function Home() {
             </motion.div>
           </motion.div>
 
-          {/* Scroll indicator — Animated line */}
+          {/* Scroll indicator — CSS animation only */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -214,10 +283,8 @@ export default function Home() {
             <span className="text-[11px] text-muted-foreground tracking-widest uppercase">
               Scroll
             </span>
-            <motion.div
-              className="w-[1px] h-8 bg-gradient-to-b from-muted-foreground/60 to-transparent"
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            <div
+              className="w-[1px] h-8 bg-gradient-to-b from-muted-foreground/60 to-transparent animate-float"
             />
           </motion.div>
         </section>
@@ -240,7 +307,7 @@ export default function Home() {
         </div>
 
         {/* ── Stats — Premium counter reveal ──────────────────────────────── */}
-        <section className="section-padding-sm">
+        <section className="section-padding-sm content-defer">
           <div className="max-w-7xl mx-auto px-6 lg:px-12">
             <AnimatedDivider className="mb-16" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 md:divide-x divide-border/40">
@@ -264,8 +331,24 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Services — Spotlight cards with hover glow ──────────────────── */}
-        <section className="section-padding bg-aurora">
+        {/* ── Services — 3D Tilt cards with spotlight glow ──────────────────── */}
+        <section className="section-padding bg-aurora content-defer relative">
+          {/* 3D decorative elements behind the service cards */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <RotatingEmblem
+              size={250}
+              className="top-[5%] right-[-2%] hidden xl:block"
+            />
+            <FloatingCube
+              size={40}
+              className="bottom-[10%] left-[5%] hidden lg:block"
+              color="hsl(280 80% 60%)"
+              delay={0.5}
+              duration={28}
+              opacity={0.05}
+            />
+          </div>
+
           <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="text-center mb-20">
               <BlurFadeIn>
@@ -286,35 +369,37 @@ export default function Home() {
                 return (
                   <StaggerGridItem key={index}>
                     <Link to={service.link} className="group block">
-                      <SpotlightCard className="p-8 md:p-12 h-full">
-                        {/* Background gradient on hover */}
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
-                        />
+                      <Tilt3DCard tiltStrength={6} glareEnabled={true}>
+                        <SpotlightCard className="p-8 md:p-12 h-full">
+                          {/* Background gradient on hover */}
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
+                          />
 
-                        <div className="relative">
-                          {/* Icon with gradient ring on hover */}
-                          <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-all duration-500 group-hover:shadow-glow">
-                            <Icon className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors duration-500" />
+                          <div className="relative">
+                            {/* Icon with gradient ring on hover */}
+                            <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-all duration-500 group-hover:shadow-glow">
+                              <Icon className="h-5 w-5 text-muted-foreground group-hover:text-accent transition-colors duration-500" />
+                            </div>
+
+                            <span className="text-xs text-muted-foreground tracking-widest tabular-nums">
+                              0{index + 1}
+                            </span>
+                            <h3 className="text-xl md:text-2xl mt-3 mb-3 group-hover:text-accent transition-colors duration-500">
+                              {service.title}
+                            </h3>
+                            <p className="text-muted-foreground leading-relaxed mb-6">
+                              {service.desc}
+                            </p>
+
+                            {/* Arrow with trail effect */}
+                            <span className="text-sm flex items-center gap-1.5 font-medium group-hover:gap-3 transition-all duration-500">
+                              Learn more
+                              <ArrowRight className="h-3.5 w-3.5 transition-all duration-500 group-hover:translate-x-1" />
+                            </span>
                           </div>
-
-                          <span className="text-xs text-muted-foreground tracking-widest tabular-nums">
-                            0{index + 1}
-                          </span>
-                          <h3 className="text-xl md:text-2xl mt-3 mb-3 group-hover:text-accent transition-colors duration-500">
-                            {service.title}
-                          </h3>
-                          <p className="text-muted-foreground leading-relaxed mb-6">
-                            {service.desc}
-                          </p>
-
-                          {/* Arrow with trail effect */}
-                          <span className="text-sm flex items-center gap-1.5 font-medium group-hover:gap-3 transition-all duration-500">
-                            Learn more
-                            <ArrowRight className="h-3.5 w-3.5 transition-all duration-500 group-hover:translate-x-1" />
-                          </span>
-                        </div>
-                      </SpotlightCard>
+                        </SpotlightCard>
+                      </Tilt3DCard>
                     </Link>
                   </StaggerGridItem>
                 );
@@ -324,8 +409,27 @@ export default function Home() {
         </section>
 
         {/* ── Philosophy / Quote — Scale on scroll ─────────────────────────── */}
-        <section className="section-padding relative overflow-hidden">
+        <section className="section-padding relative overflow-hidden content-defer">
           <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
+
+          {/* Subtle 3D decorative elements */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <FloatingRing
+              size={100}
+              className="top-[10%] right-[15%] hidden lg:block"
+              delay={0.3}
+              duration={20}
+              opacity={0.06}
+            />
+            <FloatingSphere
+              size={40}
+              className="bottom-[15%] left-[10%] hidden md:block"
+              delay={0.6}
+              glowIntensity={0.05}
+              color="hsl(280 80% 60%)"
+            />
+          </div>
+
           <div className="max-w-5xl mx-auto px-6 lg:px-12 text-center relative">
             <BlurFadeIn>
               <p className="text-xs tracking-widest text-muted-foreground uppercase mb-8">
@@ -351,9 +455,20 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Process — Bento-style cards ──────────────────────────────────── */}
-        <section className="section-padding bg-secondary/20">
-          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+        {/* ── Process — 3D Bento-style cards ──────────────────────────────────── */}
+        <section className="section-padding bg-secondary/20 content-defer relative">
+          {/* Isometric grid decoration */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-end">
+            <IsometricGrid
+              className="right-[-5%] top-[10%] hidden xl:block"
+              rows={5}
+              cols={6}
+              cellSize={35}
+              opacity={0.04}
+            />
+          </div>
+
+          <div className="max-w-7xl mx-auto px-6 lg:px-12 relative">
             <div className="text-center mb-20">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">
@@ -392,21 +507,23 @@ export default function Home() {
                 },
               ].map((item, i) => (
                 <StaggerGridItem key={i}>
-                  <div className="bento-card p-8 md:p-10 h-full group">
-                    {/* Decorative top accent */}
-                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                  <Tilt3DCard tiltStrength={5} glareEnabled={false}>
+                    <div className="bento-card p-8 md:p-10 h-full group three-d-card-lift">
+                      {/* Decorative top accent */}
+                      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                    <div className="text-3xl mb-4">{item.icon}</div>
-                    <span className="text-5xl font-light text-muted-foreground/20 tabular-nums block mb-4">
-                      {item.step}
-                    </span>
-                    <h3 className="text-xl mb-3 group-hover:text-accent transition-colors duration-500">
-                      {item.title}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {item.desc}
-                    </p>
-                  </div>
+                      <div className="text-3xl mb-4">{item.icon}</div>
+                      <span className="text-5xl font-light text-muted-foreground/20 tabular-nums block mb-4">
+                        {item.step}
+                      </span>
+                      <h3 className="text-xl mb-3 group-hover:text-accent transition-colors duration-500">
+                        {item.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </Tilt3DCard>
                 </StaggerGridItem>
               ))}
             </StaggerGrid>
@@ -417,7 +534,7 @@ export default function Home() {
         <Testimonials />
 
         {/* ── CTA Banner — Magnetic, glowing ──────────────────────────────── */}
-        <section className="section-padding">
+        <section className="section-padding content-defer">
           <ScrollReveal>
             <div className="max-w-7xl mx-auto px-6 lg:px-12">
               <motion.div
@@ -427,19 +544,36 @@ export default function Home() {
                 transition={{ duration: 0.8, ease: easing }}
                 className="relative rounded-3xl overflow-hidden p-12 md:p-20 text-center bg-foreground text-background"
               >
-                {/* Dynamic ambient inside the CTA */}
-                <motion.div
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] rounded-full bg-accent/25 blur-[100px] pointer-events-none"
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.2, 0.35, 0.2],
-                  }}
-                  transition={{
-                    duration: 6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
+                {/* Static ambient glow — no JS animation */}
+                <div
+                  className="absolute top-0 left-1/2 w-[600px] h-[300px] rounded-full bg-accent/20 pointer-events-none"
+                  style={{
+                    transform: "translateX(-50%) translateZ(0)",
+                    filter: "blur(80px)",
                   }}
                 />
+
+                {/* 3D floating elements inside CTA */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <FloatingCube
+                    size={30}
+                    className="top-[15%] left-[10%] hidden md:block"
+                    color="hsl(0 0% 100%)"
+                    delay={0.2}
+                    duration={20}
+                    opacity={0.06}
+                  />
+                  <FloatingRing
+                    size={70}
+                    className="bottom-[10%] right-[8%] hidden md:block"
+                    color="hsl(0 0% 100%)"
+                    delay={0.5}
+                    duration={16}
+                    opacity={0.05}
+                    strokeWidth={1}
+                  />
+                </div>
+
                 <div className="relative">
                   <BlurFadeIn>
                     <p className="text-xs tracking-widest uppercase mb-4 text-background/50">
