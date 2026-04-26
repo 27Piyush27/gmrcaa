@@ -1,51 +1,20 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { Link } from "react-router-dom";
 import { Linkedin, Mail, Award, Users } from "lucide-react";
+import { getTeamData } from "./TeamManagement";
 
 const easing = [0.22, 1, 0.36, 1];
 
-const TEAM = [
-  {
-    name: "CA Gaurav Mittal", role: "Founding Partner", emoji: "👨‍💼",
-    specialization: "Direct Tax, International Taxation, Transfer Pricing",
-    experience: "15+ years", qualifications: "FCA, DISA, B.Com (H)",
-    bio: "A seasoned tax professional specializing in complex direct tax matters and cross-border transactions."
-  },
-  {
-    name: "CA Ritu Sharma", role: "Senior Partner", emoji: "👩‍💼",
-    specialization: "GST, Indirect Tax, Business Advisory",
-    experience: "12+ years", qualifications: "ACA, M.Com",
-    bio: "Expert in GST compliance and indirect tax planning, helping businesses streamline their tax obligations."
-  },
-  {
-    name: "CA Priyanka Verma", role: "Partner - Corporate", emoji: "👩‍💼",
-    specialization: "Company Law, Startup Advisory, Compliance",
-    experience: "10+ years", qualifications: "ACA, CS, LLB",
-    bio: "Specialist in corporate law and startup ecosystem, guiding companies from incorporation to IPO readiness."
-  },
-  {
-    name: "CA Arun Kapoor", role: "Partner - Audit", emoji: "👨‍💼",
-    specialization: "Statutory Audit, Internal Audit, Risk Advisory",
-    experience: "14+ years", qualifications: "FCA, CIA, CISA",
-    bio: "Leading our audit practice with expertise in both statutory and internal audit across diverse industries."
-  },
-  {
-    name: "Neha Singh", role: "Manager - Tax", emoji: "👩‍💻",
-    specialization: "ITR Filing, Tax Planning, TDS",
-    experience: "6+ years", qualifications: "CA Inter, MBA Finance",
-    bio: "Manages day-to-day tax filing operations ensuring timely and accurate returns for all our clients."
-  },
-  {
-    name: "Rohit Mehra", role: "Manager - GST", emoji: "👨‍💻",
-    specialization: "GST Returns, E-way Bills, GST Audit",
-    experience: "5+ years", qualifications: "CA Inter, B.Com",
-    bio: "Handles GST compliance for 200+ clients, ensuring error-free filing and timely updates on regulatory changes."
-  },
-];
-
 export default function Team() {
+  const [team, setTeam] = useState([]);
+
+  useEffect(() => {
+    // Read from localStorage (or defaults); only show visible members
+    setTeam(getTeamData().filter((m) => m.visible !== false));
+  }, []);
   return (
     <PageTransition>
       <div className="min-h-screen">
@@ -74,7 +43,7 @@ export default function Team() {
         <section className="py-12 md:py-16">
           <div className="max-w-6xl mx-auto px-6 lg:px-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {TEAM.map((member, i) => (
+              {team.map((member, i) => (
                 <ScrollReveal key={i} delay={i * 0.08}>
                   <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", stiffness: 300, damping: 24 }}
                     className="premium-card p-6 relative group">

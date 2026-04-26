@@ -36,10 +36,57 @@ import { KanbanBoard } from "@/components/KanbanBoard";
 import { RevenueCharts } from "@/components/RevenueCharts";
 import { ExportButton } from "@/components/ExportButton";
 import { SkeletonDashboard } from "@/components/SkeletonLoaders";
-import { LayoutGrid, List, BarChart3, Brain, AlertTriangle, Layers } from "lucide-react";
+import { LayoutGrid, List, BarChart3, Brain, AlertTriangle, Layers,
+  Package, Settings2, UserPlus, CalendarDays as CalDays } from "lucide-react";
 import { PageTransition } from "@/components/PageTransition";
 
 const easing = [0.22, 1, 0.36, 1];
+
+// ─── Admin quick-access grid categories ─────────────────────────────────────
+const ADMIN_SECTIONS = [
+  {
+    category: "Operations",
+    color: "from-blue-500 to-cyan-500",
+    items: [
+      { label: "Manage Clients", path: "/clients", icon: UserCheck, desc: "View & manage client accounts" },
+      { label: "Appointments", path: "/admin/appointments", icon: CalDays, desc: "Schedule & manage bookings" },
+    ],
+  },
+  {
+    category: "Content",
+    color: "from-violet-500 to-purple-500",
+    items: [
+      { label: "Blog Manager", path: "/admin/blog", icon: FileText, desc: "Write & publish blog posts" },
+      { label: "Reviews", path: "/admin/testimonials", icon: Users, desc: "Approve client testimonials" },
+      { label: "Team / CAs", path: "/admin/team", icon: UserCheck, desc: "Add & edit team members" },
+      { label: "Careers", path: "/admin/careers", icon: Briefcase, desc: "Manage job openings" },
+    ],
+  },
+  {
+    category: "Finance",
+    color: "from-emerald-500 to-green-500",
+    items: [
+      { label: "Revenue Dashboard", path: "/admin/revenue", icon: IndianRupee, desc: "Revenue & payment analytics" },
+      { label: "Task Board", path: "/admin/tasks", icon: CheckCircle, desc: "Kanban task management" },
+    ],
+  },
+  {
+    category: "Services",
+    color: "from-amber-500 to-orange-500",
+    items: [
+      { label: "Manage Services", path: "/admin/services", icon: Package, desc: "Edit pricing & visibility" },
+    ],
+  },
+  {
+    category: "AI & ML Tools",
+    color: "from-pink-500 to-rose-500",
+    items: [
+      { label: "Client Insights", path: "/admin/ai-insights", icon: Brain, desc: "AI-powered client analysis" },
+      { label: "Workload Optimizer", path: "/admin/workload", icon: Layers, desc: "Smart task distribution" },
+      { label: "Anomaly Console", path: "/admin/anomalies", icon: AlertTriangle, desc: "Detect unusual patterns" },
+    ],
+  },
+];
 
 
 
@@ -308,58 +355,39 @@ export default function AdminDashboard() {
             <Briefcase className="h-6 w-6" />
             }
             <h1 className="text-3xl font-semibold tracking-tight">
-              {role === "admin" ? "Admin" : "CA"} Dashboard
+              {role === "admin" ? "Admin" : "CA"} Control Center
             </h1>
           </div>
-          <p className="text-background/70">
-            Manage service requests, update statuses, and handle client deliverables.
+          <p className="text-background/70 mb-6">
+            Manage all platform features — service requests, content, finances, and AI tools.
           </p>
-          <button
-            onClick={() => navigate("/clients")}
-            className="mt-4 mr-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
-            <UserCheck className="w-4 h-4" />
-            Manage Clients
-          </button>
-          <button
-            onClick={() => navigate("/admin/appointments")}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
-            <CalendarDays className="w-4 h-4" />
-            Manage Appointments
-          </button>
-          <button
-            onClick={() => navigate("/admin/blog")}
-            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
-            <FileText className="w-4 h-4" />
-            Manage Blog
-          </button>
-          <button
-            onClick={() => navigate("/admin/testimonials")}
-            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
-            <Users className="w-4 h-4" />
-            Manage Reviews
-          </button>
-          <button
-            onClick={() => navigate("/admin/careers")}
-            className="mt-4 ml-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-sm font-medium text-background transition-colors">
-            <Briefcase className="w-4 h-4" />
-            Manage Careers
-          </button>
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <p className="text-xs text-background/40 uppercase tracking-widest mb-3">AI & ML Tools</p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => navigate("/admin/ai-insights")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/20 hover:bg-violet-500/30 border border-violet-400/20 text-sm font-medium text-background transition-colors">
-                <Brain className="w-4 h-4" /> Client Insights
-              </button>
-              <button onClick={() => navigate("/admin/workload")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/20 text-sm font-medium text-background transition-colors">
-                <Layers className="w-4 h-4" /> Workload Optimizer
-              </button>
-              <button onClick={() => navigate("/admin/anomalies")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-400/20 text-sm font-medium text-background transition-colors">
-                <AlertTriangle className="w-4 h-4" /> Anomaly Console
-              </button>
-            </div>
+
+          {/* ── Organized Admin Grid ───────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            {ADMIN_SECTIONS.map((section) => (
+              <div key={section.category}>
+                <p className="text-[10px] text-background/40 uppercase tracking-widest mb-2 font-medium">
+                  {section.category}
+                </p>
+                <div className="space-y-1.5">
+                  {section.items.map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => navigate(item.path)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] border border-white/[0.06] hover:border-white/[0.15] text-left transition-all group"
+                    >
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${section.color} bg-opacity-20 flex items-center justify-center flex-shrink-0`}>
+                        <item.icon className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-background truncate">{item.label}</p>
+                        <p className="text-[10px] text-background/40 truncate">{item.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
           </motion.div>
         </div>

@@ -5,7 +5,7 @@ import {
   Calculator, FileText, Wallet, BookOpen, MessageSquare, Bell,
   LayoutDashboard, CalendarDays, User, LogOut, Shield, Briefcase,
   Calendar, MessageCircle, Gift, TrendingUp, Columns3, ShieldCheck,
-  Brain, FileSearch, BarChart3, Activity, Receipt, Search, Users, Layers, AlertTriangle, Sparkles
+  Brain, FileSearch, BarChart3, Activity, Receipt, Search, Users, Layers, AlertTriangle, Sparkles, Package
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,6 +49,8 @@ const ADMIN_ITEMS = [
   { name: "Admin Panel", path: "/admin", icon: Shield },
   { name: "Revenue Dashboard", path: "/admin/revenue", icon: TrendingUp },
   { name: "Task Board", path: "/admin/tasks", icon: Columns3 },
+  { name: "Manage Services", path: "/admin/services", icon: Package },
+  { name: "Team Manager", path: "/admin/team", icon: Users },
   { name: "Client Insights", path: "/admin/ai-insights", icon: Users },
   { name: "Workload Optimizer", path: "/admin/workload", icon: Layers },
   { name: "Anomaly Console", path: "/admin/anomalies", icon: AlertTriangle },
@@ -173,11 +175,11 @@ export const Navigation = () => {
   const isAccountActive = accountPaths.includes(location.pathname);
 
   return (
-    <motion.nav
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: hidden ? -80 : 0, opacity: 1 }}
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-      style={{ willChange: "transform, opacity" }}
+    <nav
+      style={{
+        transform: hidden ? "translateY(-100%)" : "translateY(0)",
+        transition: "transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
+      }}
       className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
         scrolled ? "glass border-b border-border/40 shadow-soft" : "bg-transparent"
       }`}
@@ -627,6 +629,6 @@ export const Navigation = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 };

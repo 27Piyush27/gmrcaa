@@ -108,28 +108,28 @@ export default function Home() {
             style={{ y: heroY, willChange: "transform" }}
             className="absolute inset-0 pointer-events-none"
           >
-            {/* Primary ambient glow — static, GPU-promoted */}
+            {/* Primary ambient glow — pre-blurred via radial-gradient (no filter:blur for scroll perf) */}
             <div
-              className="absolute top-[-20%] left-1/2 w-[800px] h-[800px] rounded-full bg-accent/[0.06]"
+              className="absolute top-[-20%] left-1/2 w-[800px] h-[800px] rounded-full"
               style={{
                 transform: "translateX(-50%) translateZ(0)",
-                filter: "blur(80px)",
+                background: "radial-gradient(circle, hsl(var(--accent) / 0.06) 0%, transparent 60%)",
               }}
             />
-            {/* Purple accent glow — CSS animation instead of framer-motion */}
+            {/* Purple accent glow */}
             <div
-              className="absolute top-[10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-purple-500/[0.04] animate-breathe"
+              className="absolute top-[10%] right-[-10%] w-[500px] h-[500px] rounded-full animate-breathe"
               style={{
-                filter: "blur(60px)",
+                background: "radial-gradient(circle, hsl(280 80% 60% / 0.04) 0%, transparent 55%)",
                 willChange: "transform",
                 transform: "translateZ(0)",
               }}
             />
-            {/* Cyan glow — CSS animation instead of framer-motion */}
+            {/* Cyan glow */}
             <div
-              className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-cyan-500/[0.03] animate-breathe"
+              className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full animate-breathe"
               style={{
-                filter: "blur(50px)",
+                background: "radial-gradient(circle, hsl(190 80% 50% / 0.03) 0%, transparent 55%)",
                 willChange: "transform",
                 transform: "translateZ(0)",
                 animationDelay: "-3s",

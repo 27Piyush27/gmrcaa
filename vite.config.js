@@ -30,6 +30,8 @@ export default defineConfig({
     // Strip console.log/warn in prod bundles to avoid data leaks
     // console.error is kept for error tracking
     minify: "esbuild",
+    // Enable CSS code splitting for better caching
+    cssCodeSplit: true,
     // Split vendor code into separate cacheable chunks
     rollupOptions: {
       output: {
@@ -42,6 +44,8 @@ export default defineConfig({
           "vendor-charts": ["recharts"],
           // Supabase client
           "vendor-supabase": ["@supabase/supabase-js"],
+          // Icon library — large, used everywhere, cache separately
+          "vendor-icons": ["lucide-react"],
         },
       },
     },

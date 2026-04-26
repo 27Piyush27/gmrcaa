@@ -31,6 +31,8 @@ export function CustomCursor() {
   const pos = useRef({ x: -100, y: -100 });
   const ringPos = useRef({ x: -100, y: -100 });
   const raf = useRef(null);
+  const idleTimer = useRef(null);
+  const isRunning = useRef(false);
 
   // Check for touch device
   const [isTouch, setIsTouch] = useState(false);
@@ -52,12 +54,27 @@ export function CustomCursor() {
     raf.current = requestAnimationFrame(animate);
   }, [hovering, clicking]);
 
+  // Start/stop rAF loop to avoid burning GPU when idle
+  const startLoop = useCallback(() => {
+    if (!isRunning.current) {
+      isRunning.current = true;
+      raf.current = requestAnimationFrame(animate);
+    }
+    // Reset idle timer — pause after 2s of no movement
+    clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      cancelAnimationFrame(raf.current);
+      isRunning.current = false;
+    }, 2000);
+  }, [animate]);
+
   useEffect(() => {
     if (isTouch) return;
 
     const onMove = (e) => {
       pos.current = { x: e.clientX, y: e.clientY };
       if (!visible) setVisible(true);
+      startLoop(); // Restart rAF on movement, schedule idle pause
     };
     const onEnter = () => setVisible(true);
     const onLeave = () => setVisible(false);
@@ -80,7 +97,7 @@ export function CustomCursor() {
     document.addEventListener("mouseover", onOver);
     document.addEventListener("mouseout", onOut);
 
-    raf.current = requestAnimationFrame(animate);
+    startLoop();
 
     return () => {
       window.removeEventListener("mousemove", onMove);
@@ -91,8 +108,9 @@ export function CustomCursor() {
       document.removeEventListener("mouseover", onOver);
       document.removeEventListener("mouseout", onOut);
       cancelAnimationFrame(raf.current);
+      clearTimeout(idleTimer.current);
     };
-  }, [isTouch, visible, animate]);
+  }, [isTouch, visible, animate, startLoop]);
 
   if (isTouch) return null;
 

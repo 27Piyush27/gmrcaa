@@ -1,7 +1,33 @@
 import { motion, useMotionValue, useSpring, useTransform, useScroll } from "framer-motion";
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 
 const ease = [0.22, 1, 0.36, 1];
+
+// ─── Device Detection — Skip heavy 3D on mobile/tablet ─────────────────────
+// Uses hardwareConcurrency + screen width to detect low-power devices.
+// Returns true on phones, tablets, and low-core-count machines.
+function useIsLowPowerDevice() {
+  const [isLow, setIsLow] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const cores = navigator.hardwareConcurrency || 2;
+    const narrow = window.innerWidth < 1024;
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    return narrow || isTouch || cores <= 4;
+  });
+
+  useEffect(() => {
+    const check = () => {
+      const cores = navigator.hardwareConcurrency || 2;
+      const narrow = window.innerWidth < 1024;
+      const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      setIsLow(narrow || isTouch || cores <= 4);
+    };
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isLow;
+}
 
 // ─── Floating 3D Cube ────────────────────────────────────────────────────────
 // A CSS 3D cube that slowly rotates in space with ambient glow
@@ -13,6 +39,7 @@ export function FloatingCube({
   duration = 20,
   opacity = 0.12,
 }) {
+  const skipRender = useIsLowPowerDevice();
   const half = size / 2;
   const faces = useMemo(() => [
     { transform: `rotateY(0deg) translateZ(${half}px)` },
@@ -22,6 +49,8 @@ export function FloatingCube({
     { transform: `rotateX(90deg) translateZ(${half}px)` },
     { transform: `rotateX(-90deg) translateZ(${half}px)` },
   ], [half]);
+
+  if (skipRender) return null;
 
   return (
     <motion.div
@@ -69,6 +98,9 @@ export function FloatingOctahedron({
   delay = 0,
   duration = 25,
 }) {
+  const skipRender = useIsLowPowerDevice();
+  if (skipRender) return null;
+
   return (
     <motion.div
       className={`absolute pointer-events-none ${className}`}
@@ -139,6 +171,9 @@ export function FloatingRing({
   strokeWidth = 1.5,
   opacity = 0.15,
 }) {
+  const skipRender = useIsLowPowerDevice();
+  if (skipRender) return null;
+
   return (
     <motion.div
       className={`absolute pointer-events-none ${className}`}
@@ -190,6 +225,9 @@ export function FloatingSphere({
   delay = 0,
   glowIntensity = 0.12,
 }) {
+  const skipRender = useIsLowPowerDevice();
+  if (skipRender) return null;
+
   return (
     <motion.div
       className={`absolute pointer-events-none ${className}`}
@@ -321,6 +359,9 @@ export function IsometricGrid({
   cellSize = 40,
   opacity = 0.06,
 }) {
+  const skipRender = useIsLowPowerDevice();
+  if (skipRender) return null;
+
   return (
     <motion.div
       className={`absolute pointer-events-none ${className}`}
@@ -398,6 +439,9 @@ export function RotatingEmblem({
   size = 200,
   className = "",
 }) {
+  const skipRender = useIsLowPowerDevice();
+  if (skipRender) return null;
+
   return (
     <motion.div
       className={`absolute pointer-events-none ${className}`}
@@ -482,6 +526,8 @@ export function FloatingDots({
   color = "hsl(var(--accent))",
   spread = 400,
 }) {
+  const skipRender = useIsLowPowerDevice();
+
   const dots = useMemo(() =>
     Array.from({ length: count }).map((_, i) => ({
       x: Math.random() * spread,
@@ -493,6 +539,8 @@ export function FloatingDots({
     })),
     [count, spread]
   );
+
+  if (skipRender) return null;
 
   return (
     <div

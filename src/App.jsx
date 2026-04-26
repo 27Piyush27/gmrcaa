@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +12,36 @@ import { CookieConsent } from "./components/CookieConsent";
 import { AnnouncementBanner } from "./components/AnnouncementBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import PageLoader from "./components/PageLoader";
-import { ScrollProgressBar, CustomCursor, BackToTop } from "./components/InteractiveEffects";
+import { ScrollProgressBar, BackToTop } from "./components/InteractiveEffects";
+
+// ── Prefetch critical routes after initial idle ────────────────────────────
+// Downloads the JS chunks for top-visited pages so navigation feels instant.
+function usePrefetchRoutes() {
+  useEffect(() => {
+    const prefetch = () => {
+      import("./pages/About");
+      import("./pages/Services");
+      import("./pages/Contact");
+      import("./pages/Auth");
+    };
+    if ("requestIdleCallback" in window) {
+      const id = requestIdleCallback(prefetch, { timeout: 4000 });
+      return () => cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(prefetch, 3000);
+      return () => clearTimeout(id);
+    }
+  }, []);
+}
+
+// ── Scroll to top on route change ─────────────────────────────────────────
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────
 // Only the visited page's code is downloaded — saves ~70% initial JS.
@@ -60,6 +89,8 @@ const ComplianceScore = lazy(() => import("./pages/ComplianceScore"));
 const Referrals = lazy(() => import("./pages/Referrals"));
 const Careers = lazy(() => import("./pages/Careers"));
 const CareerManagement = lazy(() => import("./pages/CareerManagement"));
+const TeamManagement = lazy(() => import("./pages/TeamManagement"));
+const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 
 // AI / ML / Data Science pages
 const AITaxOptimizer = lazy(() => import("./pages/AITaxOptimizer"));
@@ -135,6 +166,8 @@ const AnimatedRoutes = () => {
         <Route path="/referrals" element={<Referrals />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/admin/careers" element={<CareerManagement />} />
+        <Route path="/admin/team" element={<TeamManagement />} />
+        <Route path="/admin/services" element={<ServicesManagement />} />
         {/* AI / ML / DS Feature Routes */}
         <Route path="/ai-tax-optimizer" element={<AITaxOptimizer />} />
         <Route path="/smart-docs" element={<SmartDocAnalyzer />} />
@@ -154,18 +187,22 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () =>
-<QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <LanguageProvider>
-          <ErrorBoundary>
-          <Toaster />
-          <Sonner />
-          <AnnouncementBanner />
-          {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
-          <Navigation />
+const App = () => {
+  usePrefetchRoutes();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <LanguageProvider>
+            <ErrorBoundary>
+            <Toaster />
+            <Sonner />
+            <ScrollToTop />
+            <AnnouncementBanner />
+            {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
+            <Navigation />
           <div className="pt-16 min-h-screen flex flex-col">
             <main className="flex-1">
               <ErrorBoundary>
@@ -178,7 +215,6 @@ const App = () =>
             <AIChatbotLazy />
           </Suspense>
           <ScrollProgressBar />
-          <CustomCursor />
           <BackToTop />
           <CookieConsent />
           </ErrorBoundary>
@@ -186,7 +222,9 @@ const App = () =>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
-  </QueryClientProvider>;
+  </QueryClientProvider>
+  );
+};
 
 
 export default App;
