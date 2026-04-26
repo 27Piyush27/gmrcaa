@@ -115,7 +115,7 @@ export const Navigation = () => {
   const lastScrollY = useRef(0);
   const rafId = useRef(0);
   const { user, profile, role, signOut, loading } = useAuth();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
 
   useEffect(() => {
     const darkMode = localStorage.getItem("darkMode") === "true";
@@ -158,11 +158,11 @@ export const Navigation = () => {
   const isStaff = role === "admin" || role === "ca";
 
   const primaryLinks = [
-    { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
-    { name: "Services", path: "/services" },
-    { name: "Careers", path: "/careers" },
-    { name: "Contact", path: "/contact" },
+    { name: t("nav.home"), path: "/" },
+    { name: t("nav.about"), path: "/about" },
+    { name: t("nav.services"), path: "/services" },
+    { name: t("nav.careers"), path: "/careers" },
+    { name: t("nav.contact"), path: "/contact" },
   ];
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "";
@@ -216,7 +216,7 @@ export const Navigation = () => {
 
             {/* Tools Dropdown */}
             {!isStaff && (
-              <NavDropdown label="Tools" isActive={isToolsActive}>
+              <NavDropdown label={t("nav.tools")} isActive={isToolsActive}>
                 <div className="p-2">
                   {TOOLS_ITEMS.map((item) => {
                     const Icon = item.icon;
@@ -281,7 +281,7 @@ export const Navigation = () => {
 
             {/* Admin Links (staff only — small set, can be flat) */}
             {isStaff && (
-              <NavDropdown label="Admin" isActive={isAccountActive}>
+              <NavDropdown label={t("nav.admin")} isActive={isAccountActive}>
                 <div className="p-2">
                   {ADMIN_ITEMS.map((item) => {
                     const Icon = item.icon;
@@ -385,7 +385,7 @@ export const Navigation = () => {
                       className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all duration-150 w-full"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span className="text-[13px]">Sign Out</span>
+                      <span className="text-[13px]">{t("nav.signOut")}</span>
                     </button>
                   </div>
                 </NavDropdown>
@@ -393,10 +393,10 @@ export const Navigation = () => {
             ) : !loading ? (
               <div className="flex items-center gap-2 ml-1">
                 <Button asChild variant="ghost" size="sm" className="h-8 text-[13px] rounded-full px-4 hover:bg-secondary">
-                  <Link to="/auth">Login</Link>
+                  <Link to="/auth">{t("nav.login")}</Link>
                 </Button>
                 <Button asChild size="sm" className="h-8 text-[13px] rounded-full px-4 bg-foreground text-background hover:bg-foreground/90">
-                  <Link to="/auth?signup=true">Get Started</Link>
+                  <Link to="/auth?signup=true">{t("nav.getStarted")}</Link>
                 </Button>
               </div>
             ) : null}
@@ -464,7 +464,7 @@ export const Navigation = () => {
                     onClick={() => setMobileToolsOpen(!mobileToolsOpen)}
                     className="flex items-center justify-between w-full text-[15px] py-2.5 px-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
                   >
-                    Tools
+                    {t("nav.tools")}
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileToolsOpen ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -531,7 +531,7 @@ export const Navigation = () => {
                     onClick={() => setMobileAccountOpen(!mobileAccountOpen)}
                     className="flex items-center justify-between w-full text-[15px] py-2.5 px-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
                   >
-                    Account
+                    {t("nav.account")}
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileAccountOpen ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -600,7 +600,7 @@ export const Navigation = () => {
                   className="text-[13px] text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
                 >
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                  {isDark ? "Light" : "Dark"} Mode
+                  {isDark ? t("nav.lightMode") : t("nav.darkMode")}
                 </button>
                 <button
                   onClick={toggleLanguage}
@@ -613,15 +613,15 @@ export const Navigation = () => {
 
               {!loading && user ? (
                 <Button onClick={handleLogout} variant="outline" className="w-full rounded-xl mt-2">
-                  Sign Out
+                  {t("nav.signOut")}
                 </Button>
               ) : !loading ? (
                 <div className="flex flex-col gap-2 mt-2">
                   <Button asChild variant="outline" className="w-full rounded-xl">
-                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                    <Link to="/auth" onClick={() => setIsMenuOpen(false)}>{t("nav.login")}</Link>
                   </Button>
                   <Button asChild className="w-full rounded-xl bg-foreground text-background">
-                    <Link to="/auth?signup=true" onClick={() => setIsMenuOpen(false)}>Get Started</Link>
+                    <Link to="/auth?signup=true" onClick={() => setIsMenuOpen(false)}>{t("nav.getStarted")}</Link>
                   </Button>
                 </div>
               ) : null}

@@ -27,10 +27,12 @@ import {
   RotatingEmblem,
 } from "@/components/ThreeDElements";
 import { useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const easing = [0.22, 1, 0.36, 1];
 
 export default function Home() {
+  const { t } = useLanguage();
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -45,32 +47,32 @@ export default function Home() {
   const services = [
     {
       icon: BarChart3,
-      title: "Accounting & Bookkeeping",
-      desc: "Precision financial management with meticulous attention to every detail.",
+      title: t("home.services.accounting.title"),
+      desc: t("home.services.accounting.desc"),
       link: "/services/income-tax-filing",
       color: "from-blue-500/10 to-cyan-500/5",
       gradient: "from-blue-500 to-cyan-400",
     },
     {
       icon: Shield,
-      title: "Auditing & Assurance",
-      desc: "Comprehensive audits ensuring complete accuracy and regulatory compliance.",
+      title: t("home.services.audit.title"),
+      desc: t("home.services.audit.desc"),
       link: "/services/audit-assurance",
       color: "from-purple-500/10 to-indigo-500/5",
       gradient: "from-purple-500 to-indigo-400",
     },
     {
       icon: FileCheck,
-      title: "Tax Advisory",
-      desc: "Strategic planning to optimize your tax position legally and responsibly.",
+      title: t("home.services.tax.title"),
+      desc: t("home.services.tax.desc"),
       link: "/services/tds-compliance",
       color: "from-emerald-500/10 to-teal-500/5",
       gradient: "from-emerald-500 to-teal-400",
     },
     {
       icon: Users,
-      title: "Business Consulting",
-      desc: "Expert guidance for growth, restructuring, and long-term financial health.",
+      title: t("home.services.consulting.title"),
+      desc: t("home.services.consulting.desc"),
       link: "/services",
       color: "from-orange-500/10 to-amber-500/5",
       gradient: "from-orange-500 to-amber-400",
@@ -78,20 +80,20 @@ export default function Home() {
   ];
 
   const stats = [
-    { value: 500, suffix: "+", label: "Clients Served" },
-    { value: 13, suffix: "+", label: "Years of Excellence" },
-    { value: 99, suffix: "%", label: "Client Retention" },
+    { value: 500, suffix: "+", label: t("home.stats.clients") },
+    { value: 13, suffix: "+", label: t("home.stats.experience") },
+    { value: 99, suffix: "%", label: t("home.stats.retention") },
   ];
 
   const ticker = [
-    "Accounting & Bookkeeping",
-    "Tax Advisory",
-    "Auditing & Assurance",
-    "Business Consulting",
-    "GST Filing",
-    "Company Registration",
-    "Financial Planning",
-    "Payroll Management",
+    t("home.ticker.accounting"),
+    t("home.ticker.tax"),
+    t("home.ticker.audit"),
+    t("home.ticker.consulting"),
+    t("home.ticker.gst"),
+    t("home.ticker.company"),
+    t("home.ticker.planning"),
+    t("home.ticker.payroll"),
   ];
 
   return (
@@ -221,16 +223,16 @@ export default function Home() {
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/60 bg-secondary/60 backdrop-blur-sm text-xs text-muted-foreground tracking-widest uppercase mb-8"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Chartered Accountants · Since 2011
+              {t("home.badge")}
             </motion.div>
 
             {/* Headline — Split text reveal */}
             <div className="mb-6 overflow-hidden" style={{ perspective: "1000px" }}>
               <TextReveal delay={0.15}>
                 <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[1.02] text-balance">
-                  Financial clarity.{" "}
+                  {t("home.hero.line1")}{" "}
                   <br className="hidden md:block" />
-                  <span className="gradient-text-premium italic">Uncompromised.</span>
+                  <span className="gradient-text-premium italic">{t("home.hero.line2")}</span>
                 </h1>
               </TextReveal>
             </div>
@@ -238,13 +240,13 @@ export default function Home() {
             {/* Subtitle with blur fade */}
             <BlurFadeIn delay={0.4}>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-                We partner with discerning businesses to deliver{" "}
+                {t("home.hero.subtitle_pre")}{" "}
                 <RotatingText
-                  words={["accounting", "tax advisory", "auditing", "consulting"]}
+                  words={[t("home.rotating.accounting"), t("home.rotating.tax"), t("home.rotating.audit"), t("home.rotating.consulting")]}
                   className="font-medium text-foreground"
                   interval={2500}
                 />{" "}
-                services of the highest calibre — precisely when it matters most.
+                {t("home.hero.subtitle_post")}
               </p>
             </BlurFadeIn>
 
@@ -258,7 +260,7 @@ export default function Home() {
               <MagneticWrap strength={0.15}>
                 <Link to="/services">
                   <span className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group">
-                    Explore Services
+                    {t("home.cta.explore")}
                     <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Link>
@@ -266,7 +268,7 @@ export default function Home() {
               <MagneticWrap strength={0.15}>
                 <Link to="/contact">
                   <span className="flex items-center gap-2 px-8 py-3.5 bg-secondary/80 backdrop-blur-md text-foreground font-medium rounded-full border border-border/50 hover:bg-secondary transition-all duration-500 hover:scale-[1.03] active:scale-[0.98]">
-                    Talk to an Expert
+                    {t("home.cta.expert")}
                   </span>
                 </Link>
               </MagneticWrap>
@@ -281,7 +283,7 @@ export default function Home() {
             className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
           >
             <span className="text-[11px] text-muted-foreground tracking-widest uppercase">
-              Scroll
+              {t("home.scroll")}
             </span>
             <div
               className="w-[1px] h-8 bg-gradient-to-b from-muted-foreground/60 to-transparent animate-float"
@@ -353,12 +355,12 @@ export default function Home() {
             <div className="text-center mb-20">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">
-                  What We Do
+                  {t("home.services.label")}
                 </p>
               </BlurFadeIn>
               <TextReveal delay={0.1}>
                 <h2 className="text-4xl md:text-5xl lg:text-6xl max-w-3xl mx-auto">
-                  Comprehensive expertise across every financial discipline
+                  {t("home.services.heading")}
                 </h2>
               </TextReveal>
             </div>
@@ -394,7 +396,7 @@ export default function Home() {
 
                             {/* Arrow with trail effect */}
                             <span className="text-sm flex items-center gap-1.5 font-medium group-hover:gap-3 transition-all duration-500">
-                              Learn more
+                              {t("common.learnMore")}
                               <ArrowRight className="h-3.5 w-3.5 transition-all duration-500 group-hover:translate-x-1" />
                             </span>
                           </div>
@@ -433,23 +435,23 @@ export default function Home() {
           <div className="max-w-5xl mx-auto px-6 lg:px-12 text-center relative">
             <BlurFadeIn>
               <p className="text-xs tracking-widest text-muted-foreground uppercase mb-8">
-                Our Philosophy
+                {t("home.philosophy.label")}
               </p>
             </BlurFadeIn>
             <ScaleOnScroll>
               <blockquote className="text-3xl md:text-4xl lg:text-5xl italic leading-tight text-balance mb-8 font-light">
-                "Excellence is not a skill.
+                {t("home.philosophy.quote1")}
                 <br />
-                It's an attitude reflected in every{" "}
+                {t("home.philosophy.quote2")}{" "}
                 <span className="gradient-text-blue not-italic font-medium">
-                  balance sheet.
+                  {t("home.philosophy.quote3")}
                 </span>
-                "
+                {t("home.philosophy.quote4")}
               </blockquote>
             </ScaleOnScroll>
             <BlurFadeIn delay={0.3}>
               <p className="text-muted-foreground text-sm tracking-wide">
-                — GMR & Associates
+                {t("home.philosophy.author")}
               </p>
             </BlurFadeIn>
           </div>
@@ -472,12 +474,12 @@ export default function Home() {
             <div className="text-center mb-20">
               <BlurFadeIn>
                 <p className="text-xs tracking-widest text-muted-foreground uppercase mb-4">
-                  How It Works
+                  {t("home.process.label")}
                 </p>
               </BlurFadeIn>
               <TextReveal delay={0.1}>
                 <h2 className="text-4xl md:text-5xl">
-                  Simple. Transparent. Effective.
+                  {t("home.process.heading")}
                 </h2>
               </TextReveal>
             </div>
@@ -489,20 +491,20 @@ export default function Home() {
               {[
                 {
                   step: "01",
-                  title: "Consultation",
-                  desc: "We listen first. A dedicated CA understands your unique situation, goals, and challenges.",
+                  title: t("home.process.step1.title"),
+                  desc: t("home.process.step1.desc"),
                   icon: "💬",
                 },
                 {
                   step: "02",
-                  title: "Strategy",
-                  desc: "We craft a tailored plan optimised for compliance, efficiency, and your long-term growth.",
+                  title: t("home.process.step2.title"),
+                  desc: t("home.process.step2.desc"),
                   icon: "📊",
                 },
                 {
                   step: "03",
-                  title: "Execution",
-                  desc: "Transparent delivery with real-time updates through your personal client portal.",
+                  title: t("home.process.step3.title"),
+                  desc: t("home.process.step3.desc"),
                   icon: "🚀",
                 },
               ].map((item, i) => (
@@ -577,20 +579,19 @@ export default function Home() {
                 <div className="relative">
                   <BlurFadeIn>
                     <p className="text-xs tracking-widest uppercase mb-4 text-background/50">
-                      Ready to Begin?
+                      {t("home.cta.label")}
                     </p>
                   </BlurFadeIn>
                   <TextReveal delay={0.1}>
                     <h2 className="text-3xl md:text-5xl mb-6 text-balance text-background">
-                      Let's elevate your
+                      {t("home.cta.heading1")}
                       <br />
-                      financial strategy today.
+                      {t("home.cta.heading2")}
                     </h2>
                   </TextReveal>
                   <BlurFadeIn delay={0.3}>
                     <p className="text-background/60 mb-10 max-w-lg mx-auto leading-relaxed">
-                      Join 500+ businesses who trust GMR & Associates for their
-                      most important financial decisions.
+                      {t("home.cta.desc")}
                     </p>
                   </BlurFadeIn>
                   <BlurFadeIn delay={0.4}>
@@ -601,7 +602,7 @@ export default function Home() {
                           size="lg"
                           className="h-12 px-8 rounded-full bg-background text-foreground hover:bg-background/90 font-medium transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] hover:shadow-xl"
                         >
-                          <Link to="/contact">Schedule Consultation</Link>
+                          <Link to="/contact">{t("home.cta.schedule")}</Link>
                         </Button>
                       </MagneticWrap>
                       <MagneticWrap strength={0.12}>
@@ -611,7 +612,7 @@ export default function Home() {
                           size="lg"
                           className="h-12 px-8 rounded-full border-background/30 text-background hover:bg-background/10 transition-all duration-500 hover:scale-[1.03] active:scale-[0.98]"
                         >
-                          <Link to="/auth?signup=true">Create Account</Link>
+                          <Link to="/auth?signup=true">{t("home.cta.create")}</Link>
                         </Button>
                       </MagneticWrap>
                     </div>

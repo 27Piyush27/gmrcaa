@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Mail, Phone, MapPin } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ease = [0.22, 1, 0.36, 1];
 
@@ -9,32 +10,33 @@ export const Footer = () => {
   const year = new Date().getFullYear();
   const footerRef = useRef(null);
   const isInView = useInView(footerRef, { once: true, margin: "-80px" });
+  const { t } = useLanguage();
 
   const links = {
     company: [
-      { name: "About", path: "/about" },
-      { name: "Services", path: "/services" },
-      { name: "Contact", path: "/contact" },
-      { name: "Client Portal", path: "/dashboard" },
-      { name: "Blog", path: "/blog" },
-      { name: "FAQ", path: "/faq" },
-      { name: "Team", path: "/team" },
-      { name: "Testimonials", path: "/testimonials" },
-      { name: "Careers", path: "/careers" },
-      { name: "Feedback", path: "/feedback" },
+      { name: t("footer.about"), path: "/about" },
+      { name: t("nav.services"), path: "/services" },
+      { name: t("footer.contact"), path: "/contact" },
+      { name: t("footer.clientPortal"), path: "/dashboard" },
+      { name: t("footer.blog"), path: "/blog" },
+      { name: t("footer.faq"), path: "/faq" },
+      { name: t("footer.team"), path: "/team" },
+      { name: t("footer.testimonials"), path: "/testimonials" },
+      { name: t("footer.careers"), path: "/careers" },
+      { name: t("footer.feedback"), path: "/feedback" },
     ],
     services: [
-      { name: "Tax Calculator", path: "/tax-calculator" },
-      { name: "Financial Calculators", path: "/calculators" },
-      { name: "GST Tracker", path: "/gst-tracker" },
-      { name: "Expense Tracker", path: "/expenses" },
-      { name: "Resource Center", path: "/resources" },
-      { name: "Book Consultation", path: "/appointments" },
-      { name: "View All Services", path: "/services" },
+      { name: t("footer.taxCalc"), path: "/tax-calculator" },
+      { name: t("footer.financialCalc"), path: "/calculators" },
+      { name: t("footer.gstTracker"), path: "/gst-tracker" },
+      { name: t("footer.expenseTracker"), path: "/expenses" },
+      { name: t("footer.resources"), path: "/resources" },
+      { name: t("footer.bookConsultation"), path: "/appointments" },
+      { name: t("footer.viewAllServices"), path: "/services" },
     ],
     legal: [
-      { name: "Terms of Service", path: "/terms" },
-      { name: "Privacy Policy", path: "/privacy" },
+      { name: t("footer.terms"), path: "/terms" },
+      { name: t("footer.privacy"), path: "/privacy" },
     ],
   };
 
@@ -78,8 +80,7 @@ export const Footer = () => {
               GMR<span className="text-accent">&</span>Associates
             </p>
             <p className="text-muted-foreground text-[15px] leading-relaxed max-w-sm mb-8">
-              Chartered Accountants providing comprehensive professional
-              services with precision and integrity since 2011.
+              {t("footer.brand_desc")}
             </p>
 
             <div className="space-y-3">
@@ -116,7 +117,7 @@ export const Footer = () => {
             className="md:col-span-2 md:col-start-7"
           >
             <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5">
-              Company
+              {t("footer.company")}
             </p>
             <ul className="space-y-3">
               {links.company.map((link) => (
@@ -136,7 +137,7 @@ export const Footer = () => {
           {/* Services Links */}
           <motion.div variants={itemVariants} className="md:col-span-2">
             <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5">
-              Services
+              {t("footer.services")}
             </p>
             <ul className="space-y-3">
               {links.services.map((link) => (
@@ -153,7 +154,7 @@ export const Footer = () => {
             </ul>
 
             <p className="text-xs tracking-widest text-muted-foreground uppercase mb-5 mt-8">
-              Legal
+              {t("footer.legal")}
             </p>
             <ul className="space-y-3">
               {links.legal.map((link) => (
@@ -187,13 +188,12 @@ export const Footer = () => {
 
           <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">
-              © {year} GMR & Associates. All rights reserved. Chartered
-              Accountants.
+              © {year} GMR & Associates. {t("footer.rights")}.
             </p>
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <p className="text-xs text-muted-foreground">
-                Available for new clients
+                {t("footer.available")}
               </p>
             </div>
           </div>
