@@ -91,6 +91,7 @@ const Careers = lazy(() => import("./pages/Careers"));
 const CareerManagement = lazy(() => import("./pages/CareerManagement"));
 const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 // AI / ML / Data Science pages
 const AITaxOptimizer = lazy(() => import("./pages/AITaxOptimizer"));
@@ -134,6 +135,7 @@ const AnimatedRoutes = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/tax-calculator" element={<TaxCalculator />} />
         <Route path="/faq" element={<FAQ />} />

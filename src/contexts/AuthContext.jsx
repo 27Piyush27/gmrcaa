@@ -38,6 +38,12 @@ export function AuthProvider({ children }) {
     // Only fetch user data on genuine auth events to avoid double-fetching on mount
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // During password recovery, do NOT set the user/session so the
+        // ResetPassword page stays visible instead of redirecting.
+        if (event === "PASSWORD_RECOVERY") {
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
