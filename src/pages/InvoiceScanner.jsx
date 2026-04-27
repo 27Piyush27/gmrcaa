@@ -1,15 +1,19 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { FileText, Upload, Brain, CheckCircle, X, Sparkles, ArrowRight, Loader2, Receipt, IndianRupee, Download, AlertTriangle, Zap } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { FileText, Upload, Brain, CheckCircle, X, Sparkles, ArrowRight, Loader2, Receipt, Download, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  extractTextFromFile,
+  extractInvoiceFields,
+  classifyInvoiceCategory,
+} from "@/lib/extractText";
 
 const easing = [0.22, 1, 0.36, 1];
-const COLORS = ["#6366f1","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#8b5cf6","#14b8a6"];
 
 const CATEGORIES = {
   travel: { name: "Travel", icon: "✈️", color: "#6366f1" },
@@ -22,68 +26,48 @@ const CATEGORIES = {
   misc: { name: "Miscellaneous", icon: "📦", color: "#14b8a6" },
 };
 
-function classifyInvoice(filename) {
-  const n = filename.toLowerCase();
-  if (/travel|flight|hotel|uber|ola|cab|train/.test(n)) return "travel";
-  if (/software|aws|azure|cloud|adobe|google|microsoft|saas/.test(n)) return "software";
-  if (/office|stationery|furniture|printer/.test(n)) return "office";
-  if (/legal|consult|audit|lawyer|ca |chartered/.test(n)) return "professional";
-  if (/food|restaurant|swiggy|zomato|cafe|canteen/.test(n)) return "food";
-  if (/telecom|airtel|jio|vodafone|internet|broadband/.test(n)) return "telecom";
-  if (/electric|water|gas|utility/.test(n)) return "utilities";
-  const keys = Object.keys(CATEGORIES);
-  return keys[Math.floor(Math.random() * keys.length)];
-}
-
-function generateInvoiceData(filename, category) {
-  const vendors = {
-    travel: ["MakeMyTrip", "Cleartrip", "Uber India", "IndiGo Airlines"],
-    software: ["AWS India", "Microsoft 365", "Zoho Corp", "Adobe Systems"],
-    office: ["Amazon Business", "Flipkart Wholesale", "Staples India"],
-    professional: ["Deloitte India", "KPMG Advisory", "Legal Associates"],
-    food: ["Swiggy Corporate", "Zomato Business", "Café Coffee Day"],
-    telecom: ["Airtel Business", "Jio Enterprise", "Vodafone Idea"],
-    utilities: ["Tata Power", "BSES Rajdhani", "Indraprastha Gas"],
-    misc: ["Misc Vendor", "General Store", "Sundry Supplier"],
-  };
-  const vendor = vendors[category]?.[Math.floor(Math.random() * vendors[category].length)] || "Unknown Vendor";
-  const baseAmount = Math.round((5000 + Math.random() * 45000) / 100) * 100;
-  const gstRate = [5, 12, 18, 28][Math.floor(Math.random() * 4)];
-  const gstAmount = Math.round(baseAmount * gstRate / 100);
-  const isInter = Math.random() > 0.6;
-
-  return {
-    vendor, invoiceNo: `INV-${2026}-${String(Math.floor(1000 + Math.random() * 9000))}`,
-    date: `${Math.floor(1 + Math.random() * 28)}-${["Jan","Feb","Mar","Apr"][Math.floor(Math.random() * 4)]}-2026`,
-    baseAmount, gstRate, gstAmount, totalAmount: baseAmount + gstAmount,
-    gstin: `${String(Math.floor(1 + Math.random() * 36)).padStart(2, "0")}AABCT${Math.floor(1000 + Math.random() * 9000)}H1Z${Math.floor(1 + Math.random() * 9)}`,
-    cgst: isInter ? 0 : Math.round(gstAmount / 2), sgst: isInter ? 0 : Math.round(gstAmount / 2),
-    igst: isInter ? gstAmount : 0, isInterState: isInter, itcEligible: Math.random() > 0.15,
-  };
-}
-
 export default function InvoiceScanner() {
   const [invoices, setInvoices] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [expandedText, setExpandedText] = useState({});
   const fileInputRef = useRef(null);
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback(async (file) => {
     const id = Date.now() + Math.random();
-    const category = classifyInvoice(file.name);
-    const inv = { id, name: file.name, size: file.size, category, status: "analyzing", data: {}, stage: null };
+    const inv = { id, name: file.name, size: file.size, category: null, status: "analyzing", data: {}, rawText: "", stage: "Initializing..." };
     setInvoices(prev => [...prev, inv]);
-    setTimeout(() => setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Classifying expense category..." } : d)), 300);
-    setTimeout(() => setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting invoice fields..." } : d)), 900);
-    setTimeout(() => setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Validating GST compliance..." } : d)), 1600);
-    setTimeout(() => {
-      const data = generateInvoiceData(file.name, category);
-      setInvoices(prev => prev.map(d => d.id === id ? { ...d, status: "done", data, stage: null } : d));
-    }, 2200);
+
+    // Stage 1: Extract text
+    setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting text from invoice..." } : d));
+
+    let rawText = "";
+    try {
+      rawText = await extractTextFromFile(file);
+    } catch (err) {
+      console.error("[InvoiceScanner] Text extraction failed:", err);
+      rawText = `[Error extracting: ${file.name}]`;
+    }
+
+    // Stage 2: Classify category
+    setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Classifying expense category...", rawText } : d));
+    await delay(350);
+
+    const category = classifyInvoiceCategory(rawText, file.name);
+
+    // Stage 3: Extract fields
+    setInvoices(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting invoice fields...", category } : d));
+    await delay(350);
+
+    const data = extractInvoiceFields(rawText, file.name);
+
+    // Stage 4: Done
+    setInvoices(prev => prev.map(d => d.id === id ? { ...d, status: "done", data, category, rawText, stage: null } : d));
   }, []);
 
   const handleDrop = useCallback((e) => { e.preventDefault(); setDragActive(false); Array.from(e.dataTransfer?.files || []).slice(0, 8).forEach(processFile); }, [processFile]);
   const handleFileSelect = useCallback((e) => { Array.from(e.target.files || []).slice(0, 8).forEach(processFile); if (fileInputRef.current) fileInputRef.current.value = ""; }, [processFile]);
-  const removeInvoice = (id) => setInvoices(prev => prev.filter(d => d.id !== id));
+  const removeInvoice = (id) => { setInvoices(prev => prev.filter(d => d.id !== id)); setExpandedText(prev => { const n = { ...prev }; delete n[id]; return n; }); };
+  const toggleText = (id) => setExpandedText(prev => ({ ...prev, [id]: !prev[id] }));
 
   const done = invoices.filter(i => i.status === "done");
   const totalBase = done.reduce((s, i) => s + (i.data.baseAmount || 0), 0);
@@ -92,7 +76,7 @@ export default function InvoiceScanner() {
   const ineligibleITC = totalGST - totalITC;
 
   const categoryBreakdown = Object.entries(
-    done.reduce((acc, inv) => { acc[inv.category] = (acc[inv.category] || 0) + inv.data.totalAmount; return acc; }, {})
+    done.reduce((acc, inv) => { acc[inv.category] = (acc[inv.category] || 0) + (inv.data.totalAmount || 0); return acc; }, {})
   ).map(([key, value]) => ({ name: CATEGORIES[key]?.name || key, value, fill: CATEGORIES[key]?.color || "#6366f1" }));
 
   const gstBreakdown = [
@@ -101,12 +85,12 @@ export default function InvoiceScanner() {
     { name: "IGST", value: done.reduce((s, i) => s + (i.data.igst || 0), 0), fill: "#10b981" },
   ].filter(d => d.value > 0);
 
-  const fmt = (n) => `₹${n.toLocaleString("en-IN")}`;
+  const fmt = (n) => `₹${(n || 0).toLocaleString("en-IN")}`;
   const formatSize = (b) => b < 1024 * 1024 ? `${(b / 1024).toFixed(0)} KB` : `${(b / (1024 * 1024)).toFixed(1)} MB`;
 
   const exportCSV = () => {
     const header = "Vendor,Invoice No,Date,Category,Base Amount,GST Rate,GST Amount,Total,GSTIN,ITC Eligible\n";
-    const rows = done.map(i => `${i.data.vendor},${i.data.invoiceNo},${i.data.date},${CATEGORIES[i.category]?.name},${i.data.baseAmount},${i.data.gstRate}%,${i.data.gstAmount},${i.data.totalAmount},${i.data.gstin},${i.data.itcEligible ? "Yes" : "No"}`).join("\n");
+    const rows = done.map(i => `"${i.data.vendor}","${i.data.invoiceNo}","${i.data.date}","${CATEGORIES[i.category]?.name}",${i.data.baseAmount},${i.data.gstRate}%,${i.data.gstAmount},${i.data.totalAmount},"${i.data.gstin}",${i.data.itcEligible ? "Yes" : "No"}`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "invoices_extracted.csv"; a.click(); URL.revokeObjectURL(url);
@@ -129,7 +113,7 @@ export default function InvoiceScanner() {
             </motion.h1>
             <motion.p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-              Upload invoices for AI-powered extraction, auto-categorization, GST reconciliation, and ITC tracking.
+              Upload invoices for <strong>real text extraction</strong>, auto-categorization, GST reconciliation, and ITC tracking.
             </motion.p>
           </div>
         </section>
@@ -147,7 +131,8 @@ export default function InvoiceScanner() {
                   <Upload className={`w-8 h-8 ${dragActive ? "text-accent" : "text-muted-foreground"} transition-colors`} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">{dragActive ? "Drop invoices here" : "Upload Invoices & Bills"}</h3>
-                <p className="text-sm text-muted-foreground mb-4">Drag & drop or click • PDF, Images, Excel supported</p>
+                <p className="text-sm text-muted-foreground mb-1">Drag & drop or click • PDF, Images, Excel supported</p>
+                <p className="text-xs text-muted-foreground/70 mb-4">📄 PDFs are fully text-extracted • Amounts, GST & vendor info parsed automatically</p>
                 <div className="flex flex-wrap items-center justify-center gap-2">
                   {["Vendor Bills", "Purchase Invoices", "Expense Receipts", "GST Invoices"].map(tag => (
                     <span key={tag} className="text-[10px] px-2 py-1 rounded-full bg-secondary text-muted-foreground">{tag}</span>
@@ -160,10 +145,10 @@ export default function InvoiceScanner() {
             {done.length > 0 && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Total Base Amount", value: fmt(totalBase), color: "from-violet-500 to-purple-600", bg: "bg-violet-50 dark:bg-violet-950/30", ic: "text-violet-600" },
-                  { label: "Total GST", value: fmt(totalGST), color: "from-blue-500 to-cyan-600", bg: "bg-blue-50 dark:bg-blue-950/30", ic: "text-blue-600" },
-                  { label: "Eligible ITC", value: fmt(totalITC), color: "from-emerald-500 to-green-600", bg: "bg-emerald-50 dark:bg-emerald-950/30", ic: "text-emerald-600" },
-                  { label: "Ineligible ITC", value: fmt(ineligibleITC), color: "from-red-500 to-rose-600", bg: "bg-red-50 dark:bg-red-950/30", ic: "text-red-600" },
+                  { label: "Total Base Amount", value: fmt(totalBase), color: "from-violet-500 to-purple-600" },
+                  { label: "Total GST", value: fmt(totalGST), color: "from-blue-500 to-cyan-600" },
+                  { label: "Eligible ITC", value: fmt(totalITC), color: "from-emerald-500 to-green-600" },
+                  { label: "Ineligible ITC", value: fmt(ineligibleITC), color: "from-red-500 to-rose-600" },
                 ].map(s => (
                   <Card key={s.label} className="border-border/50 relative overflow-hidden">
                     <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${s.color}`} />
@@ -190,7 +175,8 @@ export default function InvoiceScanner() {
                   </div>
                   <div className="space-y-4">
                     {invoices.map((inv, i) => {
-                      const cat = CATEGORIES[inv.category];
+                      const cat = CATEGORIES[inv.category] || CATEGORIES.misc;
+                      const hasText = inv.rawText && !inv.rawText.startsWith("[") && inv.rawText.length > 20;
                       return (
                         <motion.div key={inv.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ delay: i * 0.05 }}>
                           <Card className="border-border/50 overflow-hidden">
@@ -202,8 +188,9 @@ export default function InvoiceScanner() {
                                     <div>
                                       <h3 className="font-semibold truncate">{inv.name}</h3>
                                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-violet-500 text-white">{cat?.name}</span>
+                                        {inv.status === "done" && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-violet-500 text-white">{cat?.name}</span>}
                                         <span className="text-[10px] text-muted-foreground">{formatSize(inv.size)}</span>
+                                        {inv.status === "done" && inv.data.vendor && <span className="text-[10px] text-muted-foreground">• {inv.data.vendor}</span>}
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -216,6 +203,13 @@ export default function InvoiceScanner() {
                                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-950/40 text-red-600 font-medium flex items-center gap-1">
                                           <AlertTriangle className="w-3 h-3" /> ITC Blocked
                                         </span>
+                                      )}
+                                      {inv.status === "done" && hasText && (
+                                        <button onClick={() => toggleText(inv.id)}
+                                          className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                                          title="Toggle raw text">
+                                          {expandedText[inv.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
                                       )}
                                       <button onClick={() => removeInvoice(inv.id)} className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                                         <X className="w-4 h-4" />
@@ -238,7 +232,7 @@ export default function InvoiceScanner() {
                                       {[
                                         ["Vendor", inv.data.vendor], ["Invoice #", inv.data.invoiceNo], ["Date", inv.data.date],
                                         ["Base Amount", fmt(inv.data.baseAmount)], ["GST Rate", `${inv.data.gstRate}%`], ["GST Amount", fmt(inv.data.gstAmount)],
-                                        ["Total", fmt(inv.data.totalAmount)], ["GSTIN", inv.data.gstin],
+                                        ["Total", fmt(inv.data.totalAmount)], ...(inv.data.gstin ? [["GSTIN", inv.data.gstin]] : []),
                                       ].map(([key, value]) => (
                                         <div key={key} className="flex flex-col px-3 py-2 rounded-lg bg-secondary/30 border border-border/30">
                                           <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{key}</span>
@@ -246,6 +240,19 @@ export default function InvoiceScanner() {
                                         </div>
                                       ))}
                                     </div>
+                                  )}
+                                  {/* Raw text toggle */}
+                                  {inv.status === "done" && expandedText[inv.id] && hasText && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3">
+                                      <div className="rounded-lg bg-secondary/20 border border-border/30 p-3">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                          <FileText className="w-3 h-3" /> Raw Extracted Text
+                                        </p>
+                                        <pre className="text-xs text-foreground/80 whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-mono leading-relaxed">
+                                          {inv.rawText.slice(0, 3000)}{inv.rawText.length > 3000 ? "\n\n... (truncated)" : ""}
+                                        </pre>
+                                      </div>
+                                    </motion.div>
                                   )}
                                 </div>
                               </div>
@@ -305,9 +312,9 @@ export default function InvoiceScanner() {
                 <h2 className="text-xl font-semibold mb-6 text-center">How It Works</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { icon: Upload, title: "Upload", desc: "Drag & drop vendor invoices — PDF, images, or spreadsheets", step: "01", gradient: "from-blue-500 to-cyan-500" },
-                    { icon: Brain, title: "AI Extracts", desc: "Our AI extracts vendor details, amounts, GST breakdowns, and validates compliance", step: "02", gradient: "from-violet-500 to-purple-500" },
-                    { icon: CheckCircle, title: "Get Insights", desc: "View category breakdown, ITC eligibility, GST reconciliation, and export data", step: "03", gradient: "from-emerald-500 to-green-500" },
+                    { icon: Upload, title: "Upload", desc: "Drag & drop vendor invoices — PDF for full text extraction, or images and spreadsheets", step: "01", gradient: "from-blue-500 to-cyan-500" },
+                    { icon: Brain, title: "AI Extracts", desc: "Real text extraction from PDFs. Regex patterns find vendor, amounts, GST, GSTIN, and dates", step: "02", gradient: "from-violet-500 to-purple-500" },
+                    { icon: CheckCircle, title: "Get Insights", desc: "View category breakdown, ITC eligibility, GST reconciliation, raw text, and export data", step: "03", gradient: "from-emerald-500 to-green-500" },
                   ].map((step, i) => (
                     <Card key={i} className="border-border/50 hover:shadow-md hover:-translate-y-1 transition-all duration-500 group">
                       <CardContent className="p-6 text-center">
@@ -337,4 +344,8 @@ export default function InvoiceScanner() {
       </div>
     </PageTransition>
   );
+}
+
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }

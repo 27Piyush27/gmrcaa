@@ -6,59 +6,30 @@ import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import {
   FileText, Upload, Brain, CheckCircle, AlertTriangle, X, Sparkles,
-  ArrowRight, Shield, Eye, Loader2, FileSearch, Clock, Zap
+  ArrowRight, Shield, Eye, EyeOff, Loader2, FileSearch, Clock, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import {
+  extractTextFromFile,
+  classifyFromContent,
+  extractFieldsFromText,
+} from "@/lib/extractText";
 
 const easing = [0.22, 1, 0.36, 1];
 
-// ── Document Classification Engine ──────────────────────────────────────────
+// ── Document type metadata ─────────────────────────────────────────────────
 const DOC_TYPES = {
-  form16: { name: "Form 16", icon: "📋", color: "bg-blue-500", category: "Income", confidence: 94, fields: ["Employee Name", "PAN", "Total Income", "TDS Deducted", "Employer TAN"] },
-  bankStatement: { name: "Bank Statement", icon: "🏦", color: "bg-emerald-500", category: "Financial", confidence: 91, fields: ["Account Holder", "Account Number", "Period", "Opening Balance", "Closing Balance"] },
-  invoice: { name: "Invoice / Bill", icon: "🧾", color: "bg-amber-500", category: "Expense", confidence: 88, fields: ["Vendor Name", "Invoice Number", "Amount", "GST Amount", "Date"] },
-  panCard: { name: "PAN Card", icon: "🪪", color: "bg-violet-500", category: "Identity", confidence: 96, fields: ["Name", "PAN Number", "Date of Birth", "Father's Name"] },
-  aadhaar: { name: "Aadhaar Card", icon: "🆔", color: "bg-indigo-500", category: "Identity", confidence: 95, fields: ["Name", "Aadhaar Number", "Address", "Date of Birth"] },
-  gstReturn: { name: "GST Return", icon: "📊", color: "bg-cyan-500", category: "Tax Filing", confidence: 89, fields: ["GSTIN", "Filing Period", "Turnover", "Tax Payable", "ITC Claimed"] },
-  itr: { name: "ITR Acknowledgment", icon: "✅", color: "bg-green-500", category: "Tax Filing", confidence: 92, fields: ["PAN", "Assessment Year", "Total Income", "Tax Paid", "Filing Date"] },
-  salarySlip: { name: "Salary Slip", icon: "💰", color: "bg-pink-500", category: "Income", confidence: 90, fields: ["Employee Name", "Month", "Gross Salary", "Deductions", "Net Pay"] },
-  rentReceipt: { name: "Rent Receipt", icon: "🏠", color: "bg-orange-500", category: "Deduction", confidence: 87, fields: ["Tenant Name", "Landlord Name", "Rent Amount", "Period", "Address"] },
-  investmentProof: { name: "Investment Proof", icon: "📈", color: "bg-teal-500", category: "Deduction", confidence: 85, fields: ["Investor Name", "Investment Type", "Amount", "Date", "Reference Number"] },
+  form16: { name: "Form 16", icon: "📋", color: "bg-blue-500", category: "Income" },
+  bankStatement: { name: "Bank Statement", icon: "🏦", color: "bg-emerald-500", category: "Financial" },
+  invoice: { name: "Invoice / Bill", icon: "🧾", color: "bg-amber-500", category: "Expense" },
+  panCard: { name: "PAN Card", icon: "🪪", color: "bg-violet-500", category: "Identity" },
+  aadhaar: { name: "Aadhaar Card", icon: "🆔", color: "bg-indigo-500", category: "Identity" },
+  gstReturn: { name: "GST Return", icon: "📊", color: "bg-cyan-500", category: "Tax Filing" },
+  itr: { name: "ITR Acknowledgment", icon: "✅", color: "bg-green-500", category: "Tax Filing" },
+  salarySlip: { name: "Salary Slip", icon: "💰", color: "bg-pink-500", category: "Income" },
+  rentReceipt: { name: "Rent Receipt", icon: "🏠", color: "bg-orange-500", category: "Deduction" },
+  investmentProof: { name: "Investment Proof", icon: "📈", color: "bg-teal-500", category: "Deduction" },
 };
-
-function classifyDocument(filename) {
-  const name = filename.toLowerCase();
-  if (name.includes("form16") || name.includes("form 16") || name.includes("tds")) return "form16";
-  if (name.includes("bank") || name.includes("statement")) return "bankStatement";
-  if (name.includes("invoice") || name.includes("bill") || name.includes("receipt") && !name.includes("rent")) return "invoice";
-  if (name.includes("pan")) return "panCard";
-  if (name.includes("aadhaar") || name.includes("aadhar")) return "aadhaar";
-  if (name.includes("gst")) return "gstReturn";
-  if (name.includes("itr") || name.includes("return")) return "itr";
-  if (name.includes("salary") || name.includes("payslip")) return "salarySlip";
-  if (name.includes("rent")) return "rentReceipt";
-  if (name.includes("invest") || name.includes("mutual") || name.includes("ppf") || name.includes("elss")) return "investmentProof";
-  // Random classification for demo purposes
-  const keys = Object.keys(DOC_TYPES);
-  return keys[Math.floor(Math.random() * keys.length)];
-}
-
-function generateExtractedData(docType) {
-  const type = DOC_TYPES[docType];
-  const sampleData = {
-    form16: { "Employee Name": "Rajesh Kumar", "PAN": "ABCPK1234F", "Total Income": "₹12,50,000", "TDS Deducted": "₹1,04,000", "Employer TAN": "DELR12345E" },
-    bankStatement: { "Account Holder": "Rajesh Kumar", "Account Number": "XXXX-XXXX-4521", "Period": "Apr 2025 - Mar 2026", "Opening Balance": "₹2,45,000", "Closing Balance": "₹3,12,000" },
-    invoice: { "Vendor Name": "CloudTech Solutions", "Invoice Number": "INV-2026-0847", "Amount": "₹15,000", "GST Amount": "₹2,700", "Date": "15-Mar-2026" },
-    panCard: { "Name": "Rajesh Kumar", "PAN Number": "ABCPK1234F", "Date of Birth": "15-Aug-1990", "Father's Name": "Suresh Kumar" },
-    aadhaar: { "Name": "Rajesh Kumar", "Aadhaar Number": "XXXX-XXXX-5678", "Address": "Sector 7, Gurugram", "Date of Birth": "15-Aug-1990" },
-    gstReturn: { "GSTIN": "06ABCPK1234F1Z5", "Filing Period": "Mar 2026", "Turnover": "₹45,00,000", "Tax Payable": "₹2,70,000", "ITC Claimed": "₹1,80,000" },
-    itr: { "PAN": "ABCPK1234F", "Assessment Year": "2026-27", "Total Income": "₹12,50,000", "Tax Paid": "₹1,04,000", "Filing Date": "28-Jul-2026" },
-    salarySlip: { "Employee Name": "Rajesh Kumar", "Month": "March 2026", "Gross Salary": "₹1,04,167", "Deductions": "₹18,750", "Net Pay": "₹85,417" },
-    rentReceipt: { "Tenant Name": "Rajesh Kumar", "Landlord Name": "Amit Sharma", "Rent Amount": "₹25,000", "Period": "Mar 2026", "Address": "B-42, Sec 15, Gurugram" },
-    investmentProof: { "Investor Name": "Rajesh Kumar", "Investment Type": "ELSS Mutual Fund", "Amount": "₹1,50,000", "Date": "20-Mar-2026", "Reference Number": "MF-2026-78451" },
-  };
-  return sampleData[docType] || {};
-}
 
 // ── Required Documents Checklist ────────────────────────────────────────────
 const ITR_CHECKLIST = [
@@ -74,30 +45,49 @@ const ITR_CHECKLIST = [
 
 // ── Component ───────────────────────────────────────────────────────────────
 export default function SmartDocAnalyzer() {
-  const [docs, setDocs] = useState([]); // { id, file, docType, status: 'analyzing'|'done', extractedData }
+  const [docs, setDocs] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [expandedText, setExpandedText] = useState({}); // { docId: true/false }
   const fileInputRef = useRef(null);
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback(async (file) => {
     const id = Date.now() + Math.random();
-    const docType = classifyDocument(file.name);
-    const newDoc = { id, file, name: file.name, size: file.size, docType, status: "analyzing", extractedData: {} };
+    const newDoc = { id, file, name: file.name, size: file.size, docType: null, status: "analyzing", extractedData: {}, rawText: "", confidence: 0, stage: "Initializing AI engine..." };
     setDocs(prev => [...prev, newDoc]);
 
-    // Simulate AI processing with stages
-    setTimeout(() => {
-      setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Classifying document..." } : d));
-    }, 400);
-    setTimeout(() => {
-      setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting key fields..." } : d));
-    }, 1000);
-    setTimeout(() => {
-      setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Running compliance checks..." } : d));
-    }, 1800);
-    setTimeout(() => {
-      const extracted = generateExtractedData(docType);
-      setDocs(prev => prev.map(d => d.id === id ? { ...d, status: "done", extractedData: extracted, stage: null } : d));
-    }, 2500);
+    // Stage 1: Extracting text
+    setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting text from document..." } : d));
+
+    let rawText = "";
+    try {
+      rawText = await extractTextFromFile(file);
+    } catch (err) {
+      console.error("[SmartDocAnalyzer] Text extraction failed:", err);
+      rawText = `[Error extracting text from ${file.name}]`;
+    }
+
+    // Stage 2: Classifying
+    setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Classifying document type...", rawText } : d));
+    await delay(400);
+
+    const classification = classifyFromContent(rawText, file.name);
+
+    // Stage 3: Extracting fields
+    setDocs(prev => prev.map(d => d.id === id ? { ...d, stage: "Extracting key fields...", docType: classification.docType, confidence: classification.confidence } : d));
+    await delay(400);
+
+    const extracted = extractFieldsFromText(rawText, classification.docType);
+
+    // Stage 4: Done
+    setDocs(prev => prev.map(d => d.id === id ? {
+      ...d,
+      status: "done",
+      docType: classification.docType,
+      confidence: classification.confidence,
+      extractedData: extracted,
+      rawText,
+      stage: null,
+    } : d));
   }, []);
 
   const handleDrop = useCallback((e) => {
@@ -113,7 +103,8 @@ export default function SmartDocAnalyzer() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [processFile]);
 
-  const removeDoc = (id) => setDocs(prev => prev.filter(d => d.id !== id));
+  const removeDoc = (id) => { setDocs(prev => prev.filter(d => d.id !== id)); setExpandedText(prev => { const n = { ...prev }; delete n[id]; return n; }); };
+  const toggleText = (id) => setExpandedText(prev => ({ ...prev, [id]: !prev[id] }));
 
   // Compliance check
   const classifiedTypes = new Set(docs.filter(d => d.status === "done").map(d => d.docType));
@@ -145,7 +136,7 @@ export default function SmartDocAnalyzer() {
             </motion.h1>
             <motion.p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed"
               initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
-              Upload financial documents and let AI classify, extract key data, and check compliance — instantly.
+              Upload financial documents and our AI will <strong>extract real text</strong>, classify the document type, and pull out key data fields — all in your browser.
             </motion.p>
           </div>
         </section>
@@ -167,7 +158,7 @@ export default function SmartDocAnalyzer() {
                     : "border-border/60 hover:border-accent/40 hover:bg-secondary/20"
                 }`}
               >
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx"
+                <input ref={fileInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx,.csv,.txt"
                   onChange={handleFileSelect} className="hidden" />
                 <motion.div animate={dragActive ? { scale: 1.1, y: -5 } : { scale: 1, y: 0 }} transition={{ type: "spring" }}>
                   <div className="w-16 h-16 rounded-2xl bg-accent/10 mx-auto mb-5 flex items-center justify-center">
@@ -176,8 +167,11 @@ export default function SmartDocAnalyzer() {
                   <h3 className="font-semibold text-lg mb-2">
                     {dragActive ? "Drop files here" : "Upload Financial Documents"}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Drag & drop or click to upload • PDF, Images, Excel supported
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Drag & drop or click to upload • PDF, Images, CSV, Excel supported
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mb-4">
+                    📄 PDFs are fully text-extracted using AI • Images classified by filename
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     {["Form 16", "PAN", "Aadhaar", "Bank Statement", "Invoices", "Rent Receipts"].map(tag => (
@@ -200,7 +194,9 @@ export default function SmartDocAnalyzer() {
                   </div>
                   <div className="space-y-4">
                     {docs.map((doc, i) => {
-                      const typeInfo = DOC_TYPES[doc.docType];
+                      const typeInfo = DOC_TYPES[doc.docType] || DOC_TYPES.invoice;
+                      const hasText = doc.rawText && !doc.rawText.startsWith("[") && doc.rawText.length > 20;
+                      const fieldCount = Object.keys(doc.extractedData).length;
                       return (
                         <motion.div key={doc.id}
                           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
@@ -217,9 +213,11 @@ export default function SmartDocAnalyzer() {
                                     <div>
                                       <h3 className="font-semibold truncate">{doc.name}</h3>
                                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${typeInfo.color} text-white`}>
-                                          {typeInfo.name}
-                                        </span>
+                                        {doc.status === "done" && (
+                                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${typeInfo.color} text-white`}>
+                                            {typeInfo.name}
+                                          </span>
+                                        )}
                                         <span className="text-[10px] text-muted-foreground">{typeInfo.category}</span>
                                         <span className="text-[10px] text-muted-foreground">{formatSize(doc.size)}</span>
                                       </div>
@@ -227,8 +225,15 @@ export default function SmartDocAnalyzer() {
                                     <div className="flex items-center gap-2">
                                       {doc.status === "done" && (
                                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                          <Sparkles className="w-3 h-3" /> {typeInfo.confidence}% confident
+                                          <Sparkles className="w-3 h-3" /> {doc.confidence}% confident
                                         </span>
+                                      )}
+                                      {doc.status === "done" && hasText && (
+                                        <button onClick={() => toggleText(doc.id)}
+                                          className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                                          title="Toggle raw text">
+                                          {expandedText[doc.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
                                       )}
                                       <button onClick={() => removeDoc(doc.id)}
                                         className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
@@ -246,14 +251,14 @@ export default function SmartDocAnalyzer() {
                                         <div className="w-48 h-1 rounded-full bg-secondary mt-2 overflow-hidden">
                                           <motion.div className="h-full bg-accent rounded-full"
                                             initial={{ width: "0%" }} animate={{ width: "100%" }}
-                                            transition={{ duration: 2.5, ease: "linear" }} />
+                                            transition={{ duration: 3, ease: "linear" }} />
                                         </div>
                                       </div>
                                     </div>
                                   )}
 
-                                  {/* Extracted Data */}
-                                  {doc.status === "done" && Object.keys(doc.extractedData).length > 0 && (
+                                  {/* Extracted Fields */}
+                                  {doc.status === "done" && fieldCount > 0 && (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                                       {Object.entries(doc.extractedData).map(([key, value], j) => (
                                         <motion.div key={key} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
@@ -264,6 +269,30 @@ export default function SmartDocAnalyzer() {
                                         </motion.div>
                                       ))}
                                     </div>
+                                  )}
+
+                                  {/* No fields extracted notice */}
+                                  {doc.status === "done" && fieldCount === 0 && (
+                                    <div className="flex items-center gap-2 py-2 px-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 mt-2">
+                                      <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                      <p className="text-xs text-amber-700 dark:text-amber-400">
+                                        No structured fields could be extracted. {!hasText ? "This file type doesn't support text extraction — try uploading a PDF." : "The document may not contain recognizable financial data patterns."}
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {/* Raw Extracted Text (collapsible) */}
+                                  {doc.status === "done" && expandedText[doc.id] && hasText && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3">
+                                      <div className="rounded-lg bg-secondary/20 border border-border/30 p-3">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                          <FileText className="w-3 h-3" /> Raw Extracted Text
+                                        </p>
+                                        <pre className="text-xs text-foreground/80 whitespace-pre-wrap break-words max-h-48 overflow-y-auto font-mono leading-relaxed">
+                                          {doc.rawText.slice(0, 3000)}{doc.rawText.length > 3000 ? "\n\n... (truncated)" : ""}
+                                        </pre>
+                                      </div>
+                                    </motion.div>
                                   )}
                                 </div>
                               </div>
@@ -336,9 +365,9 @@ export default function SmartDocAnalyzer() {
                 <h2 className="text-xl font-semibold mb-6 text-center">How It Works</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { icon: Upload, title: "Upload", desc: "Drag & drop any financial document — PDF, image, or spreadsheet", step: "01", gradient: "from-blue-500 to-cyan-500" },
-                    { icon: Brain, title: "AI Analyzes", desc: "Our AI classifies, extracts key fields, and validates data accuracy", step: "02", gradient: "from-violet-500 to-purple-500" },
-                    { icon: CheckCircle, title: "Get Results", desc: "Instantly see extracted data, compliance status, and filing readiness", step: "03", gradient: "from-emerald-500 to-green-500" },
+                    { icon: Upload, title: "Upload", desc: "Drag & drop any financial document — PDF for full text extraction, or images for smart classification", step: "01", gradient: "from-blue-500 to-cyan-500" },
+                    { icon: Brain, title: "AI Extracts", desc: "Real text is extracted from PDFs using pdf.js. Regex patterns find PAN, GSTIN, amounts, dates & more", step: "02", gradient: "from-violet-500 to-purple-500" },
+                    { icon: CheckCircle, title: "Get Results", desc: "See extracted fields, raw text preview, compliance status, and ITR filing readiness", step: "03", gradient: "from-emerald-500 to-green-500" },
                   ].map((step, i) => (
                     <Card key={i} className="border-border/50 hover:shadow-md hover:-translate-y-1 transition-all duration-500 group">
                       <CardContent className="p-6 text-center">
@@ -369,4 +398,8 @@ export default function SmartDocAnalyzer() {
       </div>
     </PageTransition>
   );
+}
+
+function delay(ms) {
+  return new Promise((r) => setTimeout(r, ms));
 }
