@@ -14,7 +14,7 @@ const STATIC_POSTS = [
   {
     id: "s1", title: "New Income Tax Regime 2025-26: Complete Guide",
     excerpt: "Everything you need to know about the new tax regime including updated slabs, rebates, and which regime to choose for maximum savings.",
-    category: "Income Tax", published_at: "2026-03-15", read_time: "8 min", author: "CA Gaurav Mittal", emoji: "📊"
+    category: "Income Tax", published_at: "2026-03-15", read_time: "8 min", author: "CA Gaurav Makkar", emoji: "📊"
   },
   {
     id: "s2", title: "GST Return Filing: Common Mistakes to Avoid",
@@ -24,7 +24,7 @@ const STATIC_POSTS = [
   {
     id: "s3", title: "How to Save Tax with Section 80C Investments",
     excerpt: "Maximize your tax savings with smart 80C investments. Compare ELSS, PPF, NPS, and other popular options.",
-    category: "Tax Planning", published_at: "2026-03-05", read_time: "10 min", author: "CA Gaurav Mittal", emoji: "💰"
+    category: "Tax Planning", published_at: "2026-03-05", read_time: "10 min", author: "CA Gaurav Makkar", emoji: "💰"
   },
   {
     id: "s4", title: "Company Incorporation in India: Step-by-Step Guide",
@@ -39,7 +39,7 @@ const STATIC_POSTS = [
   {
     id: "s6", title: "Advance Tax: Due Dates and How to Calculate",
     excerpt: "Learn when advance tax is due, how to calculate it, and avoid interest under sections 234B and 234C.",
-    category: "Income Tax", published_at: "2026-02-15", read_time: "7 min", author: "CA Gaurav Mittal", emoji: "📆"
+    category: "Income Tax", published_at: "2026-02-15", read_time: "7 min", author: "CA Gaurav Makkar", emoji: "📆"
   },
   {
     id: "s7", title: "GST E-Invoice: Who Needs It and How to Generate",
@@ -49,7 +49,7 @@ const STATIC_POSTS = [
   {
     id: "s8", title: "Startup India Registration: Benefits and Process",
     excerpt: "Discover the benefits of DPIIT recognition and how to register your startup under the Startup India scheme.",
-    category: "Startups", published_at: "2026-02-05", read_time: "9 min", author: "CA Gaurav Mittal", emoji: "🚀"
+    category: "Startups", published_at: "2026-02-05", read_time: "9 min", author: "CA Gaurav Makkar", emoji: "🚀"
   },
 ];
 

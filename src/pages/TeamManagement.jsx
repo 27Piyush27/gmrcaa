@@ -16,51 +16,24 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { PageTransition } from "@/components/PageTransition";
 
-const STORAGE_KEY = "gmr_team_v1";
+const STORAGE_KEY = "gmr_team_v2";
 const easing = [0.22, 1, 0.36, 1];
 
 // Default team data — used as fallback if localStorage is empty
+// CAs can add/remove members from the Team Management admin panel
 const DEFAULT_TEAM = [
   {
-    id: "1", name: "CA Gaurav Mittal", role: "Founding Partner", emoji: "👨‍💼",
-    specialization: "Direct Tax, International Taxation, Transfer Pricing",
-    experience: "15+ years", qualifications: "FCA, DISA, B.Com (H)",
-    bio: "A seasoned tax professional specializing in complex direct tax matters and cross-border transactions.",
+    id: "1", name: "CA Gaurav Makkar", role: "Founding Partner", emoji: "👨‍💼",
+    specialization: "Capital Markets, Statutory Audits, Project Financing",
+    experience: "15+ years", qualifications: "FCA",
+    bio: "Expert in capital markets and statutory audits with a strong financial background, assisting numerous SMEs with project financing from nationalised banks.",
     visible: true,
   },
   {
-    id: "2", name: "CA Ritu Sharma", role: "Senior Partner", emoji: "👩‍💼",
-    specialization: "GST, Indirect Tax, Business Advisory",
-    experience: "12+ years", qualifications: "ACA, M.Com",
-    bio: "Expert in GST compliance and indirect tax planning, helping businesses streamline their tax obligations.",
-    visible: true,
-  },
-  {
-    id: "3", name: "CA Priyanka Verma", role: "Partner - Corporate", emoji: "👩‍💼",
-    specialization: "Company Law, Startup Advisory, Compliance",
-    experience: "10+ years", qualifications: "ACA, CS, LLB",
-    bio: "Specialist in corporate law and startup ecosystem, guiding companies from incorporation to IPO readiness.",
-    visible: true,
-  },
-  {
-    id: "4", name: "CA Arun Kapoor", role: "Partner - Audit", emoji: "👨‍💼",
-    specialization: "Statutory Audit, Internal Audit, Risk Advisory",
-    experience: "14+ years", qualifications: "FCA, CIA, CISA",
-    bio: "Leading our audit practice with expertise in both statutory and internal audit across diverse industries.",
-    visible: true,
-  },
-  {
-    id: "5", name: "Neha Singh", role: "Manager - Tax", emoji: "👩‍💻",
-    specialization: "ITR Filing, Tax Planning, TDS",
-    experience: "6+ years", qualifications: "CA Inter, MBA Finance",
-    bio: "Manages day-to-day tax filing operations ensuring timely and accurate returns for all our clients.",
-    visible: true,
-  },
-  {
-    id: "6", name: "Rohit Mehra", role: "Manager - GST", emoji: "👨‍💻",
-    specialization: "GST Returns, E-way Bills, GST Audit",
-    experience: "5+ years", qualifications: "CA Inter, B.Com",
-    bio: "Handles GST compliance for 200+ clients, ensuring error-free filing and timely updates on regulatory changes.",
+    id: "2", name: "CA Saurabh Madan", role: "Senior Partner", emoji: "👨‍💼",
+    specialization: "Corporate Finance, Business Advisory, Financial Strategy",
+    experience: "13+ years", qualifications: "FCA",
+    bio: "Corporate finance and advisory specialist, helping businesses navigate complex financial landscapes and achieve sustainable growth.",
     visible: true,
   },
 ];
