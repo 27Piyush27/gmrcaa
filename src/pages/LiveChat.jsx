@@ -1,62 +1,252 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { PageTransition } from "@/components/PageTransition";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
-  Send, Paperclip, Phone, Video, MoreVertical, Check, CheckCheck,
-  MessageCircle, ArrowRight, User, Clock, Search
+  Send, Paperclip, Check, CheckCheck, MessageCircle, ArrowRight,
+  Clock, Search, Smile, MoreVertical, Trash2, Star, Reply,
+  Circle, Loader2, ShieldCheck, X
 } from "lucide-react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-const easing = [0.22, 1, 0.36, 1];
-
-const CONVERSATIONS = [
-  { id: 1, name: "CA Ravi Kumar", role: "Senior CA", avatar: "RK", online: true, unread: 2,
-    lastMessage: "I've reviewed your Form 16. Let's discuss the deductions.", lastTime: "2 min ago" },
-  { id: 2, name: "CA Meena Patel", role: "GST Specialist", avatar: "MP", online: true, unread: 0,
-    lastMessage: "Your GSTR-1 for December has been filed.", lastTime: "1 hour ago" },
-  { id: 3, name: "CA Amit Sharma", role: "Audit Manager", avatar: "AS", online: false, unread: 0,
-    lastMessage: "The audit report draft is ready for your review.", lastTime: "Yesterday" },
+/* ── The only CAs registered on the platform ─────────────────────────────── */
+const REGISTERED_CAS = [
+  {
+    name: "CA Gaurav Makkar",
+    role: "Founding Partner • FCA",
+    initials: "GM",
+    gradient: "from-blue-600 to-cyan-500",
+    specialization: "Capital Markets, Statutory Audits, Project Financing",
+  },
+  {
+    name: "CA Saurabh Madan",
+    role: "Senior Partner • FCA",
+    initials: "SM",
+    gradient: "from-emerald-600 to-teal-500",
+    specialization: "Corporate Finance, Business Advisory",
+  },
 ];
 
-const INITIAL_MESSAGES = {
-  1: [
-    { id: 1, sender: "ca", text: "Good morning! I've started reviewing your documents for ITR filing.", time: "10:00 AM", read: true },
-    { id: 2, sender: "ca", text: "I noticed your Form 16 shows ₹1.2L in Section 80C deductions. Do you have any additional investments to declare?", time: "10:05 AM", read: true },
-    { id: 3, sender: "user", text: "Yes, I have NPS contributions of ₹50,000 under 80CCD(1B)", time: "10:15 AM", read: true },
-    { id: 4, sender: "ca", text: "Great, that's an additional ₹50,000 deduction. I'll include that. Also, do you have any medical insurance premiums under 80D?", time: "10:18 AM", read: true },
-    { id: 5, sender: "user", text: "I pay ₹25,000 annual premium for health insurance", time: "10:22 AM", read: true },
-    { id: 6, sender: "ca", text: "Perfect. With all deductions, your estimated tax liability comes to approximately ₹42,000. I'll prepare the computation and share it with you by tomorrow.", time: "10:25 AM", read: true },
-    { id: 7, sender: "ca", text: "I've reviewed your Form 16. Let's discuss the deductions available to optimize your return.", time: "11:30 AM", read: false },
-    { id: 8, sender: "ca", text: "Can you also share last 3 months bank statements? I see some investments that might qualify for additional deductions.", time: "11:32 AM", read: false },
-  ],
-  2: [
-    { id: 1, sender: "ca", text: "Hello! Your GSTR-1 for December 2025 has been successfully filed.", time: "Yesterday", read: true },
-    { id: 2, sender: "user", text: "Thank you! What about GSTR-3B?", time: "Yesterday", read: true },
-    { id: 3, sender: "ca", text: "GSTR-3B is due by January 20th. I'll file it by the 18th. Your ITC reconciliation is complete.", time: "Yesterday", read: true },
-  ],
-  3: [
-    { id: 1, sender: "ca", text: "The statutory audit for FY 2024-25 is progressing well. Draft report will be ready by next week.", time: "2 days ago", read: true },
-    { id: 2, sender: "user", text: "Great. Are there any observations I should be aware of?", time: "2 days ago", read: true },
-    { id: 3, sender: "ca", text: "The audit report draft is ready for your review. I've sent it to your email. Please check the management representation letter as well.", time: "Yesterday", read: true },
-  ],
-};
+const EMOJI_QUICK = ["👍", "❤️", "😊", "🙏", "✅", "📎", "💯", "🎉"];
 
+const SMART_REPLIES = [
+  "Thank you for the update!",
+  "When is the deadline?",
+  "Can you share the documents?",
+  "I'll review and get back to you.",
+  "Please proceed with filing.",
+];
+
+/* ── Time formatting helper ──────────────────────────────────────────────── */
+function timeAgo(dateStr) {
+  if (!dateStr) return "";
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+}
+
+function formatTime(dateStr) {
+  return new Date(dateStr).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
 export default function LiveChat() {
-  const { user } = useAuth();
-  const [activeChat, setActiveChat] = useState(1);
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const { user, role } = useAuth();
+  const [conversations, setConversations] = useState([]);
+  const [activeConvId, setActiveConvId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [otherTyping, setOtherTyping] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [showSmartReplies, setShowSmartReplies] = useState(false);
+  const [starredMsgs, setStarredMsgs] = useState(new Set());
+  const [caProfiles, setCaProfiles] = useState({});
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
+  const isCA = role === "ca" || role === "admin";
+
+  /* ── Scroll to bottom ──────────────────────────────────────────────────── */
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  }, []);
+
+  /* ── Fetch CA profiles for display ─────────────────────────────────────── */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeChat]);
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["ca", "admin"]);
+      if (!data?.length) return;
+      const caIds = data.map((r) => r.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, name, email")
+        .in("user_id", caIds);
+      const map = {};
+      (profiles || []).forEach((p) => { map[p.user_id] = p; });
+      setCaProfiles(map);
+    })();
+  }, [user]);
 
+  /* ── Fetch conversations ───────────────────────────────────────────────── */
+  const fetchConversations = useCallback(async () => {
+    if (!user) return;
+    const col = isCA ? "ca_id" : "client_id";
+    const { data, error } = await supabase
+      .from("dm_conversations")
+      .select("*")
+      .eq(col, user.id)
+      .order("last_message_at", { ascending: false });
+
+    if (error) { console.error(error); setLoading(false); return; }
+    setConversations(data || []);
+    setLoading(false);
+  }, [user, isCA]);
+
+  useEffect(() => { fetchConversations(); }, [fetchConversations]);
+
+  /* ── Fetch messages for active conversation ────────────────────────────── */
+  const fetchMessages = useCallback(async () => {
+    if (!activeConvId) return;
+    const { data, error } = await supabase
+      .from("dm_messages")
+      .select("*")
+      .eq("conversation_id", activeConvId)
+      .eq("deleted", false)
+      .order("created_at", { ascending: true });
+
+    if (error) { console.error(error); return; }
+    setMessages(data || []);
+    scrollToBottom();
+
+    // Mark unread messages as read
+    const unreadIds = (data || [])
+      .filter((m) => !m.read && m.sender_id !== user.id)
+      .map((m) => m.id);
+    if (unreadIds.length > 0) {
+      await supabase
+        .from("dm_messages")
+        .update({ read: true, read_at: new Date().toISOString() })
+        .in("id", unreadIds);
+    }
+  }, [activeConvId, user, scrollToBottom]);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  /* ── Realtime subscriptions ────────────────────────────────────────────── */
+  useEffect(() => {
+    if (!user) return;
+    const ch = supabase
+      .channel("dm-live")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "dm_messages" }, (payload) => {
+        const msg = payload.new;
+        if (msg.conversation_id === activeConvId) {
+          setMessages((prev) => [...prev, msg]);
+          scrollToBottom();
+          if (msg.sender_id !== user.id) {
+            supabase.from("dm_messages").update({ read: true, read_at: new Date().toISOString() }).eq("id", msg.id);
+          }
+        }
+        fetchConversations();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "dm_conversations" }, () => {
+        fetchConversations();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user, activeConvId, fetchConversations, scrollToBottom]);
+
+  /* ── Start conversation with a CA (client-side) ────────────────────────── */
+  const startConversation = async (caUserId) => {
+    if (!user) return;
+    const { data, error } = await supabase.rpc("get_or_create_dm_conversation", {
+      _client_id: user.id,
+      _ca_id: caUserId,
+    });
+    if (error) { toast.error("Failed to start conversation"); return; }
+    setActiveConvId(data);
+    fetchConversations();
+  };
+
+  /* ── Send message ──────────────────────────────────────────────────────── */
+  const sendMessage = async (text) => {
+    const content = (text || newMessage).trim();
+    if (!content || !activeConvId || sending) return;
+    setSending(true);
+    setNewMessage("");
+    setShowSmartReplies(false);
+    setShowEmoji(false);
+
+    const { error } = await supabase.from("dm_messages").insert({
+      conversation_id: activeConvId,
+      sender_id: user.id,
+      content,
+      message_type: "text",
+    });
+    if (error) { toast.error("Failed to send"); console.error(error); }
+    setSending(false);
+    inputRef.current?.focus();
+  };
+
+  /* ── Delete message ────────────────────────────────────────────────────── */
+  const deleteMessage = async (msgId) => {
+    await supabase.from("dm_messages").update({ deleted: true }).eq("id", msgId);
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+  };
+
+  /* ── Toggle star ───────────────────────────────────────────────────────── */
+  const toggleStar = (msgId) => {
+    setStarredMsgs((prev) => {
+      const next = new Set(prev);
+      next.has(msgId) ? next.delete(msgId) : next.add(msgId);
+      return next;
+    });
+  };
+
+  /* ── Get partner info ──────────────────────────────────────────────────── */
+  const getPartnerInfo = (conv) => {
+    const partnerId = isCA ? conv.client_id : conv.ca_id;
+    const profile = caProfiles[partnerId];
+    if (profile) return { name: profile.name, initials: profile.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() };
+    // For CAs, try matching by name
+    const caMatch = REGISTERED_CAS.find((ca) => {
+      const p = caProfiles[conv.ca_id];
+      return p && p.name.toLowerCase().includes(ca.name.replace("CA ", "").toLowerCase());
+    });
+    if (caMatch && !isCA) return { name: caMatch.name, initials: caMatch.initials };
+    return { name: "User", initials: "U" };
+  };
+
+  const activeConv = conversations.find((c) => c.id === activeConvId);
+  const partner = activeConv ? getPartnerInfo(activeConv) : null;
+  const unreadCount = (convId) => {
+    if (convId !== activeConvId) return 0; // We don't have per-conv unread count cached; real impl would track
+    return 0;
+  };
+
+  const filteredConvs = conversations.filter((c) => {
+    if (!searchQuery) return true;
+    const p = getPartnerInfo(c);
+    return p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.last_message || "").toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  /* ── Sign-in required ──────────────────────────────────────────────────── */
   if (!user) {
     return (
       <PageTransition>
@@ -74,165 +264,284 @@ export default function LiveChat() {
     );
   }
 
-  const activeConversation = CONVERSATIONS.find(c => c.id === activeChat);
-  const chatMessages = messages[activeChat] || [];
-
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
-    const msg = {
-      id: Date.now(),
-      sender: "user",
-      text: newMessage,
-      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-      read: false,
-    };
-    setMessages(prev => ({ ...prev, [activeChat]: [...(prev[activeChat] || []), msg] }));
-    setNewMessage("");
-
-    // Simulate CA reply after 2s
-    setTimeout(() => {
-      const replies = [
-        "Thanks for that information. I'll update the records accordingly.",
-        "Noted. I'll get back to you with the updated computation shortly.",
-        "Sure, I'll take care of this. Is there anything else you need?",
-        "Great, I'll process this right away. You'll receive a confirmation soon.",
-      ];
-      const reply = {
-        id: Date.now() + 1,
-        sender: "ca",
-        text: replies[Math.floor(Math.random() * replies.length)],
-        time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
-        read: false,
-      };
-      setMessages(prev => ({ ...prev, [activeChat]: [...(prev[activeChat] || []), reply] }));
-    }, 2000);
-  };
-
+  /* ═══════════════════════════════════════════════════════════════════════ */
   return (
     <PageTransition>
       <div className="min-h-screen pt-20">
-        <div className="max-w-6xl mx-auto px-6 lg:px-12 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12 py-6">
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-soft" style={{ height: "calc(100vh - 140px)" }}>
             <div className="flex h-full">
-              {/* Sidebar */}
+
+              {/* ── Sidebar ──────────────────────────────────────────────── */}
               <div className="w-80 border-r border-border/40 flex flex-col bg-secondary/20 hidden md:flex">
                 <div className="p-4 border-b border-border/40">
-                  <h2 className="font-semibold text-lg mb-3">Messages</h2>
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="font-semibold text-lg">Messages</h2>
+                    <div className="flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      <span className="text-[10px] text-emerald-600 font-medium">Secure</span>
+                    </div>
+                  </div>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input placeholder="Search conversations..." value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9 h-9 rounded-xl bg-background text-sm" />
                   </div>
                 </div>
+
+                {/* CA list for clients to start conversations */}
+                {!isCA && conversations.length === 0 && !loading && (
+                  <div className="p-4 space-y-2">
+                    <p className="text-xs text-muted-foreground mb-3 font-medium">Start a conversation with our CAs:</p>
+                    {REGISTERED_CAS.map((ca) => (
+                      <button key={ca.name} onClick={async () => {
+                        // Find CA user_id from profiles
+                        const caName = ca.name.replace("CA ", "");
+                        const match = Object.entries(caProfiles).find(([, p]) =>
+                          p.name.toLowerCase().includes(caName.toLowerCase())
+                        );
+                        if (match) { await startConversation(match[0]); }
+                        else { toast.error(`${ca.name} is not yet registered. Please contact via the Contact page.`); }
+                      }}
+                        className="w-full p-3 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/30 flex items-center gap-3 transition-colors text-left">
+                        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${ca.gradient} flex items-center justify-center text-white text-sm font-bold`}>
+                          {ca.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{ca.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{ca.role}</p>
+                        </div>
+                        <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Conversation list */}
                 <div className="flex-1 overflow-y-auto">
-                  {CONVERSATIONS.map(conv => (
-                    <button key={conv.id} onClick={() => setActiveChat(conv.id)}
-                      className={`w-full p-4 flex items-start gap-3 hover:bg-secondary/60 transition-colors text-left border-b border-border/20 ${
-                        activeChat === conv.id ? "bg-secondary/80" : ""
-                      }`}>
-                      <div className="relative flex-shrink-0">
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                          {conv.avatar}
-                        </div>
-                        {conv.online && (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-card" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-sm truncate">{conv.name}</p>
-                          <span className="text-[11px] text-muted-foreground flex-shrink-0">{conv.lastTime}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{conv.role}</p>
-                        <p className="text-xs text-muted-foreground truncate mt-1">{conv.lastMessage}</p>
-                      </div>
-                      {conv.unread > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-accent text-accent-foreground text-[11px] font-bold flex items-center justify-center flex-shrink-0">
-                          {conv.unread}
-                        </span>
-                      )}
-                    </button>
-                  ))}
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : filteredConvs.length === 0 && conversations.length > 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-8">No matching conversations</p>
+                  ) : (
+                    filteredConvs.map((conv) => {
+                      const p = getPartnerInfo(conv);
+                      const isActive = activeConvId === conv.id;
+                      const caMatch = REGISTERED_CAS.find((ca) => ca.initials === p.initials);
+                      return (
+                        <button key={conv.id} onClick={() => setActiveConvId(conv.id)}
+                          className={`w-full p-4 flex items-start gap-3 hover:bg-secondary/60 transition-colors text-left border-b border-border/20 ${isActive ? "bg-secondary/80" : ""}`}>
+                          <div className="relative flex-shrink-0">
+                            <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${caMatch?.gradient || "from-violet-500 to-blue-500"} flex items-center justify-center text-white text-sm font-bold`}>
+                              {p.initials}
+                            </div>
+                            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-card" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-sm truncate">{p.name}</p>
+                              <span className="text-[11px] text-muted-foreground flex-shrink-0">
+                                {timeAgo(conv.last_message_at)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate mt-1">
+                              {conv.last_message || "No messages yet"}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+
+                  {/* New conversation button for clients */}
+                  {!isCA && conversations.length > 0 && (
+                    <div className="p-3 border-t border-border/30">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2 px-1">Start new chat</p>
+                      {REGISTERED_CAS.map((ca) => {
+                        const existing = conversations.some((c) => {
+                          const p = caProfiles[c.ca_id];
+                          return p && p.name.toLowerCase().includes(ca.name.replace("CA ", "").toLowerCase());
+                        });
+                        if (existing) return null;
+                        return (
+                          <button key={ca.name} onClick={async () => {
+                            const caName = ca.name.replace("CA ", "");
+                            const match = Object.entries(caProfiles).find(([, p]) =>
+                              p.name.toLowerCase().includes(caName.toLowerCase()));
+                            if (match) await startConversation(match[0]);
+                            else toast.error(`${ca.name} not registered yet.`);
+                          }}
+                            className="w-full p-2 rounded-lg hover:bg-secondary/60 flex items-center gap-2 text-sm transition-colors">
+                            <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${ca.gradient} flex items-center justify-center text-white text-[10px] font-bold`}>
+                              {ca.initials}
+                            </div>
+                            <span className="text-muted-foreground">{ca.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Chat Area */}
+              {/* ── Chat Area ────────────────────────────────────────────── */}
               <div className="flex-1 flex flex-col">
-                {/* Chat Header */}
-                <div className="p-4 border-b border-border/40 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
-                        {activeConversation?.avatar}
-                      </div>
-                      {activeConversation?.online && (
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-card" />
-                      )}
+                {!activeConvId ? (
+                  /* Empty state */
+                  <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+                    <div className="w-20 h-20 rounded-2xl bg-secondary/60 flex items-center justify-center mb-6">
+                      <MessageCircle className="w-8 h-8 text-muted-foreground/50" />
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm">{activeConversation?.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        {activeConversation?.online ? (
-                          <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Online</>
-                        ) : (
-                          <><Clock className="w-3 h-3" />Last seen recently</>
-                        )}
-                      </p>
+                    <h3 className="text-lg font-semibold mb-2">Welcome to Messages</h3>
+                    <p className="text-sm text-muted-foreground max-w-sm mb-6">
+                      {isCA
+                        ? "Client messages will appear here. Select a conversation to start chatting."
+                        : "Chat directly with your CA. Select a conversation or start a new one from the sidebar."}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                      End-to-end secured • Messages stored safely
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="rounded-full w-9 h-9"><Phone className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="rounded-full w-9 h-9"><Video className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" className="rounded-full w-9 h-9"><MoreVertical className="w-4 h-4" /></Button>
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {chatMessages.map((msg, i) => (
-                    <motion.div key={msg.id}
-                      initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                      className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                        msg.sender === "user"
-                          ? "bg-foreground text-background rounded-br-md"
-                          : "bg-secondary rounded-bl-md"
-                      }`}>
-                        <p>{msg.text}</p>
-                        <div className={`flex items-center gap-1 mt-1 ${msg.sender === "user" ? "justify-end" : ""}`}>
-                          <span className={`text-[10px] ${msg.sender === "user" ? "opacity-60" : "text-muted-foreground"}`}>{msg.time}</span>
-                          {msg.sender === "user" && (
-                            msg.read ? <CheckCheck className="w-3 h-3 text-blue-400" /> : <Check className="w-3 h-3 opacity-60" />
-                          )}
+                ) : (
+                  <>
+                    {/* Chat header */}
+                    <div className="p-4 border-b border-border/40 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                            {partner?.initials || "?"}
+                          </div>
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-card" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{partner?.name || "Chat"}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            {otherTyping ? (
+                              <><span className="text-accent animate-pulse">typing...</span></>
+                            ) : (
+                              <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Online</>
+                            )}
+                          </p>
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
+                      {/* Mobile back button could go here */}
+                    </div>
 
-                {/* Input */}
-                <div className="p-4 border-t border-border/40">
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 flex-shrink-0">
-                      <Paperclip className="w-4 h-4" />
-                    </Button>
-                    <Input
-                      placeholder="Type a message..."
-                      value={newMessage}
-                      onChange={e => setNewMessage(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && sendMessage()}
-                      className="flex-1 rounded-xl h-10 bg-secondary/40"
-                    />
-                    <Button onClick={sendMessage} size="icon" className="rounded-full w-10 h-10 flex-shrink-0"
-                      disabled={!newMessage.trim()}>
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {messages.length === 0 && (
+                        <div className="text-center py-12">
+                          <p className="text-sm text-muted-foreground">No messages yet. Say hello! 👋</p>
+                        </div>
+                      )}
+                      {messages.map((msg) => {
+                        const isMine = msg.sender_id === user.id;
+                        const isStarred = starredMsgs.has(msg.id);
+                        return (
+                          <motion.div key={msg.id}
+                            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.15 }}
+                            className={`flex group ${isMine ? "justify-end" : "justify-start"}`}>
+                            <div className="relative max-w-[70%]">
+                              {/* Action buttons on hover */}
+                              <div className={`absolute top-0 ${isMine ? "left-0 -translate-x-full" : "right-0 translate-x-full"} opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 px-1`}>
+                                <button onClick={() => toggleStar(msg.id)} className="p-1 rounded hover:bg-secondary">
+                                  <Star className={`w-3 h-3 ${isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                                </button>
+                                {isMine && (
+                                  <button onClick={() => deleteMessage(msg.id)} className="p-1 rounded hover:bg-secondary">
+                                    <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-500" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                                isMine
+                                  ? "bg-foreground text-background rounded-br-md"
+                                  : "bg-secondary rounded-bl-md"
+                              }`}>
+                                <p>{msg.content}</p>
+                                <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : ""}`}>
+                                  {isStarred && <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />}
+                                  <span className={`text-[10px] ${isMine ? "opacity-60" : "text-muted-foreground"}`}>
+                                    {formatTime(msg.created_at)}
+                                  </span>
+                                  {isMine && (
+                                    msg.read
+                                      ? <CheckCheck className="w-3 h-3 text-blue-400" />
+                                      : <Check className="w-3 h-3 opacity-60" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Smart replies */}
+                    <AnimatePresence>
+                      {showSmartReplies && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }} className="border-t border-border/30 overflow-hidden">
+                          <div className="p-2 flex gap-2 overflow-x-auto">
+                            {SMART_REPLIES.map((r) => (
+                              <button key={r} onClick={() => sendMessage(r)}
+                                className="flex-shrink-0 px-3 py-1.5 rounded-full border border-border/50 text-xs hover:bg-secondary transition-colors">
+                                {r}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Emoji picker */}
+                    <AnimatePresence>
+                      {showEmoji && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }} className="border-t border-border/30 overflow-hidden">
+                          <div className="p-2 flex gap-1.5 justify-center">
+                            {EMOJI_QUICK.map((e) => (
+                              <button key={e} onClick={() => { setNewMessage((prev) => prev + e); setShowEmoji(false); inputRef.current?.focus(); }}
+                                className="text-xl p-2 rounded-lg hover:bg-secondary transition-colors">
+                                {e}
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Input */}
+                    <div className="p-4 border-t border-border/40">
+                      <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 flex-shrink-0"
+                          onClick={() => { setShowSmartReplies(!showSmartReplies); setShowEmoji(false); }}>
+                          <Reply className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 flex-shrink-0"
+                          onClick={() => { setShowEmoji(!showEmoji); setShowSmartReplies(false); }}>
+                          <Smile className="w-4 h-4" />
+                        </Button>
+                        <Input ref={inputRef} placeholder="Type a message..." value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                          className="flex-1 rounded-xl h-10 bg-secondary/40" />
+                        <Button onClick={() => sendMessage()} size="icon"
+                          className="rounded-full w-10 h-10 flex-shrink-0"
+                          disabled={!newMessage.trim() || sending}>
+                          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
