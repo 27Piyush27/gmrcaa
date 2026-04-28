@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Calendar, Clock, Video, Phone, MapPin, ArrowLeft, CheckCircle, Loader2, CalendarDays } from "lucide-react";
+import { Calendar, Clock, Video, Phone, MapPin, ArrowLeft, CheckCircle, Loader2, CalendarDays, ExternalLink, Download } from "lucide-react";
+import { buildGoogleCalendarUrl, downloadIcsFile } from "@/lib/googleCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,15 @@ export default function Appointments() {
   };
 
   if (booked) {
+    const gcalUrl = buildGoogleCalendarUrl({
+      date: formData.date,
+      time: formData.time,
+      type: formData.type,
+      topic: formData.topic,
+      notes: formData.notes,
+      userName: profile?.name || "",
+    });
+
     return (
       <PageTransition>
         <div className="min-h-screen flex items-center justify-center px-6">
@@ -98,11 +108,43 @@ export default function Appointments() {
             <p className="text-muted-foreground mb-2">
               <strong>{new Date(formData.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })}</strong> at <strong>{formData.time}</strong>
             </p>
-            <p className="text-muted-foreground text-sm mb-8">
+            <p className="text-muted-foreground text-sm mb-6">
               {formData.type === "video" ? "You'll receive a Google Meet link via email" :
                formData.type === "phone" ? "Our CA will call you at the scheduled time" :
                "Please visit our office in Gurgaon"}
             </p>
+
+            {/* Google Calendar Integration */}
+            <div className="bg-secondary/60 rounded-xl p-5 mb-6 border border-border/40">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">Add to Calendar</p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button asChild variant="outline" className="rounded-xl gap-2 h-10">
+                  <a href={gcalUrl} target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                      <path d="M19.5 3h-3V1.5h-1.5V3h-6V1.5H7.5V3h-3C3.675 3 3 3.675 3 4.5v15c0 .825.675 1.5 1.5 1.5h15c.825 0 1.5-.675 1.5-1.5v-15c0-.825-.675-1.5-1.5-1.5zm0 16.5h-15V8h15v11.5zM7 10h2.5v2.5H7V10zm4.25 0h2.5v2.5h-2.5V10zM15.5 10H18v2.5h-2.5V10z"/>
+                    </svg>
+                    Google Calendar
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </Button>
+                <Button variant="outline" className="rounded-xl gap-2 h-10"
+                  onClick={() => {
+                    downloadIcsFile({
+                      date: formData.date,
+                      time: formData.time,
+                      type: formData.type,
+                      topic: formData.topic,
+                      notes: formData.notes,
+                      userName: profile?.name || "",
+                    });
+                    toast.success("Calendar file downloaded!");
+                  }}>
+                  <Download className="w-4 h-4" />
+                  Download .ics
+                </Button>
+              </div>
+            </div>
+
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => navigate("/dashboard")} className="rounded-xl">
                 Go to Dashboard

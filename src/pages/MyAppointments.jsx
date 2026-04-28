@@ -7,8 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   CalendarDays, Clock, Video, Phone, MapPin, ArrowLeft,
-  Loader2, XCircle, CheckCircle, Calendar, Plus, Filter
+  Loader2, XCircle, CheckCircle, Calendar, Plus, Filter, ExternalLink, Download
 } from "lucide-react";
+import { buildGoogleCalendarUrl, downloadIcsFile } from "@/lib/googleCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -218,16 +219,32 @@ export default function MyAppointments() {
                             )}
                           </div>
 
-                          {/* Cancel button */}
+                          {/* Actions */}
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {(appt.status === "pending" || appt.status === "confirmed") && (
-                              <Button size="sm" variant="outline"
-                                className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                disabled={isCancelling}
-                                onClick={() => handleCancel(appt.id)}>
-                                {isCancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                                Cancel
-                              </Button>
+                              <>
+                                <Button size="sm" variant="outline" asChild
+                                  className="gap-1.5 text-xs h-8 rounded-lg">
+                                  <a href={buildGoogleCalendarUrl({
+                                    date: appt.date,
+                                    time: appt.time_slot,
+                                    type: appt.type,
+                                    topic: appt.topic,
+                                    notes: appt.notes || "",
+                                  })} target="_blank" rel="noopener noreferrer">
+                                    <CalendarDays className="w-3.5 h-3.5" />
+                                    Add to Calendar
+                                    <ExternalLink className="w-2.5 h-2.5" />
+                                  </a>
+                                </Button>
+                                <Button size="sm" variant="outline"
+                                  className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 rounded-lg"
+                                  disabled={isCancelling}
+                                  onClick={() => handleCancel(appt.id)}>
+                                  {isCancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                                  Cancel
+                                </Button>
+                              </>
                             )}
                             {appt.status === "confirmed" && (
                               <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
