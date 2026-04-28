@@ -7,11 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   CalendarDays, Clock, Video, Phone, MapPin, ArrowLeft,
-  Loader2, XCircle, CheckCircle, Calendar, Plus, Filter, ExternalLink, Download
+  Loader2, XCircle, CheckCircle, Calendar, Plus, ExternalLink
 } from "lucide-react";
-import { buildGoogleCalendarUrl, downloadIcsFile } from "@/lib/googleCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -30,7 +30,7 @@ const STATUS_STYLES = {
   completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200",
 };
 
-const TOPIC_LABELS = {
+const SERVICE_LABELS = {
   "income-tax": "Income Tax Filing",
   "gst":        "GST Registration/Filing",
   "company":    "Company Incorporation",
@@ -38,6 +38,21 @@ const TOPIC_LABELS = {
   "advisory":   "Tax Advisory",
   "other":      "Other",
 };
+
+/**
+ * Extract date string and time string from an ISO timestamp
+ */
+function parseAppointmentDate(isoStr) {
+  const dt = new Date(isoStr);
+  const dateStr = dt.toISOString().split("T")[0]; // "YYYY-MM-DD"
+  let hours = dt.getHours();
+  const minutes = dt.getMinutes();
+  const period = hours >= 12 ? "PM" : "AM";
+  if (hours > 12) hours -= 12;
+  if (hours === 0) hours = 12;
+  const timeStr = `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
+  return { dateStr, timeStr, dateObj: dt };
+}
 
 export default function MyAppointments() {
   const navigate = useNavigate();
@@ -58,9 +73,9 @@ export default function MyAppointments() {
     try {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id, date, time_slot, type, topic, notes, status, created_at")
+        .select("id, appointment_date, meeting_type, duration_minutes, service_id, notes, status, created_at")
         .eq("user_id", user.id)
-        .order("date", { ascending: false });
+        .order("appointment_date", { ascending: false });
       if (error) throw error;
       setAppointments(data || []);
     } catch (err) {
@@ -169,12 +184,13 @@ export default function MyAppointments() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               transition={{ duration: 0.4, ease: easing }} className="space-y-3">
               {filtered.map((appt, i) => {
-                const TypeIcon = TYPE_ICONS[appt.type]?.icon || CalendarDays;
-                const typeLabel = TYPE_ICONS[appt.type]?.label || appt.type;
+                const { dateStr, timeStr, dateObj } = parseAppointmentDate(appt.appointment_date);
+                const TypeIcon = TYPE_ICONS[appt.meeting_type]?.icon || CalendarDays;
+                const typeLabel = TYPE_ICONS[appt.meeting_type]?.label || appt.meeting_type;
                 const statusStyle = STATUS_STYLES[appt.status] || STATUS_STYLES.pending;
                 const isCancelling = cancelling === appt.id;
-                const apptDate = new Date(appt.date + "T00:00:00");
-                const isPast = apptDate < new Date(new Date().toDateString());
+                const isPast = dateObj < new Date(new Date().toDateString());
+                const serviceLabel = SERVICE_LABELS[appt.service_id] || appt.service_id || "Consultation";
 
                 return (
                   <motion.div key={appt.id}
@@ -195,18 +211,17 @@ export default function MyAppointments() {
                               )}
                             </div>
 
-                            <p className="text-sm font-medium text-foreground">
-                              {TOPIC_LABELS[appt.topic] || appt.topic}
-                            </p>
+                            <p className="text-sm font-medium text-foreground">{serviceLabel}</p>
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {apptDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                                {dateObj.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                {appt.time_slot}
+                                {timeStr}
+                                {appt.duration_minutes && <span className="text-muted-foreground/60">({appt.duration_minutes} min)</span>}
                               </span>
                               <span className="flex items-center gap-1">
                                 <TypeIcon className="w-3.5 h-3.5" />
@@ -226,10 +241,10 @@ export default function MyAppointments() {
                                 <Button size="sm" variant="outline" asChild
                                   className="gap-1.5 text-xs h-8 rounded-lg">
                                   <a href={buildGoogleCalendarUrl({
-                                    date: appt.date,
-                                    time: appt.time_slot,
-                                    type: appt.type,
-                                    topic: appt.topic,
+                                    date: dateStr,
+                                    time: timeStr,
+                                    type: appt.meeting_type,
+                                    topic: appt.service_id || "consultation",
                                     notes: appt.notes || "",
                                   })} target="_blank" rel="noopener noreferrer">
                                     <CalendarDays className="w-3.5 h-3.5" />

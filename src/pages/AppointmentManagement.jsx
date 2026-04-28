@@ -60,8 +60,8 @@ export default function AppointmentManagement() {
     try {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id, user_id, date, time_slot, type, topic, notes, status, created_at")
-        .order("date", { ascending: true });
+        .select("id, user_id, appointment_date, meeting_type, duration_minutes, service_id, notes, status, created_at")
+        .order("appointment_date", { ascending: true });
 
       if (error) throw error;
 
@@ -172,12 +172,17 @@ export default function AppointmentManagement() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, ease: easing }}
               className="space-y-3">
               {filtered.map((appt, i) => {
-                const TypeIcon = TYPE_ICONS[appt.type]?.icon || CalendarDays;
-                const typeLabel = TYPE_ICONS[appt.type]?.label || appt.type;
+                const TypeIcon = TYPE_ICONS[appt.meeting_type]?.icon || CalendarDays;
+                const typeLabel = TYPE_ICONS[appt.meeting_type]?.label || appt.meeting_type;
                 const statusStyle = STATUS_STYLES[appt.status] || STATUS_STYLES.pending;
                 const isUpdating = updating === appt.id;
-                const apptDate = new Date(appt.date + "T00:00:00");
+                const apptDate = new Date(appt.appointment_date);
                 const isPast = apptDate < new Date(new Date().toDateString());
+                const hours = apptDate.getHours();
+                const mins = apptDate.getMinutes();
+                const period = hours >= 12 ? 'PM' : 'AM';
+                const h12 = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+                const timeStr = `${h12}:${String(mins).padStart(2,'0')} ${period}`;
 
                 return (
                   <motion.div key={appt.id}
@@ -214,7 +219,7 @@ export default function AppointmentManagement() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3.5 h-3.5" />
-                                {appt.time_slot}
+                                {timeStr}
                               </span>
                               <span className="flex items-center gap-1">
                                 <TypeIcon className="w-3.5 h-3.5" />
@@ -223,7 +228,7 @@ export default function AppointmentManagement() {
                             </div>
 
                             <p className="text-sm font-medium text-foreground">
-                              {TOPIC_LABELS[appt.topic] || appt.topic}
+                              {TOPIC_LABELS[appt.service_id] || appt.service_id || 'Consultation'}
                             </p>
                             {appt.notes && (
                               <p className="text-xs text-muted-foreground italic">"{appt.notes}"</p>

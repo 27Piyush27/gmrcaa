@@ -4,15 +4,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Calendar, Clock, Video, Phone, MapPin, ArrowLeft, CheckCircle, Loader2, CalendarDays, ExternalLink, Download } from "lucide-react";
-import { buildGoogleCalendarUrl, downloadIcsFile } from "@/lib/googleCalendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
+import { buildGoogleCalendarUrl, downloadIcsFile } from "@/lib/googleCalendar";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -29,6 +28,28 @@ const CONSULTATION_TYPES = [
   { value: "in_person", label: "In Person", icon: MapPin, desc: "Visit our office" },
 ];
 
+const SERVICE_OPTIONS = [
+  { value: "income-tax", label: "Income Tax Filing" },
+  { value: "gst", label: "GST Registration/Filing" },
+  { value: "company", label: "Company Incorporation" },
+  { value: "audit", label: "Audit & Compliance" },
+  { value: "advisory", label: "Tax Advisory" },
+  { value: "other", label: "Other" },
+];
+
+/**
+ * Convert date string "YYYY-MM-DD" + time "2:30 PM" → ISO timestamp string
+ */
+function buildTimestamp(dateStr, timeStr) {
+  const [time, period] = timeStr.split(" ");
+  let [hours, minutes] = time.split(":").map(Number);
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  const dt = new Date(dateStr);
+  dt.setHours(hours, minutes, 0, 0);
+  return dt.toISOString();
+}
+
 export default function Appointments() {
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
@@ -37,8 +58,8 @@ export default function Appointments() {
   const [formData, setFormData] = useState({
     date: "",
     time: "",
-    type: "video",
-    topic: "",
+    meetingType: "video",
+    serviceId: "",
     notes: ""
   });
 
@@ -60,18 +81,19 @@ export default function Appointments() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) { toast.error("Please login first"); navigate("/auth"); return; }
-    if (!formData.date || !formData.time || !formData.topic) {
+    if (!formData.date || !formData.time || !formData.serviceId) {
       toast.error("Please fill in all required fields");
       return;
     }
     setSubmitting(true);
     try {
+      const appointmentDate = buildTimestamp(formData.date, formData.time);
       const { error } = await supabase.from("appointments").insert({
         user_id: user.id,
-        date: formData.date,
-        time_slot: formData.time,
-        type: formData.type,
-        topic: formData.topic,
+        appointment_date: appointmentDate,
+        meeting_type: formData.meetingType,
+        duration_minutes: 30,
+        service_id: formData.serviceId,
         notes: formData.notes || null,
         status: "pending",
       });
@@ -80,18 +102,19 @@ export default function Appointments() {
       toast.success("Appointment booked successfully!");
     } catch (err) {
       console.error("Appointment booking error:", err);
-      toast.error("Failed to book appointment. Please try again.");
+      toast.error(err?.message || "Failed to book appointment. Please try again.");
     } finally {
       setSubmitting(false);
     }
   };
 
   if (booked) {
+    const topicLabel = SERVICE_OPTIONS.find(s => s.value === formData.serviceId)?.label || formData.serviceId;
     const gcalUrl = buildGoogleCalendarUrl({
       date: formData.date,
       time: formData.time,
-      type: formData.type,
-      topic: formData.topic,
+      type: formData.meetingType,
+      topic: formData.serviceId,
       notes: formData.notes,
       userName: profile?.name || "",
     });
@@ -108,9 +131,10 @@ export default function Appointments() {
             <p className="text-muted-foreground mb-2">
               <strong>{new Date(formData.date + "T00:00:00").toLocaleDateString("en-IN", { weekday: "long", month: "long", day: "numeric" })}</strong> at <strong>{formData.time}</strong>
             </p>
+            <p className="text-muted-foreground text-sm mb-2">{topicLabel}</p>
             <p className="text-muted-foreground text-sm mb-6">
-              {formData.type === "video" ? "You'll receive a Google Meet link via email" :
-               formData.type === "phone" ? "Our CA will call you at the scheduled time" :
+              {formData.meetingType === "video" ? "You'll receive a Google Meet link via email" :
+               formData.meetingType === "phone" ? "Our CA will call you at the scheduled time" :
                "Please visit our office in Gurgaon"}
             </p>
 
@@ -130,12 +154,9 @@ export default function Appointments() {
                 <Button variant="outline" className="rounded-xl gap-2 h-10"
                   onClick={() => {
                     downloadIcsFile({
-                      date: formData.date,
-                      time: formData.time,
-                      type: formData.type,
-                      topic: formData.topic,
-                      notes: formData.notes,
-                      userName: profile?.name || "",
+                      date: formData.date, time: formData.time,
+                      type: formData.meetingType, topic: formData.serviceId,
+                      notes: formData.notes, userName: profile?.name || "",
                     });
                     toast.success("Calendar file downloaded!");
                   }}>
@@ -149,7 +170,7 @@ export default function Appointments() {
               <Button variant="outline" onClick={() => navigate("/dashboard")} className="rounded-xl">
                 Go to Dashboard
               </Button>
-              <Button onClick={() => { setBooked(false); setFormData({ date: "", time: "", type: "video", topic: "", notes: "" }); }}
+              <Button onClick={() => { setBooked(false); setFormData({ date: "", time: "", meetingType: "video", serviceId: "", notes: "" }); }}
                 className="rounded-xl">
                 Book Another
               </Button>
@@ -197,9 +218,9 @@ export default function Appointments() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {CONSULTATION_TYPES.map(type => {
                       const Icon = type.icon;
-                      const isActive = formData.type === type.value;
+                      const isActive = formData.meetingType === type.value;
                       return (
-                        <button key={type.value} type="button" onClick={() => handleChange("type", type.value)}
+                        <button key={type.value} type="button" onClick={() => handleChange("meetingType", type.value)}
                           className={`flex flex-col items-center gap-2 p-5 rounded-xl border-2 transition-all ${
                             isActive ? "border-foreground bg-foreground/5" : "border-border/60 hover:border-foreground/30"
                           }`}>
@@ -267,16 +288,13 @@ export default function Appointments() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Topic *</Label>
-                    <Select value={formData.topic} onValueChange={v => handleChange("topic", v)}>
+                    <Label>Service / Topic *</Label>
+                    <Select value={formData.serviceId} onValueChange={v => handleChange("serviceId", v)}>
                       <SelectTrigger className="premium-input"><SelectValue placeholder="What do you need help with?" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="income-tax">Income Tax Filing</SelectItem>
-                        <SelectItem value="gst">GST Registration/Filing</SelectItem>
-                        <SelectItem value="company">Company Incorporation</SelectItem>
-                        <SelectItem value="audit">Audit & Compliance</SelectItem>
-                        <SelectItem value="advisory">Tax Advisory</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {SERVICE_OPTIONS.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

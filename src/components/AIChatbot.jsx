@@ -434,8 +434,10 @@ export function AIChatbot() {
     if (!user) { navigate("/auth"); return; }
     try {
       const { error } = await supabase.from("appointments").insert({
-        user_id: user.id, date: formData.date, time_slot: formData.time,
-        type: formData.type, topic: formData.topic, notes: formData.notes || null, status: "pending",
+        user_id: user.id,
+        appointment_date: new Date(`${formData.date}T${(() => { const [t, p] = formData.time.split(' '); let [h, m] = t.split(':').map(Number); if (p === 'PM' && h !== 12) h += 12; if (p === 'AM' && h === 12) h = 0; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; })()}`).toISOString(),
+        meeting_type: formData.type, duration_minutes: 30, service_id: formData.topic || 'advisory',
+        notes: formData.notes || null, status: "pending",
       });
       if (error) throw error;
       setShowBookingForm(false);
