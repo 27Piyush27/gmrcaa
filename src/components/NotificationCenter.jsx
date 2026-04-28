@@ -148,7 +148,7 @@ export function NotificationCenter() {
                         </div>
                         <div className="flex-1 min-w-0" onClick={() => markAsRead(notification.id)}>
                           <p className={`text-xs leading-snug ${!notification.read ? "font-medium" : "text-muted-foreground"}`}>
-                            {notification.message}
+                            {notification.body}
                           </p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(notification.created_at)}</p>
                         </div>
