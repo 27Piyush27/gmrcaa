@@ -15,6 +15,7 @@ import {
 "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { notifyStaff } from "@/lib/notifications";
 
 
 
@@ -96,6 +97,11 @@ export function ClientDocumentUpload({ serviceRequestId, status }) {
       if (insertError) throw insertError;
 
       toast.success("Document uploaded successfully");
+      notifyStaff(
+        "New Document Uploaded",
+        `A client uploaded ${file.name}.`,
+        "document_uploaded"
+      );
       setNote("");
       fetchDocuments();
     } catch (error) {

@@ -12,12 +12,8 @@ const easing = [0.22, 1, 0.36, 1];
 
 const clientTools = [
   { icon: Calculator, title: "AI Tax Optimizer", desc: "Compare Old vs New regime with 3-year projections and personalized deduction strategies.", link: "/ai-tax-optimizer", gradient: "from-blue-500 to-cyan-500", tag: "Tax" },
-  { icon: FileText, title: "Smart Document Analyzer", desc: "AI-powered document classification, field extraction, and compliance validation.", link: "/smart-docs", gradient: "from-violet-500 to-purple-500", tag: "Documents" },
-  { icon: TrendingUp, title: "Financial Insights", desc: "Linear regression forecasting, Z-score anomaly detection, and automated reporting.", link: "/financial-insights", gradient: "from-emerald-500 to-green-500", tag: "Analytics" },
   { icon: Shield, title: "Risk Assessment", desc: "Multi-factor compliance scoring with AI-driven remediation plans and trend tracking.", link: "/risk-assessment", gradient: "from-amber-500 to-orange-500", tag: "Compliance" },
   { icon: Activity, title: "Cash Flow Forecaster", desc: "Monte Carlo simulation with 500 scenarios for probabilistic financial projections.", link: "/cash-flow-forecast", gradient: "from-cyan-500 to-blue-500", tag: "Forecast", isNew: true },
-  { icon: Receipt, title: "Smart Invoice Scanner", desc: "AI invoice extraction, auto-categorization, GST reconciliation, and ITC tracking.", link: "/invoice-scanner", gradient: "from-pink-500 to-rose-500", tag: "Invoices", isNew: true },
-  { icon: Search, title: "AI Deduction Finder", desc: "ML analysis across 15+ tax sections to discover missed deductions and savings.", link: "/deduction-finder", gradient: "from-indigo-500 to-violet-500", tag: "Tax", isNew: true },
 ];
 
 const adminTools = [

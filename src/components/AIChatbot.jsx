@@ -3,7 +3,7 @@ import {
   MessageSquare, X, Send, Trash2, ArrowRight, Mic, MicOff,
   Image as ImageIcon, Globe, Calendar, Calculator, Bell, Sparkles,
   Loader2, Copy, Check, RefreshCw, ThumbsUp, ThumbsDown,
-  Moon, Sun, History, ChevronLeft, Search, FileText, Paperclip
+  Moon, Sun, History, ChevronLeft, Search, FileText, Paperclip, CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+import { servicesData } from "@/lib/servicesData";
+import { resolveServiceIdForDb } from "@/lib/serviceIdResolver";
+import { notifyStaff } from "@/lib/notifications";
 
 // ── constants ──────────────────────────────────────────────────────────
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ca-chatbot`;
@@ -30,6 +34,19 @@ const QUICK_OPTIONS_HI = [
   "मुझे GST के लिए रजिस्ट्रेशन करना है",
   "मैं एक नई कंपनी शुरू कर रहा हूँ",
   "आपकी क्या सेवाएँ हैं?",
+];
+
+const STAFF_QUICK_OPTIONS_EN = [
+  "Show me my pending tasks",
+  "What are today's appointments?",
+  "Navigate to client dashboard",
+  "How do I update a service request?",
+];
+const STAFF_QUICK_OPTIONS_HI = [
+  "मेरे लंबित कार्य दिखाएं",
+  "आज की अपॉइंटमेंट क्या हैं?",
+  "क्लाइंट डैशबोर्ड पर जाएं",
+  "सेवा अनुरोध को कैसे अपडेट करें?",
 ];
 
 const TAX_DEADLINES = [
@@ -148,15 +165,23 @@ export function AIChatbot() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showTaxLookup, setShowTaxLookup] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  
+  const [serviceRequests, setServiceRequests] = useState([]);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharingLoading, setSharingLoading] = useState(false);
+  const [selectedReqId, setSelectedReqId] = useState("");
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
-  const { user } = useAuth();
+  const { user, profile, role } = useAuth();
   const navigate = useNavigate();
+  const isStaff = role === "admin" || role === "ca";
 
   const isHindi = lang === "hi";
-  const quickOptions = isHindi ? QUICK_OPTIONS_HI : QUICK_OPTIONS_EN;
+  const quickOptions = isStaff 
+    ? (isHindi ? STAFF_QUICK_OPTIONS_HI : STAFF_QUICK_OPTIONS_EN)
+    : (isHindi ? QUICK_OPTIONS_HI : QUICK_OPTIONS_EN);
   const upcomingDeadlines = getUpcomingDeadlines(lang);
 
   // Resolve theme class
@@ -167,6 +192,63 @@ export function AIChatbot() {
       setDeadlineBadge(true);
     }
   }, [isOpen, upcomingDeadlines.length, messages.length]);
+
+  useEffect(() => {
+    if (user && isOpen) {
+      supabase.from("service_requests")
+        .select("id, services(name), status")
+        .eq("user_id", user.id)
+        .neq("status", "completed")
+        .then(({ data }) => setServiceRequests(data || []));
+    }
+  }, [user, isOpen]);
+
+  const handleRequestService = async (serviceId) => {
+    if (!user) {
+      toast.error(isHindi ? "सेवा का अनुरोध करने के लिए कृपया लॉगिन करें" : "Please login to request a service");
+      navigate("/auth", { state: { redirectTo: `/services` } });
+      return;
+    }
+    try {
+      const selectedService = servicesData.find((s) => s.id === serviceId);
+      if (!selectedService) return;
+      
+      const backendServiceId = selectedService.backendServiceId ?? serviceId;
+      const serviceIdForDb = await resolveServiceIdForDb(backendServiceId, selectedService.title);
+      
+      const { data: existing } = await supabase
+        .from("service_requests")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("service_id", serviceIdForDb)
+        .in("status", ["pending", "in_progress", "completed"]);
+
+      if (existing?.length > 0) {
+        toast.info(isHindi ? "आपके पास पहले से ही इस सेवा के लिए एक सक्रिय अनुरोध है।" : "You already have an active request for this service.");
+        navigate("/dashboard");
+        return;
+      }
+      
+      const { error } = await supabase.from("service_requests").insert({
+        user_id: user.id,
+        service_id: serviceIdForDb,
+        status: "pending",
+        progress: 0
+      });
+      
+      if (error) throw error;
+      toast.success(isHindi ? "सेवा का सफलतापूर्वक अनुरोध किया गया!" : "Service requested successfully! Track progress on your dashboard.");
+      navigate("/dashboard");
+      notifyStaff(
+        "New Service Request",
+        `A client requested the ${selectedService.title} service via the Chatbot.`,
+        "service_update"
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error(isHindi ? "सेवा का अनुरोध करने में विफल।" : "Failed to request service.");
+    }
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -207,16 +289,22 @@ export function AIChatbot() {
     if (!files.length) return;
     const newFiles = [];
     for (const file of files.slice(0, 3 - pendingFiles.length)) {
-      if (!file.type.startsWith("image/")) {
-        alert(isHindi ? "कृपया एक इमेज फ़ाइल चुनें" : "Please select an image file");
-        continue;
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        alert(isHindi ? "फ़ाइल 10MB से छोटी होनी चाहिए" : "File must be smaller than 10MB");
+      if (file.size > 20 * 1024 * 1024) {
+        alert(isHindi ? "फ़ाइल 20MB से छोटी होनी चाहिए" : "File must be smaller than 20MB");
         continue;
       }
       const base64 = await fileToBase64(file);
-      newFiles.push({ file, preview: URL.createObjectURL(file), base64, mimeType: file.type });
+      const isImage = file.type.startsWith("image/");
+      const isPdf = file.type === "application/pdf";
+      const isSupportedByAI = isImage || isPdf;
+      newFiles.push({
+        file,
+        preview: isImage ? URL.createObjectURL(file) : null,
+        base64,
+        mimeType: file.type || "application/octet-stream",
+        isPdf,
+        isSupportedByAI
+      });
     }
     setPendingFiles((prev) => [...prev, ...newFiles].slice(0, 3));
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -232,6 +320,7 @@ export function AIChatbot() {
   const clearPendingFiles = () => {
     pendingFiles.forEach((f) => f.preview && URL.revokeObjectURL(f.preview));
     setPendingFiles([]);
+    setShowShareModal(false);
   };
 
   // ── Chat History ──────────────────────────────────────────────────
@@ -321,8 +410,14 @@ export function AIChatbot() {
         base64: pendingFiles[0].base64,
         mimeType: pendingFiles[0].mimeType,
         preview: pendingFiles[0].preview,
+        isSupportedByAI: pendingFiles[0].isSupportedByAI
       };
-      userMsg.allFiles = pendingFiles.map((f) => ({ preview: f.preview, name: f.file.name }));
+      userMsg.allFiles = pendingFiles.map((f) => ({ preview: f.preview, name: f.file.name, isPdf: f.isPdf }));
+      
+      const hasSupportedFiles = pendingFiles.some(f => f.isSupportedByAI);
+      if (!hasSupportedFiles && !text.trim()) {
+        userMsg.content = isHindi ? "मैंने कुछ दस्तावेज़ साझा किए हैं।" : "I have shared some documents.";
+      }
     }
 
     const updatedMessages = isRegen ? [...messages, userMsg] : [...messages, userMsg];
@@ -335,30 +430,71 @@ export function AIChatbot() {
     let convId = conversationId;
     if (user) convId = await ensureConversation();
 
+    // Upload files to Supabase Storage so CAs can view them later
+    if (user && pendingFiles.length > 0) {
+      for (const pending of pendingFiles) {
+        try {
+          const safeName = pending.file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const filePath = `${user.id}/chatbot/${Date.now()}_${safeName}`;
+          await supabase.storage
+            .from("client-uploads")
+            .upload(filePath, pending.file, { cacheControl: "3600", upsert: false });
+        } catch (err) {
+          console.error("Failed to upload chatbot file:", err);
+        }
+      }
+    }
+
     let assistantContent = "";
 
     try {
-      const apiMessages = updatedMessages.map((m) => {
-        const msg = { role: m.role, content: m.content };
-        if (m.image) msg.image = { base64: m.image.base64, mimeType: m.image.mimeType };
-        return msg;
+      // Convert our messages to Gemini format for full multimodal support
+      const geminiContents = updatedMessages.map((m) => {
+        const parts = [];
+        if (m.content) {
+          parts.push({ text: m.content });
+        }
+        if (m.image && m.image.isSupportedByAI) {
+           const base64Data = m.image.base64.split(',')[1] || m.image.base64;
+           parts.push({
+             inlineData: {
+               mimeType: m.image.mimeType,
+               data: base64Data
+             }
+           });
+        }
+        if (parts.length === 0) {
+          parts.push({ text: " " });
+        }
+        return {
+          role: m.role === "assistant" ? "model" : "user",
+          parts: parts
+        };
       });
 
-      const resp = await fetch(CHAT_URL, {
+      const systemPrompt = isStaff 
+        ? `You are an expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage their platform, clients, and workflow. Use markdown for formatting. If the user wants to navigate to an admin feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`
+        : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
+
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!GEMINI_KEY) throw new Error("Gemini API key is not configured in .env file");
+
+      const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
+
+      const resp = await fetch(URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${SUPABASE_CLIENT_KEY}`,
-        },
-        body: JSON.stringify({ messages: apiMessages, conversationId: convId, lang }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          contents: geminiContents,
+          systemInstruction: { role: "user", parts: [{ text: systemPrompt }] }
+        }),
       });
 
       if (!resp.ok) {
         const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to get response");
+        throw new Error(errData.error?.message || "Failed to get response from Gemini");
       }
-      if (!resp.body) throw new Error("No response body");
-
+      
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -382,13 +518,14 @@ export function AIChatbot() {
           let line = buffer.slice(0, newlineIndex);
           buffer = buffer.slice(newlineIndex + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
+          if (line.trim() === "") continue;
           if (!line.startsWith("data: ")) continue;
+          
           const jsonStr = line.slice(6).trim();
           if (jsonStr === "[DONE]") break;
           try {
             const parsed = JSON.parse(jsonStr);
-            const delta = parsed.choices?.[0]?.delta?.content;
+            const delta = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (delta) { assistantContent += delta; upsertAssistant(assistantContent); }
           } catch { buffer = line + "\n" + buffer; break; }
         }
@@ -398,6 +535,16 @@ export function AIChatbot() {
         setShowBookingForm(true);
         assistantContent = assistantContent.replace(/\[SHOW_BOOKING_FORM\]/g, "");
         upsertAssistant(assistantContent);
+      }
+
+      // Check for navigation commands
+      const navMatch = assistantContent.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-]+)\]/);
+      if (navMatch) {
+        const route = navMatch[1];
+        assistantContent = assistantContent.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-]+\]/g, "");
+        upsertAssistant(assistantContent);
+        toast.success(`Navigating to ${route.replace('/', '')}...`);
+        setTimeout(() => navigate(route), 1500); // 1.5s delay so user can read message
       }
 
       // Generate smart suggestions
@@ -436,7 +583,8 @@ export function AIChatbot() {
       const { error } = await supabase.from("appointments").insert({
         user_id: user.id,
         appointment_date: new Date(`${formData.date}T${(() => { const [t, p] = formData.time.split(' '); let [h, m] = t.split(':').map(Number); if (p === 'PM' && h !== 12) h += 12; if (p === 'AM' && h === 12) h = 0; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; })()}`).toISOString(),
-        meeting_type: formData.type, duration_minutes: 30, service_id: formData.topic || 'advisory',
+        time_slot: formData.time.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1').trim(),
+        meeting_type: formData.type, duration_minutes: 30, service_type: formData.topic || 'Tax Consultation',
         notes: formData.notes || null, status: "pending",
       });
       if (error) throw error;
@@ -447,6 +595,11 @@ export function AIChatbot() {
           ? `✅ आपकी अपॉइंटमेंट **${formData.date}** को **${formData.time}** पर बुक हो गई है!`
           : `✅ Your appointment has been booked for **${formData.date}** at **${formData.time}**! We'll confirm shortly.`,
       }]);
+      notifyStaff(
+        "Chatbot Appointment Booked",
+        `A client booked a ${formData.type} appointment via the Chatbot for ${formData.date} at ${formData.time}.`,
+        "appointment"
+      );
     } catch {
       setMessages((prev) => [...prev, {
         role: "assistant",
@@ -457,8 +610,24 @@ export function AIChatbot() {
 
   // ── Render markdown ───────────────────────────────────────────────
   const renderContent = (content) => {
-    const serviceRegex = /\[SERVICE:([\w-]+)\]/g;
-    const parts = content.split(serviceRegex);
+    const combinedRegex = /\[(SERVICE|REQUEST_SERVICE):([\w-]+)\]/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    
+    combinedRegex.lastIndex = 0;
+
+    while ((match = combinedRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
+      }
+      parts.push({ type: match[1], id: match[2] });
+      lastIndex = combinedRegex.lastIndex;
+    }
+    if (lastIndex < content.length) {
+      parts.push({ type: 'text', content: content.slice(lastIndex) });
+    }
+
     const mdComponents = {
       p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
       ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
@@ -466,14 +635,27 @@ export function AIChatbot() {
       li: ({ children }) => <li className="mb-1">{children}</li>,
       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
     };
-    if (parts.length === 1) return <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>;
+
+    if (parts.length === 1 && parts[0].type === 'text') {
+      return <ReactMarkdown components={mdComponents}>{content}</ReactMarkdown>;
+    }
+
     return parts.map((part, i) => {
-      if (i % 2 === 1) return (
-        <Button key={i} size="sm" variant="accent" className="my-1 text-xs" onClick={() => navigate(`/services/${part}`)}>
-          {isHindi ? "सेवा देखें" : "View Service"} <ArrowRight className="ml-1 h-3 w-3" />
-        </Button>
-      );
-      return part ? <ReactMarkdown key={i} components={mdComponents}>{part}</ReactMarkdown> : null;
+      if (part.type === 'SERVICE') {
+        return (
+          <Button key={i} size="sm" variant="accent" className="my-1 text-xs" onClick={() => navigate(`/services/${part.id}`)}>
+            {isHindi ? "सेवा देखें" : "View Service"} <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        );
+      }
+      if (part.type === 'REQUEST_SERVICE') {
+        return (
+          <Button key={i} size="sm" className="my-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all active:scale-95" onClick={() => handleRequestService(part.id)}>
+            {isHindi ? "सेवा का अनुरोध करें" : "Request Service"} <CheckCircle className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        );
+      }
+      return part.content ? <ReactMarkdown key={i} components={mdComponents}>{part.content}</ReactMarkdown> : null;
     });
   };
 
@@ -587,6 +769,67 @@ export function AIChatbot() {
         )}
       </div>
     );
+  };
+
+  const ShareModal = () => (
+    <div className="mx-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
+      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+        <FileText className="h-3.5 w-3.5 text-primary" />
+        {isHindi ? "CA को दस्तावेज़ भेजें" : "Share Document with CA"}
+      </p>
+      <select className="w-full text-xs p-1.5 rounded-md border border-border/50 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+        value={selectedReqId} onChange={(e) => setSelectedReqId(e.target.value)}>
+        <option value="">{isHindi ? "सेवा चुनें" : "Select Service"}</option>
+        {serviceRequests.map((req) => (
+          <option key={req.id} value={req.id}>{req.services?.name}</option>
+        ))}
+      </select>
+      <div className="flex gap-2">
+        <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleShareToCA} disabled={!selectedReqId || sharingLoading}>
+          {sharingLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : (isHindi ? "शेयर करें" : "Share with CA")}
+        </Button>
+        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowShareModal(false)}>
+          {isHindi ? "रद्द करें" : "Cancel"}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const handleShareToCA = async () => {
+    if (!user || !pendingFiles.length || !selectedReqId) return;
+    setSharingLoading(true);
+    let successCount = 0;
+    try {
+      for (const pending of pendingFiles) {
+        const file = pending.file;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${selectedReqId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("client-uploads")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase.from("client_documents").insert({
+          user_id: user.id,
+          service_request_id: selectedReqId,
+          file_name: file.name,
+          file_path: fileName,
+          file_size: file.size,
+          mime_type: file.type,
+        });
+        if (dbError) throw dbError;
+        successCount++;
+      }
+      toast.success(isHindi ? `${successCount} दस्तावेज़ CA को भेजे गए` : `${successCount} document(s) shared with CA!`);
+      setShowShareModal(false);
+      clearPendingFiles();
+    } catch (err) {
+      console.error("Share document error:", err);
+      toast.error(isHindi ? "दस्तावेज़ शेयर करने में त्रुटि" : "Failed to share documents");
+    } finally {
+      setSharingLoading(false);
+    }
   };
 
   // ── Chat History Panel ────────────────────────────────────────────
@@ -842,24 +1085,40 @@ export function AIChatbot() {
 
           {/* Pending file previews */}
           {pendingFiles.length > 0 && (
-            <div className="px-3 py-2 border-t border-border/50 flex items-center gap-2 bg-secondary/30 overflow-x-auto">
-              {pendingFiles.map((f, i) => (
-                <div key={i} className="relative flex-shrink-0">
-                  <img src={f.preview} alt={f.file.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
-                  <button onClick={() => removeFile(i)}
-                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[8px]">
-                    <X className="h-2.5 w-2.5" />
-                  </button>
+            <div className="px-3 py-2 border-t border-border/50 flex flex-col gap-2 bg-secondary/30">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {pendingFiles.map((f, i) => (
+                  <div key={i} className="relative flex-shrink-0">
+                    {f.isPdf || !f.preview ? (
+                      <div className="w-10 h-10 rounded-lg border border-border bg-red-500/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-red-500" />
+                      </div>
+                    ) : (
+                      <img src={f.preview} alt={f.file.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
+                    )}
+                    <button onClick={() => removeFile(i)}
+                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[8px]">
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                ))}
+                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{pendingFiles.length}/3</span>
+              </div>
+              {user && serviceRequests.length > 0 && !showShareModal && (
+                <div className="flex items-center">
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setShowShareModal(true)}>
+                    {isHindi ? "दस्तावेज़ CA के साथ साझा करें" : "Share to CA Vault"}
+                  </Button>
                 </div>
-              ))}
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{pendingFiles.length}/3</span>
+              )}
+              {showShareModal && <ShareModal />}
             </div>
           )}
 
           {/* Input */}
           <div className="p-3 border-t border-border">
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} multiple />
+              <input ref={fileInputRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelect} multiple />
               <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0"
                 onClick={() => fileInputRef.current?.click()} disabled={isLoading || pendingFiles.length >= 3}>
                 <Paperclip className="h-4 w-4 text-muted-foreground" />

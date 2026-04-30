@@ -29,7 +29,7 @@ export const Footer = () => {
       { name: t("footer.taxCalc"), path: "/tax-calculator" },
       { name: t("footer.financialCalc"), path: "/calculators" },
       { name: t("footer.gstTracker"), path: "/gst-tracker" },
-      { name: t("footer.expenseTracker"), path: "/expenses" },
+
       { name: t("footer.resources"), path: "/resources" },
       { name: t("footer.bookConsultation"), path: "/appointments" },
       { name: t("footer.viewAllServices"), path: "/services" },

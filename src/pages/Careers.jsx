@@ -11,6 +11,7 @@ import {
   Shield, FileCheck, IndianRupee, Users, Building2, ArrowRight, Star, CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const easing = [0.22, 1, 0.36, 1];
 
@@ -192,12 +193,29 @@ export default function Careers() {
     }, 100);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.success("Application submitted successfully! We'll get back to you within 3-5 business days.");
-    setFormData({ name: "", email: "", phone: "", message: "" });
-    setShowForm(false);
-    setSelectedRole("");
+    try {
+      const subject = `[Job Application] ${selectedRole}`;
+      const fullMessage = `Phone: ${formData.phone}\n\nCover Note:\n${formData.message || 'No cover note provided.'}`;
+      
+      const { error } = await supabase.from('contact_inquiries').insert({
+        name: formData.name,
+        email: formData.email,
+        subject: subject,
+        message: fullMessage
+      });
+
+      if (error) throw error;
+
+      toast.success("Application submitted successfully! We'll get back to you within 3-5 business days.");
+      setFormData({ name: "", email: "", phone: "", message: "" });
+      setShowForm(false);
+      setSelectedRole("");
+    } catch (error) {
+      console.error("Application error:", error);
+      toast.error("Failed to submit application. Please try emailing us directly.");
+    }
   };
 
   return (
@@ -413,7 +431,7 @@ export default function Careers() {
                     Applying for: <span className="font-medium text-foreground">{selectedRole}</span>
                   </p>
                 </div>
-                <form onSubmit={handleSubmit} className="premium-card p-6 md:p-8 space-y-5">
+                <form onSubmit={handleSubmit} className="premium-card p-5 sm:p-6 md:p-8 space-y-4 sm:space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Full Name *</Label>
@@ -464,17 +482,17 @@ export default function Careers() {
                       careers@gmrindia.com
                     </a>
                   </p>
-                  <div className="flex gap-3">
-                    <Button type="submit" className="flex-1 h-11 rounded-xl gap-2">
-                      <Send className="w-4 h-4" /> Submit Application
-                    </Button>
+                  <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
                     <Button
                       type="button"
                       variant="outline"
-                      className="rounded-xl"
+                      className="rounded-xl h-12 sm:h-11 w-full sm:w-auto"
                       onClick={() => { setShowForm(false); setSelectedRole(""); }}
                     >
                       Cancel
+                    </Button>
+                    <Button type="submit" className="flex-1 h-12 sm:h-11 rounded-xl gap-2 w-full">
+                      <Send className="w-4 h-4" /> Submit Application
                     </Button>
                   </div>
                 </form>

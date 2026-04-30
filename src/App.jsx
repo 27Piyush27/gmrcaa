@@ -76,31 +76,28 @@ const BlogManagement = lazy(() => import("./pages/BlogManagement"));
 const TestimonialApproval = lazy(() => import("./pages/TestimonialApproval"));
 const ClientProfile = lazy(() => import("./pages/ClientProfile"));
 const GSTTracker = lazy(() => import("./pages/GSTTracker"));
-const ExpenseTracker = lazy(() => import("./pages/ExpenseTracker"));
+
 const FinancialCalculators = lazy(() => import("./pages/FinancialCalculators"));
 const KnowledgeBase = lazy(() => import("./pages/KnowledgeBase"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const NotificationPreferences = lazy(() => import("./pages/NotificationPreferences"));
-const RevenueDashboard = lazy(() => import("./pages/RevenueDashboard"));
+
 const TaskKanban = lazy(() => import("./pages/TaskKanban"));
 const TaxCalendar = lazy(() => import("./pages/TaxCalendar"));
-const LiveChat = lazy(() => import("./pages/LiveChat"));
+
 const ComplianceScore = lazy(() => import("./pages/ComplianceScore"));
-const Referrals = lazy(() => import("./pages/Referrals"));
 const Careers = lazy(() => import("./pages/Careers"));
 const CareerManagement = lazy(() => import("./pages/CareerManagement"));
 const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ChatbotDocuments = lazy(() => import("./pages/ChatbotDocuments"));
+const JobApplications = lazy(() => import("./pages/JobApplications"));
 
 // AI / ML / Data Science pages
 const AITaxOptimizer = lazy(() => import("./pages/AITaxOptimizer"));
-const SmartDocAnalyzer = lazy(() => import("./pages/SmartDocAnalyzer"));
-const FinancialInsights = lazy(() => import("./pages/FinancialInsights"));
 const RiskAssessment = lazy(() => import("./pages/RiskAssessment"));
 const CashFlowForecaster = lazy(() => import("./pages/CashFlowForecaster"));
-const InvoiceScanner = lazy(() => import("./pages/InvoiceScanner"));
-const DeductionFinder = lazy(() => import("./pages/DeductionFinder"));
 const AIClientInsights = lazy(() => import("./pages/AIClientInsights"));
 const WorkloadOptimizer = lazy(() => import("./pages/WorkloadOptimizer"));
 const AnomalyConsole = lazy(() => import("./pages/AnomalyConsole"));
@@ -155,29 +152,26 @@ const AnimatedRoutes = () => {
         <Route path="/invoices" element={<InvoiceHistory />} />
         <Route path="/documents" element={<DocumentVault />} />
         <Route path="/gst-tracker" element={<GSTTracker />} />
-        <Route path="/expenses" element={<ExpenseTracker />} />
+
         <Route path="/calculators" element={<FinancialCalculators />} />
         <Route path="/resources" element={<KnowledgeBase />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/notifications" element={<NotificationPreferences />} />
-        <Route path="/admin/revenue" element={<RevenueDashboard />} />
+
         <Route path="/admin/tasks" element={<TaskKanban />} />
-        <Route path="/tax-calendar" element={<TaxCalendar />} />
-        <Route path="/messages" element={<LiveChat />} />
-        <Route path="/compliance" element={<ComplianceScore />} />
-        <Route path="/referrals" element={<Referrals />} />
-        <Route path="/careers" element={<Careers />} />
+        <Route path="/admin/calendar" element={<TaxCalendar />} />
         <Route path="/admin/careers" element={<CareerManagement />} />
         <Route path="/admin/team" element={<TeamManagement />} />
         <Route path="/admin/services" element={<ServicesManagement />} />
+        <Route path="/admin/chatbot-documents" element={<ChatbotDocuments />} />
+        <Route path="/admin/job-applications" element={<JobApplications />} />
+
+        <Route path="/compliance" element={<ComplianceScore />} />
+        <Route path="/careers" element={<Careers />} />
         {/* AI / ML / DS Feature Routes */}
         <Route path="/ai-tax-optimizer" element={<AITaxOptimizer />} />
-        <Route path="/smart-docs" element={<SmartDocAnalyzer />} />
-        <Route path="/financial-insights" element={<FinancialInsights />} />
         <Route path="/risk-assessment" element={<RiskAssessment />} />
         <Route path="/cash-flow-forecast" element={<CashFlowForecaster />} />
-        <Route path="/invoice-scanner" element={<InvoiceScanner />} />
-        <Route path="/deduction-finder" element={<DeductionFinder />} />
         <Route path="/admin/ai-insights" element={<AIClientInsights />} />
         <Route path="/admin/workload" element={<WorkloadOptimizer />} />
         <Route path="/admin/anomalies" element={<AnomalyConsole />} />

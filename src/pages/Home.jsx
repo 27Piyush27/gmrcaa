@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Shield, BarChart3, FileCheck, Users } from "lucide-react";
+import { ArrowRight, Shield, BarChart3, FileCheck, Users, CalendarDays } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ScrollReveal";
@@ -26,13 +26,15 @@ import {
   IsometricGrid,
   RotatingEmblem,
 } from "@/components/ThreeDElements";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { BookConsultationDialog } from "@/components/BookConsultationDialog";
 
 const easing = [0.22, 1, 0.36, 1];
 
 export default function Home() {
   const { t } = useLanguage();
+  const [bookingOpen, setBookingOpen] = useState(false);
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -535,6 +537,49 @@ export default function Home() {
         {/* ── Testimonials ────────────────────────────────────────────────── */}
         <Testimonials />
 
+        {/* ── Book Free Consultation CTA ───────────────────────────────────── */}
+        <section className="section-padding-sm content-defer">
+          <ScrollReveal>
+            <div className="max-w-4xl mx-auto px-6 lg:px-12">
+              <motion.div
+                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 24 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.7, ease: easing }}
+                className="relative rounded-3xl overflow-hidden border border-border/40 bg-card/80 backdrop-blur-xl shadow-lg"
+              >
+                {/* Top accent */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400" />
+                <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+
+                <div className="p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+                  <div className="flex-shrink-0">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center">
+                      <CalendarDays className="w-8 h-8 md:w-10 md:h-10 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-2xl md:text-3xl font-semibold mb-2">Book Free Consultation</h3>
+                    <p className="text-muted-foreground leading-relaxed max-w-lg">
+                      Schedule a one-on-one session with our expert Chartered Accountants. Get personalized advice on tax planning, GST, audits, and more.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <MagneticWrap strength={0.12}>
+                      <button onClick={() => setBookingOpen(true)}>
+                        <span className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group whitespace-nowrap">
+                          Book Now
+                          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+                        </span>
+                      </button>
+                    </MagneticWrap>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </ScrollReveal>
+        </section>
+
         {/* ── CTA Banner — Magnetic, glowing ──────────────────────────────── */}
         <section className="section-padding content-defer">
           <ScrollReveal>
@@ -624,6 +669,9 @@ export default function Home() {
         </section>
 
       </div>
+
+      {/* Book Consultation Dialog */}
+      <BookConsultationDialog open={bookingOpen} onOpenChange={setBookingOpen} />
     </PageTransition>
   );
 }

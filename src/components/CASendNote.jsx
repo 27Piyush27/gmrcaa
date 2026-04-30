@@ -26,8 +26,7 @@ export function CASendNote({ targetUserId, clientName, serviceRequestId }) {
         title: "Message from your CA",
         message: note.trim(),
         type: "ca_note",
-        related_id: serviceRequestId || null,
-        created_by: user?.id || null,
+        link: serviceRequestId ? "/dashboard" : null,
       });
       if (error) throw error;
       toast.success(`Note sent to ${clientName || "client"} successfully.`);

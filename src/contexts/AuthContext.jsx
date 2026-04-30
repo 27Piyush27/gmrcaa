@@ -50,9 +50,8 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           // Only re-fetch profile/role on real auth state changes, not the initial trigger
           if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-            setTimeout(() => {
-              fetchUserData(session.user.id);
-            }, 0);
+            setLoading(true);
+            fetchUserData(session.user.id);
           }
         } else {
           setProfile(null);

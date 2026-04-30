@@ -3,55 +3,35 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
-  CalendarDays, Clock, Video, Phone, MapPin, ArrowLeft,
-  Loader2, XCircle, CheckCircle, Calendar, Plus, ExternalLink
+  CalendarDays, Clock, ArrowLeft, Loader2, XCircle, CheckCircle,
+  Calendar, Plus, Video, Phone, MapPin, Briefcase
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { buildGoogleCalendarUrl } from "@/lib/googleCalendar";
+import { TIME_SLOTS } from "@/components/BookConsultationDialog";
 
 const easing = [0.22, 1, 0.36, 1];
-
 const FILTERS = ["all", "pending", "confirmed", "cancelled", "completed"];
 
-const TYPE_ICONS = {
-  video:     { icon: Video,  label: "Video Call" },
-  phone:     { icon: Phone,  label: "Phone Call" },
-  in_person: { icon: MapPin, label: "In Person"  },
+const STATUS_CONFIG = {
+  pending:     { label: "Pending",     variant: "outline" },
+  scheduled:   { label: "Scheduled",   variant: "default" },
+  confirmed:   { label: "Confirmed",   variant: "default" },
+  completed:   { label: "Completed",   variant: "secondary" },
+  cancelled:   { label: "Cancelled",   variant: "destructive" },
+  rescheduled: { label: "Rescheduled", variant: "outline" },
 };
 
-const STATUS_STYLES = {
-  pending:   "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-200",
-  confirmed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200",
-  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200",
-  completed: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200",
+const MEETING_ICONS = {
+  video: Video, phone: Phone, "in-person": MapPin,
 };
 
-const SERVICE_LABELS = {
-  "income-tax": "Income Tax Filing",
-  "gst":        "GST Registration/Filing",
-  "company":    "Company Incorporation",
-  "audit":      "Audit & Compliance",
-  "advisory":   "Tax Advisory",
-  "other":      "Other",
-};
-
-/**
- * Extract date string and time string from an ISO timestamp
- */
-function parseAppointmentDate(isoStr) {
-  const dt = new Date(isoStr);
-  const dateStr = dt.toISOString().split("T")[0]; // "YYYY-MM-DD"
-  let hours = dt.getHours();
-  const minutes = dt.getMinutes();
-  const period = hours >= 12 ? "PM" : "AM";
-  if (hours > 12) hours -= 12;
-  if (hours === 0) hours = 12;
-  const timeStr = `${hours}:${String(minutes).padStart(2, "0")} ${period}`;
-  return { dateStr, timeStr, dateObj: dt };
+function getTimeLabel(slot) {
+  return TIME_SLOTS.find(s => s.value === slot)?.label || slot || "";
 }
 
 export default function MyAppointments() {
@@ -65,7 +45,6 @@ export default function MyAppointments() {
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
     if (user) fetchAppointments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading, navigate]);
 
   const fetchAppointments = async () => {
@@ -73,13 +52,13 @@ export default function MyAppointments() {
     try {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id, appointment_date, meeting_type, duration_minutes, service_id, notes, status, created_at")
+        .select("*")
         .eq("user_id", user.id)
         .order("appointment_date", { ascending: false });
       if (error) throw error;
       setAppointments(data || []);
     } catch (err) {
-      console.error("Error fetching appointments:", err);
+      console.error(err);
       toast.error("Failed to load appointments");
     } finally {
       setLoading(false);
@@ -89,18 +68,12 @@ export default function MyAppointments() {
   const handleCancel = async (id) => {
     setCancelling(id);
     try {
-      const { error } = await supabase
-        .from("appointments")
-        .update({ status: "cancelled" })
-        .eq("id", id);
+      const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "cancelled" } : a));
       toast.success("Appointment cancelled");
-    } catch {
-      toast.error("Failed to cancel appointment");
-    } finally {
-      setCancelling(null);
-    }
+    } catch { toast.error("Failed to cancel"); }
+    finally { setCancelling(null); }
   };
 
   const filtered = appointments.filter(a => filter === "all" || a.status === filter);
@@ -110,17 +83,12 @@ export default function MyAppointments() {
   }, {});
 
   if (authLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
-        {/* Header */}
         <div className="bg-foreground text-background py-10">
           <div className="container mx-auto px-6">
             <Button variant="ghost" onClick={() => navigate("/dashboard")}
@@ -144,127 +112,79 @@ export default function MyAppointments() {
         </div>
 
         <div className="container mx-auto px-6 py-8">
-          {/* Filter tabs */}
           <div className="flex flex-wrap gap-2 mb-6">
             {FILTERS.map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-xl border text-sm font-medium capitalize transition-colors ${
-                  filter === f
-                    ? "bg-foreground text-background border-foreground"
-                    : "border-border/50 text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                className={`px-4 py-2 rounded-xl border text-sm font-medium capitalize transition-all duration-200 ${
+                  filter === f ? "bg-foreground text-background border-foreground" : "border-border/50 text-muted-foreground hover:border-foreground/30"
                 }`}>
                 {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
-                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${filter === f ? "bg-background/20" : "bg-secondary"}`}>
-                  {counts[f]}
-                </span>
+                <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${filter === f ? "bg-background/20" : "bg-secondary"}`}>{counts[f]}</span>
               </button>
             ))}
           </div>
 
-          {/* List */}
           {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-foreground" />
-            </div>
+            <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin" /></div>
           ) : filtered.length === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
                 <CalendarDays className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  {filter !== "all" ? `No ${filter} appointments` : "You haven't booked any appointments yet."}
-                </p>
+                <p className="text-muted-foreground mb-4">{filter !== "all" ? `No ${filter} appointments` : "No appointments yet."}</p>
                 {filter === "all" && (
-                  <Button onClick={() => navigate("/appointments")} className="rounded-xl gap-2">
-                    <Plus className="w-4 h-4" /> Book Consultation
-                  </Button>
+                  <Button onClick={() => navigate("/appointments")} className="rounded-xl gap-2"><Plus className="w-4 h-4" /> Book Consultation</Button>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, ease: easing }} className="space-y-3">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
               {filtered.map((appt, i) => {
-                const { dateStr, timeStr, dateObj } = parseAppointmentDate(appt.appointment_date);
-                const TypeIcon = TYPE_ICONS[appt.meeting_type]?.icon || CalendarDays;
-                const typeLabel = TYPE_ICONS[appt.meeting_type]?.label || appt.meeting_type;
-                const statusStyle = STATUS_STYLES[appt.status] || STATUS_STYLES.pending;
+                const MeetingIcon = MEETING_ICONS[appt.meeting_type] || CalendarDays;
                 const isCancelling = cancelling === appt.id;
-                const isPast = dateObj < new Date(new Date().toDateString());
-                const serviceLabel = SERVICE_LABELS[appt.service_id] || appt.service_id || "Consultation";
+                const cfg = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending;
 
                 return (
-                  <motion.div key={appt.id}
-                    initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                  <motion.div key={appt.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04, duration: 0.35, ease: easing }}>
                     <Card className="border-border/50 hover:border-border transition-colors">
                       <CardContent className="p-5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyle}`}>
-                                {appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
-                              </span>
-                              {isPast && appt.status === "pending" && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
-                                  Past Date
+                              <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                              {appt.service_type && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-secondary border border-border/30">
+                                  <Briefcase className="w-2.5 h-2.5" />{appt.service_type}
                                 </span>
                               )}
                             </div>
 
-                            <p className="text-sm font-medium text-foreground">{serviceLabel}</p>
-
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {dateObj.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                                {appt.appointment_date
+                                  ? new Date(appt.appointment_date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                                  : ""}
                               </span>
                               <span className="flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5" />
-                                {timeStr}
+                                <Clock className="w-3.5 h-3.5" />{getTimeLabel(appt.time_slot)}
                                 {appt.duration_minutes && <span className="text-muted-foreground/60">({appt.duration_minutes} min)</span>}
                               </span>
                               <span className="flex items-center gap-1">
-                                <TypeIcon className="w-3.5 h-3.5" />
-                                {typeLabel}
+                                <MeetingIcon className="w-3.5 h-3.5" />{appt.meeting_type || ""}
                               </span>
                             </div>
 
-                            {appt.notes && (
-                              <p className="text-xs text-muted-foreground italic">"{appt.notes}"</p>
-                            )}
+                            {appt.notes && <p className="text-xs text-muted-foreground italic">"{appt.notes}"</p>}
                           </div>
 
-                          {/* Actions */}
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {(appt.status === "pending" || appt.status === "confirmed") && (
-                              <>
-                                <Button size="sm" variant="outline" asChild
-                                  className="gap-1.5 text-xs h-8 rounded-lg">
-                                  <a href={buildGoogleCalendarUrl({
-                                    date: dateStr,
-                                    time: timeStr,
-                                    type: appt.meeting_type,
-                                    topic: appt.service_id || "consultation",
-                                    notes: appt.notes || "",
-                                  })} target="_blank" rel="noopener noreferrer">
-                                    <CalendarDays className="w-3.5 h-3.5" />
-                                    Add to Calendar
-                                    <ExternalLink className="w-2.5 h-2.5" />
-                                  </a>
-                                </Button>
-                                <Button size="sm" variant="outline"
-                                  className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 rounded-lg"
-                                  disabled={isCancelling}
-                                  onClick={() => handleCancel(appt.id)}>
-                                  {isCancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-                                  Cancel
-                                </Button>
-                              </>
-                            )}
-                            {appt.status === "confirmed" && (
-                              <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                                <CheckCircle className="w-3.5 h-3.5" /> Confirmed
-                              </span>
+                            {(appt.status === "pending" || appt.status === "confirmed" || appt.status === "scheduled") && (
+                              <Button size="sm" variant="outline"
+                                className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 h-8 rounded-lg text-xs"
+                                disabled={isCancelling} onClick={() => handleCancel(appt.id)}>
+                                {isCancelling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />} Cancel
+                              </Button>
                             )}
                           </div>
                         </div>

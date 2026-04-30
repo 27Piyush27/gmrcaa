@@ -125,7 +125,7 @@ const translations = {
     "footer.taxCalc": "Tax Calculator",
     "footer.financialCalc": "Financial Calculators",
     "footer.gstTracker": "GST Tracker",
-    "footer.expenseTracker": "Expense Tracker",
+
     "footer.resources": "Resource Center",
     "footer.bookConsultation": "Book Consultation",
     "footer.viewAllServices": "View All Services",
@@ -153,7 +153,7 @@ const translations = {
     "tools.taxCalc": "Tax Calculator",
     "tools.financialCalc": "Financial Calculators",
     "tools.gstTracker": "GST Tracker",
-    "tools.expenseTracker": "Expense Tracker",
+
     "tools.taxCalendar": "Tax Calendar",
     "tools.resources": "Resource Center",
     "tools.expenses": "Expenses",
@@ -162,7 +162,7 @@ const translations = {
     "tools.taxCalc.desc": "Old & New regime comparison",
     "tools.financialCalc.desc": "EMI, SIP & HRA tools",
     "tools.gstTracker.desc": "Filing status & deadlines",
-    "tools.expenseTracker.desc": "Track business expenses",
+
     "tools.taxCalendar.desc": "All tax deadlines",
     "tools.resources.desc": "Checklists & guides",
 
@@ -187,7 +187,7 @@ const translations = {
 
     // Account items
     "account.dashboard": "My Dashboard",
-    "account.messages": "Messages",
+
     "account.appointments": "My Appointments",
     "account.compliance": "Compliance Score",
     "account.referrals": "Referrals",
@@ -196,7 +196,7 @@ const translations = {
 
     // Admin items
     "admin.panel": "Admin Panel",
-    "admin.revenue": "Revenue Dashboard",
+
     "admin.tasks": "Task Board",
     "admin.services": "Manage Services",
     "admin.team": "Team Manager",
@@ -331,7 +331,7 @@ const translations = {
     "footer.taxCalc": "टैक्स कैलकुलेटर",
     "footer.financialCalc": "वित्तीय कैलकुलेटर",
     "footer.gstTracker": "GST ट्रैकर",
-    "footer.expenseTracker": "खर्च ट्रैकर",
+
     "footer.resources": "संसाधन केंद्र",
     "footer.bookConsultation": "परामर्श बुक करें",
     "footer.viewAllServices": "सभी सेवाएं देखें",
@@ -359,7 +359,7 @@ const translations = {
     "tools.taxCalc": "टैक्स कैलकुलेटर",
     "tools.financialCalc": "वित्तीय कैलकुलेटर",
     "tools.gstTracker": "GST ट्रैकर",
-    "tools.expenseTracker": "खर्च ट्रैकर",
+
     "tools.taxCalendar": "टैक्स कैलेंडर",
     "tools.resources": "संसाधन केंद्र",
     "tools.expenses": "खर्चे",
@@ -368,7 +368,7 @@ const translations = {
     "tools.taxCalc.desc": "पुरानी और नई व्यवस्था तुलना",
     "tools.financialCalc.desc": "EMI, SIP और HRA उपकरण",
     "tools.gstTracker.desc": "फाइलिंग स्थिति और समय-सीमा",
-    "tools.expenseTracker.desc": "व्यापारिक खर्चों को ट्रैक करें",
+
     "tools.taxCalendar.desc": "सभी कर की समय-सीमाएं",
     "tools.resources.desc": "चेकलिस्ट और गाइड",
 
@@ -393,7 +393,7 @@ const translations = {
 
     // Account items
     "account.dashboard": "मेरा डैशबोर्ड",
-    "account.messages": "संदेश",
+
     "account.appointments": "मेरी अपॉइंटमेंट",
     "account.compliance": "अनुपालन स्कोर",
     "account.referrals": "रेफ़रल",
@@ -402,7 +402,7 @@ const translations = {
 
     // Admin items
     "admin.panel": "एडमिन पैनल",
-    "admin.revenue": "राजस्व डैशबोर्ड",
+
     "admin.tasks": "टास्क बोर्ड",
     "admin.services": "सेवाएं प्रबंधित करें",
     "admin.team": "टीम मैनेजर",

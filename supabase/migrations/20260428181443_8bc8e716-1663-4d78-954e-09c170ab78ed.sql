@@ -1,0 +1,1 @@
+ALTER TABLE public.appointments DROP CONSTRAINT IF EXISTS appointments_service_id_fkey;

@@ -149,7 +149,7 @@ export default function TaxCalculator() {
                     </div>
                   </div>
                   <a
-                    href="https://incometaxindia.gov.in/pages/tools/tax-calculator.aspx"
+                    href="https://www.incometaxindia.gov.in/income-tax-calculator"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0">

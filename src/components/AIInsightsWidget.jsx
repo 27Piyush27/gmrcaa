@@ -77,8 +77,8 @@ function generateDashboardInsights(serviceRequests = [], complianceScore = 78) {
       icon: Lightbulb,
       type: "tip",
       title: "ITR Filing Deadline Approaching",
-      text: "July 31st is the deadline for individual ITR filing. Use Smart Document Analyzer to check your filing readiness.",
-      action: { label: "Check Readiness", path: "/smart-docs" },
+      text: "July 31st is the deadline for individual ITR filing. Calculate your tax liability to ensure readiness.",
+      action: { label: "Calculate Tax", path: "/tax-calculator" },
     });
   } else {
     insights.push({

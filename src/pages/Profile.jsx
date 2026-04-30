@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
   User, Mail, Phone, MapPin, Shield, Save, Loader2,
-  Building2, FileText, ArrowLeft, Camera, CheckCircle
+  Building2, FileText, ArrowLeft, Camera, CheckCircle, X, ImagePlus
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,10 +17,35 @@ import { PageTransition } from "@/components/PageTransition";
 
 const easing = [0.22, 1, 0.36, 1];
 
+// Helper: compress image client-side before upload
+function compressImage(file, maxSize = 512) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const canvas = document.createElement("canvas");
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxSize) { h = (h * maxSize) / w; w = maxSize; } }
+        else { if (h > maxSize) { w = (w * maxSize) / h; h = maxSize; } }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.85);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const { user, profile, role, loading: authLoading } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -45,9 +70,108 @@ export default function Profile() {
         company_name: profile.company_name || "",
         avatar_url: profile.avatar_url || ""
       });
+      if (profile.avatar_url) setAvatarPreview(profile.avatar_url);
     }
   }, [user, profile, authLoading, navigate]);
 
+  // ── Avatar upload ──────────────────────────────────────────────────
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be smaller than 10MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      // Compress image
+      const compressed = await compressImage(file, 512);
+      const fileName = `${user.id}-${Date.now()}.jpg`;
+
+      // Try uploading to Supabase Storage
+      let publicUrl = null;
+      try {
+        // Delete old avatar if exists
+        if (formData.avatar_url && formData.avatar_url.includes("avatars/")) {
+          const oldPath = formData.avatar_url.split("avatars/").pop();
+          if (oldPath) await supabase.storage.from("avatars").remove([oldPath]);
+        }
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(fileName, compressed, {
+            cacheControl: "3600",
+            upsert: true,
+            contentType: "image/jpeg"
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(uploadData.path);
+
+        publicUrl = urlData.publicUrl;
+      } catch (storageErr) {
+        console.warn("Storage upload failed, using base64 fallback:", storageErr);
+        // Fallback: convert to base64 data URI
+        publicUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(compressed);
+        });
+      }
+
+      // Save to profile
+      const { error: updateErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("user_id", user.id);
+
+      if (updateErr) throw updateErr;
+
+      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+      setAvatarPreview(publicUrl);
+      toast.success("Profile picture updated!");
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("Failed to upload profile picture");
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAvatar = async () => {
+    try {
+      // Delete from storage if applicable
+      if (formData.avatar_url && formData.avatar_url.includes("avatars/")) {
+        const oldPath = formData.avatar_url.split("avatars/").pop();
+        if (oldPath) await supabase.storage.from("avatars").remove([oldPath]);
+      }
+
+      await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("user_id", user.id);
+
+      setFormData(prev => ({ ...prev, avatar_url: "" }));
+      setAvatarPreview(null);
+      toast.success("Profile picture removed");
+    } catch (err) {
+      console.error("Remove avatar error:", err);
+      toast.error("Failed to remove profile picture");
+    }
+  };
+
+  // ── Save profile ──────────────────────────────────────────────────
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -93,6 +217,15 @@ export default function Profile() {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarSelect}
+        />
+
         {/* Header */}
         <div className="relative overflow-hidden bg-foreground text-background">
           <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/[0.04] blur-3xl pointer-events-none" />
@@ -103,13 +236,52 @@ export default function Profile() {
             </Button>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: easing }} className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl font-bold">
-                  {initials}
+              <div className="relative group">
+                {/* Avatar */}
+                <div
+                  className="w-20 h-20 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl font-bold overflow-hidden cursor-pointer transition-all duration-300 group-hover:border-white/40"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    initials
+                  )}
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-2xl">
+                    {uploadingAvatar ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-white" />
+                    )}
+                  </div>
                 </div>
-                <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-accent flex items-center justify-center">
-                  <Camera className="w-3.5 h-3.5 text-white" />
+                {/* Upload button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-accent flex items-center justify-center hover:scale-110 transition-transform disabled:opacity-50"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-3.5 h-3.5 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-3.5 h-3.5 text-white" />
+                  )}
                 </button>
+                {/* Remove button */}
+                {avatarPreview && (
+                  <button
+                    onClick={removeAvatar}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-destructive flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Remove photo"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                )}
               </div>
               <div>
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">{formData.name || "Your Profile"}</h1>
@@ -117,6 +289,15 @@ export default function Profile() {
                   <Shield className="w-4 h-4" />
                   {role === "admin" ? "Administrator" : role === "ca" ? "Chartered Accountant" : "Client"}
                 </p>
+                {avatarPreview ? (
+                  <p className="text-[10px] text-background/40 mt-0.5 flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-emerald-400" /> Photo uploaded
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-background/40 mt-0.5 flex items-center gap-1">
+                    <ImagePlus className="w-3 h-3" /> Click avatar to upload photo
+                  </p>
+                )}
               </div>
             </motion.div>
           </div>

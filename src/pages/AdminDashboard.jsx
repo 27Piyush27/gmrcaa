@@ -33,7 +33,7 @@ import { ServiceStatusStepper } from "@/components/ServiceStatusStepper";
 import { CADocumentReview } from "@/components/CADocumentReview";
 import { CASendNote } from "@/components/CASendNote";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { RevenueCharts } from "@/components/RevenueCharts";
+
 import { ExportButton } from "@/components/ExportButton";
 import { SkeletonDashboard } from "@/components/SkeletonLoaders";
 import { LayoutGrid, List, BarChart3, Brain, AlertTriangle, Layers,
@@ -66,7 +66,7 @@ const ADMIN_SECTIONS = [
     category: "Finance",
     color: "from-emerald-500 to-green-500",
     items: [
-      { label: "Revenue Dashboard", path: "/admin/revenue", icon: IndianRupee, desc: "Revenue & payment analytics" },
+
       { label: "Task Board", path: "/admin/tasks", icon: CheckCircle, desc: "Kanban task management" },
     ],
   },
@@ -434,10 +434,7 @@ export default function AdminDashboard() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "kanban" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               <LayoutGrid className="w-3.5 h-3.5" /> Kanban
             </button>
-            <button onClick={() => setViewMode("analytics")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${viewMode === "analytics" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              <BarChart3 className="w-3.5 h-3.5" /> Analytics
-            </button>
+
           </div>
           <ExportButton
             data={requests.map(r => ({ Service: resolveServiceName(r), Client: r.profiles?.name || "", Status: r.status, Progress: `${r.progress}%`, Amount: r.amount || "", Date: new Date(r.created_at).toLocaleDateString("en-IN") }))}
@@ -446,12 +443,7 @@ export default function AdminDashboard() {
             label="Export CSV" />
         </motion.div>
 
-        {/* Analytics view */}
-        {viewMode === "analytics" && (
-          <div className="space-y-6 mb-8">
-            <RevenueCharts payments={payments} />
-          </div>
-        )}
+
 
         {/* Kanban view */}
         {viewMode === "kanban" && (

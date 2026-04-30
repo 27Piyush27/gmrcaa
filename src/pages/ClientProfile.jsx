@@ -125,8 +125,12 @@ export default function ClientProfile() {
 
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: easing }} className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-xl font-bold flex-shrink-0">
-                {initials}
+              <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-xl font-bold flex-shrink-0 overflow-hidden">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt={profile.name} className="w-full h-full object-cover" />
+                ) : (
+                  initials
+                )}
               </div>
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight">{profile.name}</h1>

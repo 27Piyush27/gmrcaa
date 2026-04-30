@@ -1221,3 +1221,34 @@ a:active,
     cursor: auto !important;
   }
 }
+
+/* ─── Ultra-Performance Mode for small/low-end devices ────────────── */
+@media (max-width: 768px) {
+  /* Reduce blur overhead on mobile devices */
+  .glass, .glass-dark, .glass-frosted {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+  
+  /* Simplify heavy box shadows */
+  .shadow-hero, .shadow-float, .shadow-xl {
+    box-shadow: 0 10px 25px -5px hsl(var(--foreground) / 0.1), 0 8px 10px -6px hsl(var(--foreground) / 0.1) !important;
+  }
+
+  /* Reduce animation complexities on mobile */
+  .animate-ticker {
+    animation-duration: 45s !important;
+  }
+
+  /* Simplify pseudo-element glows */
+  .bg-aurora::before,
+  .bg-aurora::after {
+    filter: blur(40px) !important;
+    opacity: 0.6;
+  }
+
+  /* Prevent over-scrolling bounce issues */
+  body {
+    overscroll-behavior-y: none;
+  }
+}

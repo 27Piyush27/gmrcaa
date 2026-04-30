@@ -4,55 +4,64 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger } from
-"@/components/ui/popover";
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
-const TYPE_CONFIG = {
-  service_update:     { color: "bg-blue-500" },
-  payment_received:   { color: "bg-green-600" },
-  document_uploaded:  { color: "bg-violet-500" },
-  document_reviewed:  { color: "bg-teal-500" },
-  system:             { color: "bg-yellow-500" },
-  chat:               { color: "bg-orange-400" },
+const TYPE_COLOR = {
+  service_update: "bg-blue-500",
+  payment_received: "bg-green-500",
+  payment: "bg-green-500",
+  document_uploaded: "bg-violet-500",
+  document_reviewed: "bg-teal-500",
+  appointment: "bg-purple-500",
+  system: "bg-yellow-500",
+  chat: "bg-orange-400",
+  success: "bg-emerald-500",
+  warning: "bg-amber-500",
+  info: "bg-blue-400",
 };
 
 export function NotificationBell() {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
 
-  // ── Fetch from the real notifications table ─────────────────────────────
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
+
     const { data, error } = await supabase
       .from("notifications")
-      .select("id, type, title, body, read, created_at")
+      .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(15);
+      .limit(20);
 
     if (error) {
       console.error("Error fetching notifications:", error);
       return;
     }
-    setNotifications(data || []);
+
+    const mapped = data || [];
+    setNotifications(mapped);
+    setUnreadCount(mapped.filter((n) => !n.read).length);
   }, [user]);
 
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // ── Realtime subscription on notifications table ────────────────────────
+  // Realtime: listen for new notifications
   useEffect(() => {
     if (!user) return;
 
     const channel = supabase
-      .channel(`notif-bell-${user.id}`)
+      .channel(`notifications-bell-${user.id}`)
       .on(
         "postgres_changes",
         {
@@ -61,30 +70,32 @@ export function NotificationBell() {
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        () => { fetchNotifications(); }
+        () => {
+          fetchNotifications();
+        }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, fetchNotifications]);
 
-  // ── Mark all as read ─────────────────────────────────────────────────────
-  const markAllRead = async () => {
-    if (!user) return;
-    const now = new Date().toISOString();
-    await supabase
-      .from("notifications")
-      .update({ read: true, read_at: now })
-      .eq("user_id", user.id)
-      .eq("read", false);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true, read_at: now })));
-  };
-
-  const handleOpen = (isOpen) => {
+  const handleOpen = async (isOpen) => {
     setOpen(isOpen);
+    if (isOpen && unreadCount > 0) {
+      // Mark all as read
+      const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
+      if (unreadIds.length > 0) {
+        await supabase
+          .from("notifications")
+          .update({ read: true })
+          .in("id", unreadIds);
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      }
+    }
   };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const formatTime = (dateStr) => {
     const date = new Date(dateStr);
@@ -108,11 +119,11 @@ export function NotificationBell() {
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 &&
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-pulse">
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
-          }
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
@@ -120,58 +131,53 @@ export function NotificationBell() {
           <div>
             <h4 className="text-sm font-semibold">Notifications</h4>
             <p className="text-xs text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+              {unreadCount > 0 ? `${unreadCount} unread` : "All caught up!"}
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={markAllRead}>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={() => handleOpen(true)}>
               <CheckCheck className="w-3.5 h-3.5" />
               Mark all read
             </Button>
           )}
         </div>
         <ScrollArea className="max-h-80">
-          {notifications.length === 0 ?
-          <div className="px-4 py-8 text-center">
+          {notifications.length === 0 ? (
+            <div className="px-4 py-8 text-center">
               <Bell className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">No notifications yet</p>
-            </div> :
-
-          <div className="divide-y">
-              {notifications.map((n) => {
-              const config = TYPE_CONFIG[n.type] || { color: "bg-muted" };
-              return (
+            </div>
+          ) : (
+            <div className="divide-y">
+              {notifications.map((n) => (
                 <div
                   key={n.id}
                   className={cn(
                     "flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/50",
-                    !n.read && "bg-muted/30"
-                  )}>
-                  
-                    <div
+                    !n.read && "bg-primary/5"
+                  )}
+                >
+                  <div
                     className={cn(
                       "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                      config.color
-                    )} />
-                  
-                    <div className="min-w-0 flex-1">
-                      <p className={cn("text-sm truncate", !n.read && "font-semibold")}>
-                        {n.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {n.body}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[10px] text-muted-foreground">
-                      {formatTime(n.created_at)}
-                    </span>
-                  </div>);
-
-            })}
+                      TYPE_COLOR[n.type] || "bg-muted-foreground"
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{n.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                      {n.message}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {formatTime(n.created_at)}
+                  </span>
+                </div>
+              ))}
             </div>
-          }
+          )}
         </ScrollArea>
       </PopoverContent>
-    </Popover>);
-
+    </Popover>
+  );
 }

@@ -16,6 +16,13 @@ const TOPIC_LABELS = {
   "audit": "Audit & Compliance",
   "advisory": "Tax Advisory",
   "other": "General Consultation",
+  "ITR Filing": "ITR Filing",
+  "GST Registration": "GST Registration",
+  "GST Return Filing": "GST Return Filing",
+  "Tax Consultation": "Tax Consultation",
+  "Company Registration": "Company Registration",
+  "Audit Services": "Audit Services",
+  "Loan File Preparation": "Loan File Preparation",
 };
 
 const TYPE_LABELS = {

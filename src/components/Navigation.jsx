@@ -19,41 +19,39 @@ const TOOLS_ITEMS = [
   { name: "Tax Calculator", path: "/tax-calculator", icon: Calculator, desc: "Old & New regime comparison" },
   { name: "Financial Calculators", path: "/calculators", icon: Calculator, desc: "EMI, SIP & HRA tools" },
   { name: "GST Tracker", path: "/gst-tracker", icon: FileText, desc: "Filing status & deadlines" },
-  { name: "Expense Tracker", path: "/expenses", icon: Wallet, desc: "Track business expenses" },
+
   { name: "Tax Calendar", path: "/tax-calendar", icon: Calendar, desc: "All tax deadlines" },
   { name: "Resource Center", path: "/resources", icon: BookOpen, desc: "Checklists & guides" },
 ];
 
 const AI_TOOLS_ITEMS = [
   { name: "AI Tax Optimizer", path: "/ai-tax-optimizer", icon: Brain, desc: "Smart regime & deduction AI" },
-  { name: "Smart Doc Analyzer", path: "/smart-docs", icon: FileSearch, desc: "AI document classification" },
-  { name: "Financial Insights", path: "/financial-insights", icon: BarChart3, desc: "Predictive analytics & ML" },
   { name: "Risk Assessment", path: "/risk-assessment", icon: ShieldCheck, desc: "ML compliance risk scoring" },
   { name: "Cash Flow Forecaster", path: "/cash-flow-forecast", icon: Activity, desc: "Monte Carlo simulations" },
-  { name: "Invoice Scanner", path: "/invoice-scanner", icon: Receipt, desc: "AI invoice extraction" },
-  { name: "Deduction Finder", path: "/deduction-finder", icon: Search, desc: "Find missed deductions" },
   { name: "AI Hub", path: "/ai-tools", icon: Sparkles, desc: "All AI tools overview" },
 ];
 
 const ACCOUNT_ITEMS = [
   { name: "My Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { name: "Messages", path: "/messages", icon: MessageCircle },
+
   { name: "My Appointments", path: "/my-appointments", icon: CalendarDays },
   { name: "Compliance Score", path: "/compliance", icon: ShieldCheck },
-  { name: "Referrals", path: "/referrals", icon: Gift },
   { name: "Notifications", path: "/notifications", icon: Bell },
   { name: "Profile", path: "/profile", icon: User },
 ];
 
 const ADMIN_ITEMS = [
   { name: "Admin Panel", path: "/admin", icon: Shield },
-  { name: "Revenue Dashboard", path: "/admin/revenue", icon: TrendingUp },
+
   { name: "Task Board", path: "/admin/tasks", icon: Columns3 },
   { name: "Manage Services", path: "/admin/services", icon: Package },
+  { name: "Chatbot Documents", path: "/admin/chatbot-documents", icon: FileSearch },
+  { name: "Job Applications", path: "/admin/job-applications", icon: Briefcase },
   { name: "Team Manager", path: "/admin/team", icon: Users },
   { name: "Client Insights", path: "/admin/ai-insights", icon: Users },
   { name: "Workload Optimizer", path: "/admin/workload", icon: Layers },
   { name: "Anomaly Console", path: "/admin/anomalies", icon: AlertTriangle },
+  { name: "Appointments", path: "/admin/appointments", icon: CalendarDays },
   { name: "Blog Manager", path: "/admin/blog", icon: FileText },
   { name: "Reviews", path: "/admin/testimonials", icon: MessageSquare },
   { name: "Manage Careers", path: "/admin/careers", icon: Briefcase },
@@ -361,7 +359,7 @@ export const Navigation = () => {
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                   <div className="p-2">
-                    {ACCOUNT_ITEMS.map((item) => {
+                    {ACCOUNT_ITEMS.filter(item => !(isStaff && item.name === "My Appointments")).map((item) => {
                       const Icon = item.icon;
                       return (
                         <Link
@@ -544,7 +542,7 @@ export const Navigation = () => {
                         className="overflow-hidden"
                       >
                         <div className="pl-3 flex flex-col gap-0.5 pb-1">
-                          {ACCOUNT_ITEMS.map((item) => {
+                          {ACCOUNT_ITEMS.filter(item => !(isStaff && item.name === "My Appointments")).map((item) => {
                             const Icon = item.icon;
                             return (
                               <Link
