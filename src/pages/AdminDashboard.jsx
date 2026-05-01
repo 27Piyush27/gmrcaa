@@ -49,6 +49,7 @@ const ADMIN_SECTIONS = [
     color: "from-blue-500 to-cyan-500",
     items: [
       { label: "Manage Clients", path: "/clients", icon: UserCheck, desc: "View & manage client accounts" },
+      { label: "User Roles", path: "/admin/roles", icon: Shield, desc: "Promote users to CA or Admin" },
       { label: "Appointments", path: "/admin/appointments", icon: CalDays, desc: "Schedule & manage bookings" },
     ],
   },

@@ -93,6 +93,7 @@ const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ChatbotDocuments = lazy(() => import("./pages/ChatbotDocuments"));
 const JobApplications = lazy(() => import("./pages/JobApplications"));
+const UserRolesManagement = lazy(() => import("./pages/UserRolesManagement"));
 
 // AI / ML / Data Science pages
 const AITaxOptimizer = lazy(() => import("./pages/AITaxOptimizer"));
@@ -165,6 +166,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/services" element={<ServicesManagement />} />
         <Route path="/admin/chatbot-documents" element={<ChatbotDocuments />} />
         <Route path="/admin/job-applications" element={<JobApplications />} />
+        <Route path="/admin/roles" element={<UserRolesManagement />} />
 
         <Route path="/compliance" element={<ComplianceScore />} />
         <Route path="/careers" element={<Careers />} />

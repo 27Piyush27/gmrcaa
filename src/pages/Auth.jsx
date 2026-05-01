@@ -12,12 +12,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
-const roles = [
-{ value: "client", label: "Client", icon: User, description: "Access your financial documents and services" },
-{ value: "ca", label: "Chartered Accountant", icon: Briefcase, description: "Manage clients and provide services" },
-{ value: "admin", label: "Admin", icon: Shield, description: "Full system administration access" }];
-
-
 const emailSchema = z.string().trim().email({ message: "Invalid email address" }).max(255);
 const passwordSchema = z.string().min(6, { message: "Password must be at least 6 characters" });
 const nameSchema = z.string().trim().min(1, { message: "Name is required" }).max(100);
@@ -81,8 +75,7 @@ export default function Auth() {
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
-    role: "client"
+    confirmPassword: ""
   });
 
   useEffect(() => {
@@ -166,18 +159,10 @@ export default function Auth() {
       return;
     }
 
-    // Admin signup requires special code
-    if (signupData.role === "admin") {
-      toast.error("Admin accounts can only be created by existing admins");
-      setIsSubmitting(false);
-      return;
-    }
-
     const { error } = await signUp(
       signupData.email,
       signupData.password,
-      signupData.name,
-      signupData.role
+      signupData.name
     );
 
     if (error) {
@@ -344,33 +329,6 @@ export default function Auth() {
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-6">
-                  {/* Role Selection for Signup */}
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {roles.filter((r) => r.value !== "admin").map((role) => {
-                    const Icon = role.icon;
-                    const isActive = signupData.role === role.value;
-                    return (
-                      <motion.button
-                        key={role.value}
-                        type="button"
-                        onClick={() => setSignupData({ ...signupData, role: role.value })}
-                        whileHover={{ scale: 1.03 }}
-                        whileTap={{ scale: 0.97 }}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-300 ${
-                        isActive ?
-                        "border-foreground bg-foreground/5 shadow-sm" :
-                        "border-border/60 hover:border-foreground/30"}`
-                        }>
-                        
-                          <Icon className={`w-5 h-5 ${isActive ? "text-foreground" : "text-muted-foreground"}`} />
-                          <span className={`text-xs font-medium ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
-                            {role.value === "ca" ? "Chartered Accountant" : role.label}
-                          </span>
-                        </motion.button>);
-
-                  })}
-                  </div>
-
                   <form onSubmit={handleSignup} className="space-y-4">
                     <motion.div className="space-y-2" custom={0} variants={fieldVariants} initial="hidden" animate="visible">
                       <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
@@ -449,7 +407,7 @@ export default function Auth() {
                           </> :
 
                       <>
-                            Create {signupData.role === "ca" ? "CA" : "Client"} Account
+                            Create Account
                             <ArrowRight className="h-4 w-4" />
                           </>
                       }
