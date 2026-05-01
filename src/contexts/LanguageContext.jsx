@@ -419,24 +419,60 @@ const LanguageContext = createContext(undefined);
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem("app-language") || "en";
+    const match = document.cookie.match(/(^|;) ?googtrans=([^;]*)(;|$)/);
+    let currentLang = "en";
+    if (match) {
+      const parts = match[2].split('/');
+      if (parts.length > 2 && parts[2] === 'hi') {
+        currentLang = "hi";
+      }
+    }
+    return currentLang;
   });
 
   useEffect(() => {
-    localStorage.setItem("app-language", language);
-    document.documentElement.lang = language === "hi" ? "hi-IN" : "en-IN";
-  }, [language]);
+    // Add Google Translate script if not already present
+    if (!document.getElementById("google-translate-script")) {
+      const addScript = document.createElement("script");
+      addScript.id = "google-translate-script";
+      addScript.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      addScript.async = true;
+      document.body.appendChild(addScript);
+
+      window.googleTranslateElementInit = () => {
+        new window.google.translate.TranslateElement(
+          { pageLanguage: "en", includedLanguages: "hi,en", autoDisplay: false },
+          "google_translate_element"
+        );
+      };
+    }
+  }, []);
 
   const t = (key) => {
-    return translations[language]?.[key] || translations.en[key] || key;
+    // Always return English so React renders English in the virtual DOM.
+    // Google Translate will seamlessly translate the rendered DOM to Hindi.
+    return translations.en?.[key] || key;
   };
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === "en" ? "hi" : "en");
+    const newLang = language === "en" ? "hi" : "en";
+    setLanguage(newLang);
+
+    const select = document.querySelector(".goog-te-combo");
+    if (select) {
+      select.value = newLang;
+      select.dispatchEvent(new Event("change"));
+    } else {
+      // Fallback: set cookie and reload
+      document.cookie = `googtrans=/en/${newLang}; path=/`;
+      document.cookie = `googtrans=/en/${newLang}; path=/; domain=${window.location.hostname}`;
+      window.location.reload();
+    }
   };
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+      <div id="google_translate_element" style={{ display: "none" }}></div>
       {children}
     </LanguageContext.Provider>
   );

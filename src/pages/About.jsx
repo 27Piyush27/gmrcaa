@@ -141,12 +141,18 @@ export default function About() {
                 About Us
               </p>
             </BlurFadeIn>
+            
             <TextReveal delay={0.15}>
-              <h1 className="text-5xl md:text-7xl lg:text-8xl mb-8 text-balance max-w-4xl">
-                Thirteen years of{" "}
-                <span className="italic gradient-text-iridescent">trusted expertise.</span>
+              <h1 className="text-5xl md:text-7xl lg:text-8xl mb-2 text-balance max-w-4xl tracking-tight">
+                Thirteen years of
               </h1>
             </TextReveal>
+            <TextReveal delay={0.25}>
+              <span className="block mt-2 mb-10 text-[5rem] md:text-[8rem] lg:text-[10rem] font-['Dancing_Script'] text-primary font-bold leading-[0.8] tracking-normal drop-shadow-sm">
+                trusted expertise.
+              </span>
+            </TextReveal>
+
             <BlurFadeIn delay={0.4}>
               <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
                 Established in 2011, GMR & Associates has grown from a dedicated practice

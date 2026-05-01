@@ -673,59 +673,72 @@ export function AIChatbot() {
     }
     const times = ["10:00 AM", "11:00 AM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
     return (
-      <div className="mx-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
-        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />{isHindi ? "त्वरित अपॉइंटमेंट बुक करें" : "Quick Book Appointment"}
+      <div className="mx-2 mb-3 p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+        <p className="text-[13px] font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+          <Calendar className="h-4 w-4" /> Quick Book Appointment
         </p>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {dates.map((d) => (
             <button key={d} onClick={() => setBk((p) => ({ ...p, date: d }))}
-              className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
-                bk.date === d ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</button>
+              className={cn("text-[12px] font-medium px-3 py-1.5 rounded-full border transition-all",
+                bk.date === d ? "bg-black text-white dark:bg-white dark:text-black border-transparent" : "border-gray-200 dark:border-white/20 hover:border-black dark:hover:border-white text-gray-700 dark:text-gray-300")}>
+              {new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+            </button>
           ))}
         </div>
-        {bk.date && <div className="flex flex-wrap gap-1.5 animate-in fade-in duration-200">
-          {times.map((t) => (
-            <button key={t} onClick={() => setBk((p) => ({ ...p, time: t }))}
-              className={cn("text-[10px] px-2 py-1 rounded-lg border transition-all",
-                bk.time === t ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{t}</button>
-          ))}
-        </div>}
-        {bk.time && <div className="flex gap-1.5 animate-in fade-in duration-200">
-          {[{ val: "video", lbl: "Video" }, { val: "phone", lbl: isHindi ? "फ़ोन" : "Phone" }, { val: "in_person", lbl: isHindi ? "ऑफ़िस" : "Office" }].map((t) => (
-            <button key={t.val} onClick={() => setBk((p) => ({ ...p, type: t.val }))}
-              className={cn("text-[10px] px-2.5 py-1 rounded-lg border transition-all",
-                bk.type === t.val ? "bg-primary text-primary-foreground border-primary" : "border-border/50 hover:border-primary/40")}>{t.lbl}</button>
-          ))}
-        </div>}
-        {bk.date && bk.time && <Button size="sm" className="w-full h-8 text-xs rounded-lg gap-1.5" onClick={() => handleInlineBooking(bk)}>
-          <Calendar className="h-3 w-3" />{isHindi ? "बुक करें" : "Confirm Booking"}
-        </Button>}
+        {bk.date && (
+          <div className="flex flex-wrap gap-2 animate-in fade-in duration-200">
+            {times.map((t) => (
+              <button key={t} onClick={() => setBk((p) => ({ ...p, time: t }))}
+                className={cn("text-[12px] font-medium px-3 py-1.5 rounded-full border transition-all",
+                  bk.time === t ? "bg-black text-white dark:bg-white dark:text-black border-transparent" : "border-gray-200 dark:border-white/20 hover:border-black dark:hover:border-white text-gray-700 dark:text-gray-300")}>
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
+        {bk.time && (
+          <div className="flex gap-2 animate-in fade-in duration-200">
+            {[{ val: "video", lbl: "Video" }, { val: "phone", lbl: "Phone" }, { val: "in_person", lbl: "Office" }].map((t) => (
+              <button key={t.val} onClick={() => setBk((p) => ({ ...p, type: t.val }))}
+                className={cn("text-[12px] font-medium px-3.5 py-1.5 rounded-full border transition-all",
+                  bk.type === t.val ? "bg-black text-white dark:bg-white dark:text-black border-transparent" : "border-gray-200 dark:border-white/20 hover:border-black dark:hover:border-white text-gray-700 dark:text-gray-300")}>
+                {t.lbl}
+              </button>
+            ))}
+          </div>
+        )}
+        {bk.date && bk.time && (
+          <Button size="sm" className="w-full h-9 mt-2 text-[13px] rounded-xl bg-black text-white dark:bg-white dark:text-black shadow-sm gap-1.5" onClick={() => handleInlineBooking(bk)}>
+            <Calendar className="h-3.5 w-3.5" /> Confirm Booking
+          </Button>
+        )}
       </div>
     );
   };
 
   const DeadlinePanel = () => (
-    <div className="mx-2 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 space-y-2 animate-in slide-in-from-bottom-2 duration-300">
-      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-        <Bell className="h-3.5 w-3.5 text-amber-500" />{isHindi ? "आगामी कर समयसीमाएँ" : "Upcoming Tax Deadlines"}
+    <div className="mx-2 mb-3 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 space-y-3 animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
+      <p className="text-[13px] font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+        <Bell className="h-4 w-4 text-amber-500" /> Upcoming Tax Deadlines
       </p>
-      {upcomingDeadlines.length === 0
-        ? <p className="text-[11px] text-muted-foreground">{isHindi ? "अगले 60 दिनों में कोई समयसीमा नहीं" : "No deadlines in the next 60 days"}</p>
-        : upcomingDeadlines.map((d, i) => (
-          <div key={i} className={cn("text-[11px] px-2.5 py-1.5 rounded-lg border",
-            d.daysLeft <= 15 ? "border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400" :
-            d.daysLeft <= 30 ? "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400" :
-            "border-border/50 text-muted-foreground")}>{d.text}</div>
-        ))}
-      <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
-        onClick={() => { setShowDeadlines(false); sendMessage(isHindi ? "मुझे कर समयसीमाओं के बारे में विस्तार से बताएं" : "Tell me more about upcoming tax deadlines and what I need to prepare"); }}>
-        {isHindi ? "AI से और जानें →" : "Ask AI for details →"}
+      {upcomingDeadlines.length === 0 ? (
+        <p className="text-[12px] text-gray-500">No deadlines in the next 60 days</p>
+      ) : (
+        upcomingDeadlines.map((d, i) => (
+          <div key={i} className={cn("text-[12px] px-3 py-2 rounded-xl border bg-white dark:bg-[#1C1C1E] shadow-sm",
+            d.daysLeft <= 15 ? "border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400" :
+            d.daysLeft <= 30 ? "border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400" :
+            "border-gray-100 dark:border-white/10 text-gray-600 dark:text-gray-300")}>{d.text}</div>
+        ))
+      )}
+      <Button size="sm" variant="ghost" className="w-full h-8 text-[11px] font-medium text-amber-700 dark:text-amber-400"
+        onClick={() => { setShowDeadlines(false); sendMessage("Tell me more about upcoming tax deadlines and what I need to prepare"); }}>
+        Ask AI for details →
       </Button>
     </div>
   );
 
-  // ── Tax Lookup Widget ─────────────────────────────────────────────
   const TaxLookupWidget = () => {
     const [income, setIncome] = useState("");
     const [result, setResult] = useState(null);
@@ -735,37 +748,37 @@ export function AIChatbot() {
       setResult(calculateTax(inc));
     };
     return (
-      <div className="mx-2 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
-        <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-          <Calculator className="h-3.5 w-3.5 text-blue-500" />{isHindi ? "त्वरित टैक्स लुकअप" : "Quick Tax Lookup"}
+      <div className="mx-2 mb-3 p-4 rounded-2xl border border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 space-y-3 animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
+        <p className="text-[13px] font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+          <Calculator className="h-4 w-4 text-blue-500" /> Quick Tax Lookup
         </p>
         <div className="flex gap-2">
-          <input type="number" placeholder={isHindi ? "वार्षिक आय (₹)" : "Annual Income (₹)"}
+          <input type="number" placeholder="Annual Income (₹)"
             value={income} onChange={(e) => setIncome(e.target.value)}
-            className="flex-1 h-8 text-xs px-3 rounded-lg border border-border/50 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30" />
-          <Button size="sm" className="h-8 text-xs px-3 rounded-lg" onClick={calc}>
-            {isHindi ? "गणना" : "Calculate"}
+            className="flex-1 h-9 text-[13px] px-3 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-[#1C1C1E] focus:outline-none focus:ring-1 focus:ring-blue-500/30 shadow-sm" />
+          <Button size="sm" className="h-9 text-[13px] px-4 rounded-xl bg-blue-600 text-white hover:bg-blue-700 shadow-sm" onClick={calc}>
+            Calculate
           </Button>
         </div>
         {result && (
-          <div className="space-y-1.5 animate-in fade-in duration-200">
-            <div className={cn("flex justify-between text-[11px] px-2.5 py-1.5 rounded-lg border",
-              result.better === "old" ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50")}>
-              <span>{isHindi ? "पुरानी व्यवस्था" : "Old Regime"}</span>
+          <div className="space-y-2 animate-in fade-in duration-200 mt-2">
+            <div className={cn("flex justify-between text-[12px] px-3 py-2 rounded-xl border shadow-sm",
+              result.better === "old" ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300" : "border-gray-100 dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-gray-700 dark:text-gray-300")}>
+              <span>Old Regime</span>
               <span className="font-semibold">₹{result.oldTax.toLocaleString("en-IN")}</span>
             </div>
-            <div className={cn("flex justify-between text-[11px] px-2.5 py-1.5 rounded-lg border",
-              result.better === "new" ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50")}>
-              <span>{isHindi ? "नई व्यवस्था" : "New Regime"}</span>
+            <div className={cn("flex justify-between text-[12px] px-3 py-2 rounded-xl border shadow-sm",
+              result.better === "new" ? "border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300" : "border-gray-100 dark:border-white/10 bg-white dark:bg-[#1C1C1E] text-gray-700 dark:text-gray-300")}>
+              <span>New Regime</span>
               <span className="font-semibold">₹{result.newTax.toLocaleString("en-IN")}</span>
             </div>
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium text-center">
-              ✓ {result.better === "new" ? (isHindi ? "नई व्यवस्था बेहतर" : "New Regime saves more") : (isHindi ? "पुरानी व्यवस्था बेहतर" : "Old Regime saves more")}
-              {" — "}₹{Math.abs(result.oldTax - result.newTax).toLocaleString("en-IN")} {isHindi ? "बचत" : "saved"}
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium text-center mt-2">
+              ✓ {result.better === "new" ? "New Regime saves more" : "Old Regime saves more"}
+              {" — "}₹{Math.abs(result.oldTax - result.newTax).toLocaleString("en-IN")} saved
             </p>
-            <Button size="sm" variant="ghost" className="w-full h-7 text-[10px]"
-              onClick={() => { setShowTaxLookup(false); sendMessage(isHindi ? `मेरी आय ₹${income} है, विस्तृत टैक्स प्लानिंग बताएं` : `My income is ₹${income}, give me detailed tax planning advice`); }}>
-              {isHindi ? "AI से विस्तृत सलाह लें →" : "Get detailed AI advice →"}
+            <Button size="sm" variant="ghost" className="w-full h-8 text-[11px] font-medium text-blue-600 dark:text-blue-400"
+              onClick={() => { setShowTaxLookup(false); sendMessage(`My income is ₹${income}, give me detailed tax planning advice`); }}>
+              Get detailed AI advice →
             </Button>
           </div>
         )}
@@ -774,24 +787,23 @@ export function AIChatbot() {
   };
 
   const ShareModal = () => (
-    <div className="mx-2 p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300">
-      <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-        <FileText className="h-3.5 w-3.5 text-primary" />
-        {isHindi ? "CA को दस्तावेज़ भेजें" : "Share Document with CA"}
+    <div className="mx-2 mb-3 p-4 rounded-2xl border border-gray-100 dark:border-white/10 bg-white dark:bg-white/5 space-y-3 animate-in slide-in-from-bottom-2 duration-300 shadow-sm">
+      <p className="text-[13px] font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
+        <FileText className="h-4 w-4" /> Share Document with CA
       </p>
-      <select className="w-full text-xs p-1.5 rounded-md border border-border/50 bg-background focus:outline-none focus:ring-1 focus:ring-primary/30"
+      <select className="w-full text-[13px] p-2.5 rounded-xl border border-gray-200 dark:border-white/20 bg-gray-50 dark:bg-[#1C1C1E] focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
         value={selectedReqId} onChange={(e) => setSelectedReqId(e.target.value)}>
-        <option value="">{isHindi ? "सेवा चुनें" : "Select Service"}</option>
+        <option value="">Select Service</option>
         {serviceRequests.map((req) => (
           <option key={req.id} value={req.id}>{req.services?.name}</option>
         ))}
       </select>
       <div className="flex gap-2">
-        <Button size="sm" className="flex-1 h-7 text-xs" onClick={handleShareToCA} disabled={!selectedReqId || sharingLoading}>
-          {sharingLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : (isHindi ? "शेयर करें" : "Share with CA")}
+        <Button size="sm" className="flex-1 h-9 text-[13px] rounded-xl bg-black text-white dark:bg-white dark:text-black shadow-sm" onClick={handleShareToCA} disabled={!selectedReqId || sharingLoading}>
+          {sharingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Share with CA"}
         </Button>
-        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowShareModal(false)}>
-          {isHindi ? "रद्द करें" : "Cancel"}
+        <Button size="sm" variant="ghost" className="h-9 text-[13px] rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-white" onClick={() => setShowShareModal(false)}>
+          Cancel
         </Button>
       </div>
     </div>
@@ -823,36 +835,40 @@ export function AIChatbot() {
         if (dbError) throw dbError;
         successCount++;
       }
-      toast.success(isHindi ? `${successCount} दस्तावेज़ CA को भेजे गए` : `${successCount} document(s) shared with CA!`);
+      toast.success(`${successCount} document(s) shared with CA!`);
       setShowShareModal(false);
       clearPendingFiles();
     } catch (err) {
       console.error("Share document error:", err);
-      toast.error(isHindi ? "दस्तावेज़ शेयर करने में त्रुटि" : "Failed to share documents");
+      toast.error("Failed to share documents");
     } finally {
       setSharingLoading(false);
     }
   };
 
-  // ── Chat History Panel ────────────────────────────────────────────
   const HistoryPanel = () => (
-    <div className="absolute inset-0 z-10 bg-background/95 backdrop-blur-sm flex flex-col rounded-3xl overflow-hidden animate-in slide-in-from-left-4 duration-200">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <button onClick={() => setShowHistory(false)} className="text-muted-foreground hover:text-foreground"><ChevronLeft className="h-4 w-4" /></button>
-        <h3 className="font-semibold text-sm flex-1">{isHindi ? "चैट इतिहास" : "Chat History"}</h3>
+    <div className="absolute inset-0 z-20 bg-white/95 dark:bg-[#1C1C1E]/95 backdrop-blur-xl flex flex-col rounded-[28px] overflow-hidden animate-in slide-in-from-right-4 fade-in duration-300">
+      <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100 dark:border-white/5">
+        <button onClick={() => setShowHistory(false)} className="h-8 w-8 rounded-full flex items-center justify-center text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+        <h3 className="font-semibold text-[15px] flex-1 text-gray-900 dark:text-white">Chat History</h3>
       </div>
-      <ScrollArea className="flex-1 p-3">
+      <ScrollArea className="flex-1 p-4">
         {historyLoading ? (
-          <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
         ) : pastConversations.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-8">{isHindi ? "कोई पिछली चैट नहीं" : "No past conversations"}</p>
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <History className="h-12 w-12 mb-3 opacity-20" />
+            <p className="text-[13px]">No past conversations</p>
+          </div>
         ) : (
           <div className="space-y-1.5">
             {pastConversations.map((conv) => (
               <button key={conv.id} onClick={() => loadConversation(conv.id)}
-                className="w-full text-left px-3 py-2.5 rounded-xl border border-border/50 hover:bg-secondary/50 hover:border-foreground/10 transition-all text-xs space-y-0.5">
-                <p className="font-medium text-foreground truncate">{conv.title}</p>
-                <p className="text-[10px] text-muted-foreground">{new Date(conv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+                className="w-full text-left px-4 py-3.5 rounded-2xl border border-transparent hover:border-gray-200 dark:hover:border-white/10 bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-all group">
+                <p className="font-medium text-[14px] text-gray-900 dark:text-white truncate mb-1">{conv.title}</p>
+                <p className="text-[11px] text-gray-500">{new Date(conv.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
               </button>
             ))}
           </div>
@@ -861,185 +877,130 @@ export function AIChatbot() {
     </div>
   );
 
-  // ═══════════════════════════════════════════════════════════════════
   return (
     <>
-      {/* Floating button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-hero transition-all duration-300 hover:scale-110",
-          "bg-primary text-primary-foreground",
+          "fixed bottom-6 right-6 z-50 flex items-center justify-center w-[56px] h-[56px] rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-transform duration-300",
+          "bg-black text-white dark:bg-white dark:text-black hover:scale-105 active:scale-95",
           !isOpen && "animate-[pulse-ring_2s_ease-in-out_infinite]",
-          isOpen && "rotate-90"
+          isOpen && "rotate-90 scale-90 hover:scale-95"
         )}
         aria-label="Open AI Assistant"
       >
-        {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
+        {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
         {!isOpen && upcomingDeadlines.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-500 border-2 border-background animate-pulse" />
+          <span className="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white dark:border-black animate-pulse" />
         )}
       </button>
 
-      {/* Chat panel */}
       {isOpen && (
         <div className={cn(
-          "fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-8rem)] flex flex-col rounded-3xl border border-border/50 glass-frosted shadow-hero overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300",
+          "fixed bottom-[96px] right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] h-[620px] max-h-[calc(100vh-8rem)] flex flex-col rounded-[28px] border border-gray-200/50 dark:border-white/10 bg-white dark:bg-[#1C1C1E] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-400",
           themeClass
         )}>
 
-          {/* History overlay */}
           {showHistory && <HistoryPanel />}
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-primary/5">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <Sparkles className="h-3 w-3 text-primary" />
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/5 bg-white/80 dark:bg-[#1C1C1E]/80 backdrop-blur-xl z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-100 dark:border-white/10">
+                <Sparkles className="h-4 w-4 text-black dark:text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-sm text-foreground leading-none">
-                  {isHindi ? "GMR AI सहायक" : "GMR AI Assistant"}
+                <h3 className="font-semibold text-[15px] text-gray-900 dark:text-white leading-tight tracking-tight">
+                  GMR Assistant
                 </h3>
-                <span className="text-[9px] text-emerald-500 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                  {isHindi ? "ऑनलाइन" : "Online"}
+                <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Online
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon" className="h-7 w-7" title={isHindi ? "Switch to English" : "हिंदी में बदलें"}
-                onClick={() => setLang(lang === "en" ? "hi" : "en")}>
-                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-              {/* Theme toggle */}
-              <Button variant="ghost" size="icon" className="h-7 w-7"
-                title={chatTheme === "dark" ? "Light mode" : "Dark mode"}
-                onClick={() => setChatTheme((t) => t === "dark" ? "light" : "dark")}>
-                {chatTheme === "dark" ? <Sun className="h-3.5 w-3.5 text-muted-foreground" /> : <Moon className="h-3.5 w-3.5 text-muted-foreground" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 relative"
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 relative"
                 onClick={() => { setShowDeadlines(!showDeadlines); setDeadlineBadge(false); }}
-                title={isHindi ? "कर समयसीमाएँ" : "Tax Deadlines"}>
-                <Bell className="h-3.5 w-3.5 text-muted-foreground" />
-                {deadlineBadge && upcomingDeadlines.length > 0 && <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-amber-500" />}
+                title="Tax Deadlines">
+                <Calendar className="h-4 w-4" />
+                {deadlineBadge && upcomingDeadlines.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500" />}
               </Button>
-              {/* History */}
-              {user && <Button variant="ghost" size="icon" className="h-7 w-7"
-                onClick={() => { setShowHistory(true); loadHistory(); }} title={isHindi ? "इतिहास" : "History"}>
-                <History className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>}
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearChat}>
-                <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+              {user && (
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-gray-500 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                  onClick={() => { setShowHistory(true); loadHistory(); }} title="History">
+                  <History className="h-4 w-4" />
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10" onClick={clearChat} title="Clear Chat">
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
-          {/* Feature pills */}
-          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/50 overflow-x-auto scrollbar-hide">
-            <button onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
-              <ImageIcon className="h-3 w-3" /> {isHindi ? "डॉक्यूमेंट" : "Document"}
-            </button>
-            <button onClick={() => sendMessage(isHindi ? "मेरा टैक्स कैलकुलेट करो" : "Calculate my tax")}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
-              <Calculator className="h-3 w-3" /> {isHindi ? "टैक्स गणना" : "Tax Calc"}
-            </button>
-            <button onClick={() => { setShowTaxLookup(!showTaxLookup); setShowDeadlines(false); }}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 transition-colors whitespace-nowrap text-blue-600 dark:text-blue-400 hover:text-blue-700">
-              <Search className="h-3 w-3" /> {isHindi ? "टैक्स लुकअप" : "Tax Lookup"}
-            </button>
-            <button onClick={() => sendMessage(isHindi ? "मुझे अपॉइंटमेंट बुक करनी है" : "I want to book an appointment")}
-              className="flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full border border-border/60 bg-secondary/40 hover:bg-secondary transition-colors whitespace-nowrap text-muted-foreground hover:text-foreground">
-              <Calendar className="h-3 w-3" /> {isHindi ? "बुकिंग" : "Book"}
-            </button>
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium whitespace-nowrap">
-              {isHindi ? "हिंदी" : "EN"}
-            </span>
-          </div>
-
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <ScrollArea className="flex-1 p-5 bg-white dark:bg-[#1C1C1E]" ref={scrollRef}>
             {showDeadlines && <DeadlinePanel />}
             {showTaxLookup && <TaxLookupWidget />}
 
             {messages.length === 0 ? (
-              <div className="space-y-4">
-                <div className="flex justify-center mb-2">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
+              <div className="flex flex-col items-center justify-center h-full pt-10 pb-4 space-y-6">
+                <div className="w-16 h-16 rounded-[20px] bg-gray-50 dark:bg-white/5 flex items-center justify-center border border-gray-100 dark:border-white/10 shadow-sm">
+                  <Sparkles className="h-8 w-8 text-black dark:text-white" />
                 </div>
-                <p className="text-sm text-muted-foreground text-center">
-                  {isHindi ? "👋 नमस्ते! मैं आपका CA सहायक हूँ। मैं कैसे मदद कर सकता हूँ?" : "👋 Hello! I'm your CA assistant. How can I help you today?"}
-                </p>
-                <div className="grid gap-2">
-                  {quickOptions.map((opt) => (
+                <div className="text-center space-y-1">
+                  <h4 className="font-medium text-gray-900 dark:text-white text-lg tracking-tight">How can I help you?</h4>
+                  <p className="text-[13px] text-gray-500 dark:text-gray-400">Ask me about taxes, audits, or our services.</p>
+                </div>
+                <div className="grid gap-2 w-full mt-4">
+                  {(isStaff ? STAFF_QUICK_OPTIONS_EN : QUICK_OPTIONS_EN).map((opt) => (
                     <button key={opt} onClick={() => sendMessage(opt)}
-                      className="text-left text-xs px-3.5 py-2.5 rounded-xl border border-border/60 bg-secondary/40 hover:bg-secondary hover:border-foreground/20 hover:scale-[1.02] transition-all duration-200 text-foreground">{opt}</button>
+                      className="text-left text-[13px] font-medium px-4 py-3.5 rounded-[16px] border border-gray-200/60 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 hover:-translate-y-[1px] transition-all duration-300 text-gray-700 dark:text-gray-300 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
+                      {opt}
+                    </button>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-6 pb-2">
                 {messages.map((msg, i) => (
                   <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
-                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm relative group break-words overflow-x-hidden",
+                    <div className={cn("max-w-[85%] rounded-[24px] px-4 py-3 text-[14px] leading-relaxed relative group break-words shadow-sm",
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-secondary text-secondary-foreground rounded-bl-md"
+                        ? "bg-black text-white dark:bg-white dark:text-black rounded-br-[8px]"
+                        : "bg-[#F5F5F7] dark:bg-[#2C2C2E] text-gray-900 dark:text-white rounded-bl-[8px]"
                     )}>
-                      {/* Bot avatar for assistant */}
-                      {msg.role === "assistant" && (
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <div className="w-4 h-4 rounded-full bg-primary/15 flex items-center justify-center">
-                            <Sparkles className="h-2.5 w-2.5 text-primary" />
-                          </div>
-                          <span className="text-[9px] font-medium text-muted-foreground">GMR AI</span>
-                        </div>
-                      )}
-                      {/* Multi-file thumbnails */}
                       {msg.allFiles && (
-                        <div className="flex gap-1.5 mb-2">
+                        <div className="flex gap-2 mb-3">
                           {msg.allFiles.map((f, fi) => (
-                            <img key={fi} src={f.preview} alt={f.name} className="w-12 h-12 rounded-lg object-cover border border-white/20" />
+                            <img key={fi} src={f.preview} alt={f.name} className="w-16 h-16 rounded-[14px] object-cover border border-black/10 dark:border-white/10 shadow-sm" />
                           ))}
                         </div>
                       )}
                       {msg.image?.preview && !msg.allFiles && (
-                        <img src={msg.image.preview} alt="uploaded" className="w-full max-w-[200px] rounded-lg mb-2" />
+                        <img src={msg.image.preview} alt="uploaded" className="w-full max-w-[200px] rounded-[14px] mb-3 shadow-sm" />
                       )}
                       {msg.role === "assistant" ? renderContent(msg.content) : msg.content}
                     </div>
 
-                    {/* Message actions for assistant */}
                     {msg.role === "assistant" && msg.content && (
-                      <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {/* Copy */}
+                      <div className="flex items-center gap-1 mt-1.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => copyMessage(msg.content, i)}
-                          className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                          title={isHindi ? "कॉपी करें" : "Copy"}>
+                          className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                           {copiedIdx === i ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
                         </button>
-                        {/* Regenerate (only on last assistant msg) */}
                         {i === messages.length - 1 && (
                           <button onClick={regenerateLastResponse}
-                            className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                            title={isHindi ? "पुनः उत्तर दें" : "Regenerate"}>
+                            className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                             <RefreshCw className="h-3 w-3" />
                           </button>
                         )}
-                        {/* Rating */}
                         <button onClick={() => setRatings((p) => ({ ...p, [i]: p[i] === "up" ? null : "up" }))}
-                          className={cn("p-1 rounded-md hover:bg-secondary transition-colors",
-                            ratings[i] === "up" ? "text-emerald-500" : "text-muted-foreground hover:text-foreground")}
-                          title={isHindi ? "अच्छा" : "Good response"}>
+                          className={cn("p-1.5 rounded-full transition-colors",
+                            ratings[i] === "up" ? "text-blue-500 bg-blue-50 dark:bg-blue-500/10" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white")}>
                           <ThumbsUp className="h-3 w-3" />
                         </button>
                         <button onClick={() => setRatings((p) => ({ ...p, [i]: p[i] === "down" ? null : "down" }))}
-                          className={cn("p-1 rounded-md hover:bg-secondary transition-colors",
-                            ratings[i] === "down" ? "text-red-500" : "text-muted-foreground hover:text-foreground")}
-                          title={isHindi ? "बुरा" : "Poor response"}>
+                          className={cn("p-1.5 rounded-full transition-colors",
+                            ratings[i] === "down" ? "text-red-500 bg-red-50 dark:bg-red-500/10" : "text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white")}>
                           <ThumbsDown className="h-3 w-3" />
                         </button>
                       </div>
@@ -1047,33 +1008,23 @@ export function AIChatbot() {
                   </div>
                 ))}
 
-                {/* Premium typing indicator */}
                 {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-                  <div className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-                    </div>
-                    <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "0ms" }} />
-                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "150ms" }} />
-                          <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: "300ms" }} />
-                        </div>
-                        <span className="text-[10px] text-muted-foreground italic animate-pulse">
-                          {isHindi ? "GMR AI सोच रहा है..." : "GMR AI is thinking..."}
-                        </span>
+                  <div className="flex items-start">
+                    <div className="bg-[#F5F5F7] dark:bg-[#2C2C2E] rounded-[24px] rounded-bl-[8px] px-5 py-4 shadow-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Smart suggestions */}
                 {!isLoading && suggestions.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="flex flex-wrap gap-2 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {suggestions.map((s, i) => (
                       <button key={i} onClick={() => { setSuggestions([]); sendMessage(s); }}
-                        className="text-[10px] px-2.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary hover:border-primary/40 transition-all duration-200">
+                        className="text-[12px] font-medium px-4 py-2 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 transition-all duration-200 shadow-sm">
                         {s}
                       </button>
                     ))}
@@ -1085,63 +1036,80 @@ export function AIChatbot() {
             {showBookingForm && <InlineBookingForm />}
           </ScrollArea>
 
-          {/* Pending file previews */}
-          {pendingFiles.length > 0 && (
-            <div className="px-3 py-2 border-t border-border/50 flex flex-col gap-2 bg-secondary/30">
-              <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="p-4 bg-white dark:bg-[#1C1C1E] border-t border-gray-100 dark:border-white/5 z-10">
+            {messages.length > 0 && (
+              <div className="flex items-center gap-2 mb-3 overflow-x-auto scrollbar-hide pb-1">
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 text-[11px] font-medium px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors whitespace-nowrap shadow-sm">
+                  <ImageIcon className="h-3 w-3" /> Document
+                </button>
+                <button onClick={() => { setShowTaxLookup(!showTaxLookup); setShowDeadlines(false); }}
+                  className="flex items-center gap-1.5 text-[11px] font-medium px-3.5 py-1.5 rounded-full border border-blue-200 dark:border-blue-500/20 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors whitespace-nowrap shadow-sm">
+                  <Search className="h-3 w-3" /> Tax Lookup
+                </button>
+              </div>
+            )}
+
+            {pendingFiles.length > 0 && (
+              <div className="flex gap-2 mb-3 overflow-x-auto">
                 {pendingFiles.map((f, i) => (
-                  <div key={i} className="relative flex-shrink-0">
+                  <div key={i} className="relative flex-shrink-0 group">
                     {f.isPdf || !f.preview ? (
-                      <div className="w-10 h-10 rounded-lg border border-border bg-red-500/10 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-red-500" />
+                      <div className="w-14 h-14 rounded-[14px] bg-gray-100 dark:bg-white/10 flex items-center justify-center border border-gray-200 dark:border-white/10 shadow-sm">
+                        <FileText className="h-6 w-6 text-gray-500" />
                       </div>
                     ) : (
-                      <img src={f.preview} alt={f.file.name} className="w-10 h-10 rounded-lg object-cover border border-border" />
+                      <img src={f.preview} alt={f.file.name} className="w-14 h-14 rounded-[14px] object-cover border border-gray-200 dark:border-white/10 shadow-sm" />
                     )}
                     <button onClick={() => removeFile(i)}
-                      className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-[8px]">
-                      <X className="h-2.5 w-2.5" />
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black text-white dark:bg-white dark:text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                      <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{pendingFiles.length}/3</span>
-              </div>
-              {user && serviceRequests.length > 0 && !showShareModal && (
-                <div className="flex items-center">
-                  <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setShowShareModal(true)}>
-                    {isHindi ? "दस्तावेज़ CA के साथ साझा करें" : "Share to CA Vault"}
+                {user && serviceRequests.length > 0 && !showShareModal && (
+                  <Button size="sm" variant="outline" className="h-14 rounded-[14px] text-[11px] px-3 border-dashed" onClick={() => setShowShareModal(true)}>
+                    Send to CA
                   </Button>
-                </div>
-              )}
-              {showShareModal && <ShareModal />}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+            
+            {showShareModal && pendingFiles.length > 0 && <ShareModal />}
 
-          {/* Input */}
-          <div className="p-3 border-t border-border">
-            <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="flex gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="relative flex items-end gap-2 bg-[#F5F5F7] dark:bg-[#2C2C2E] p-1.5 rounded-[28px] border border-gray-200/50 dark:border-white/5 transition-colors focus-within:border-gray-300 dark:focus-within:border-white/20 focus-within:bg-white dark:focus-within:bg-[#1C1C1E] shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
               <input ref={fileInputRef} type="file" accept="*/*" className="hidden" onChange={handleFileSelect} multiple />
-              <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0"
+              
+              <button type="button" className="h-[44px] w-[44px] flex shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
                 onClick={() => fileInputRef.current?.click()} disabled={isLoading || pendingFiles.length >= 3}>
-                <Paperclip className="h-4 w-4 text-muted-foreground" />
-              </Button>
-              <Input value={input} onChange={(e) => setInput(e.target.value)}
-                placeholder={isHindi ? "CA सेवाओं के बारे में पूछें..." : "Ask about our CA services..."}
-                className="text-sm h-9" disabled={isLoading} />
-              <Button type="button" variant="ghost" size="icon"
-                className={cn("h-9 w-9 shrink-0", isListening && "text-red-500 animate-pulse")}
+                <Paperclip className="h-5 w-5" />
+              </button>
+              
+              <input 
+                value={input} 
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask me anything..."
+                className="flex-1 max-h-32 min-h-[44px] py-3 px-1 bg-transparent text-[14px] text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none" 
+                disabled={isLoading} 
+              />
+              
+              <button type="button" 
+                className={cn("h-[44px] w-[44px] shrink-0 flex items-center justify-center rounded-full transition-colors", 
+                  isListening ? "text-red-500 bg-red-50 dark:bg-red-500/10 animate-pulse" : "text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-white/10")}
                 onClick={isListening ? stopListening : startListening} disabled={isLoading}>
-                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-              </Button>
-              <Button type="submit" size="icon" className="h-9 w-9 shrink-0"
+                {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </button>
+              
+              <button type="submit" 
+                className="h-[44px] w-[44px] shrink-0 flex items-center justify-center rounded-full bg-black text-white dark:bg-white dark:text-black hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 shadow-sm"
                 disabled={isLoading || (!input.trim() && !pendingFiles.length)}>
-                <Send className="h-4 w-4" />
-              </Button>
+                <ArrowRight className="h-5 w-5" />
+              </button>
             </form>
+            
             {!user && (
-              <p className="text-[10px] text-muted-foreground mt-1 text-center">
-                <button onClick={() => navigate("/auth")} className="underline hover:text-foreground">{isHindi ? "साइन इन करें" : "Sign in"}</button>{" "}
-                {isHindi ? "चैट इतिहास सहेजने के लिए" : "to save chat history & access all features"}
+              <p className="text-[11px] text-gray-400 mt-3 mb-1 text-center font-medium">
+                <button onClick={() => navigate("/auth")} className="text-gray-900 dark:text-white hover:underline">Sign in</button> to save chat history
               </p>
             )}
           </div>

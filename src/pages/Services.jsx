@@ -130,100 +130,80 @@ export default function Services() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-[#F5F5F7] dark:bg-black font-sans">
 
-        {/* ── Hero — lightweight, no 3D ──────────────────────────────── */}
-        <section className="relative pt-28 pb-14 md:pt-36 md:pb-20 overflow-hidden">
-          {/* Soft ambient glow — pure CSS, GPU-composited */}
-          <div
-            className="absolute top-1/4 left-1/3 w-[28rem] h-[28rem] rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, hsl(var(--accent) / 0.06) 0%, transparent 70%)", transform: "translateZ(0)" }}
-          />
-          <div
-            className="absolute bottom-0 right-[15%] w-[24rem] h-[24rem] rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(circle, hsl(260 60% 55% / 0.04) 0%, transparent 70%)", transform: "translateZ(0)" }}
-          />
-
-          <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center relative">
+        {/* ── Apple-style Clean Hero ──────────────────────────────── */}
+        <section className="relative pt-32 pb-20 md:pt-40 md:pb-28 overflow-hidden flex flex-col items-center justify-center">
+          <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-white dark:from-[#111] to-transparent pointer-events-none" />
+          
+          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
             {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/60 bg-secondary/60 backdrop-blur-sm text-xs text-muted-foreground tracking-widest uppercase mb-8">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {servicesData.length} Professional Services
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-sm mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-[11px] font-medium tracking-wide text-gray-600 dark:text-gray-300 uppercase">
+                {servicesData.length} Professional Services
+              </span>
+            </motion.div>
 
             {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-balance mb-6">
-              Expert Financial
+            <style>
+              {`
+                @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap');
+                .aesthetic-cursive {
+                  font-family: 'Dancing Script', cursive;
+                  line-height: 1.2;
+                  padding-bottom: 0.2em;
+                }
+              `}
+            </style>
+            <motion.h1 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-6xl sm:text-7xl md:text-[6rem] text-balance mb-6 text-gray-900 dark:text-white aesthetic-cursive"
+            >
+              Expert financial solutions.
               <br />
-              <span className="italic gradient-text-premium">Solutions.</span>
-            </h1>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300 text-7xl sm:text-8xl md:text-[7.5rem] drop-shadow-sm">
+                Tailored for you.
+              </span>
+            </motion.h1>
 
-            <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
-              Request a service and pay only after our CA team completes the work.{" "}
-              <span className="text-foreground font-medium">Zero risk. Full transparency.</span>
-            </p>
-
-            {/* Process steps */}
-            <div className="flex flex-wrap justify-center items-center gap-3">
-              {["Request", "We Work", "You Pay"].map((step, i) => (
-                <div key={step} className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-border/50 bg-background/50 backdrop-blur-sm text-xs text-muted-foreground font-medium">
-                    <span className="w-5 h-5 rounded-full bg-foreground text-background text-[10px] flex items-center justify-center font-bold flex-shrink-0">
-                      {i + 1}
-                    </span>
-                    {step}
-                  </span>
-                  {i < 2 && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/30 hidden sm:block" />}
-                </div>
-              ))}
-            </div>
+            <motion.p 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10 tracking-tight"
+            >
+              Request a service and pay only after our CA team completes the work. Zero risk. Full transparency.
+            </motion.p>
           </div>
         </section>
 
-        {/* ── Sticky filter bar ──────────────────────────────────────── */}
-        <div
-          className="sticky top-16 z-30 bg-background/85 backdrop-blur-md border-b border-border/40"
-          style={{ transform: "translateZ(0)" }}
-        >
-          <div className="max-w-7xl mx-auto px-6 lg:px-12 py-3">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-
-              {/* Search */}
-              <div className="relative flex-shrink-0 sm:w-52">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search services…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-9 pl-8 pr-8 rounded-xl border border-border/50 bg-secondary/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/30 transition-all duration-200"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Category pills — plain CSS transitions, no LayoutGroup */}
-              <div className="flex-1 overflow-x-auto scrollbar-none">
-                <div className="flex items-center gap-1.5 min-w-max">
+        {/* ── Sticky filter bar (Apple/Google style) ──────────────────────────────────────── */}
+        <div className="sticky top-16 z-40 pb-6 pt-2 bg-[#F5F5F7]/80 dark:bg-black/80 backdrop-blur-2xl border-b border-gray-200/50 dark:border-white/10" style={{ transform: "translateZ(0)" }}>
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              
+              {/* Category pills */}
+              <div className="flex-1 w-full overflow-x-auto scrollbar-none pb-2 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0">
+                <div className="flex items-center gap-2 min-w-max p-1 bg-gray-200/50 dark:bg-white/5 rounded-full w-fit">
                   {CATEGORIES.map((cat) => {
                     const active = activeCategory === cat.id;
                     return (
                       <button
                         key={cat.id}
                         onClick={() => setActiveCategory(cat.id)}
-                        className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-300 ${
+                        className={`relative flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-300 ${
                           active
-                            ? "bg-foreground text-background shadow-sm"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                            ? "bg-white dark:bg-white text-black shadow-sm"
+                            : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                         }`}
                       >
-                        <cat.Icon className="w-3.5 h-3.5" />
                         {cat.label}
                       </button>
                     );
@@ -231,35 +211,49 @@ export default function Services() {
                 </div>
               </div>
 
-              {/* Count */}
-              <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0 hidden sm:block">
-                {filtered.length} {filtered.length === 1 ? "service" : "services"}
-              </span>
+              {/* Search */}
+              <div className="relative w-full md:w-64 group flex-shrink-0">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search services…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-10 pl-10 pr-10 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-[13px] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
             </div>
           </div>
         </div>
 
         {/* ── Services Grid ──────────────────────────────────────────── */}
-        <section className="py-12 md:py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
+        <section className="py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-6 lg:px-12">
             {filtered.length === 0 ? (
-              <div className="py-24 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-secondary mx-auto mb-5 flex items-center justify-center">
-                  <Search className="w-7 h-7 text-muted-foreground" />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-32 text-center max-w-md mx-auto">
+                <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-white/5 mx-auto mb-6 flex items-center justify-center">
+                  <Search className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No services found</h3>
-                <p className="text-muted-foreground text-sm mb-6">Try a different search or category</p>
+                <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white tracking-tight">No services found</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">Try a different search term or category.</p>
                 <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => { setSearchQuery(""); setActiveCategory("All"); }}
-                  className="rounded-xl gap-2"
+                  className="rounded-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200"
                 >
-                  <X className="w-4 h-4" /> Clear filters
+                  Clear search
                 </Button>
-              </div>
+              </motion.div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {filtered.map((service, index) => {
                   const IconComp = iconMap[service.icon];
                   const isRequesting = requestingId === service.id;
@@ -273,96 +267,85 @@ export default function Services() {
                       variants={cardVariants}
                       className="group"
                     >
-                      <div className="relative h-full rounded-2xl border border-border/50 bg-card overflow-hidden transition-all duration-500 ease-out hover:border-border/80 hover:shadow-lg hover:-translate-y-1">
-                        {/* Top accent line — pure CSS */}
-                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-foreground/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <div className="flex flex-col h-full rounded-[24px] bg-white dark:bg-[#1C1C1E] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-400 hover:-translate-y-1 relative overflow-hidden">
+                        
+                        {/* Apple-style top reflection */}
+                        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-black/5 dark:via-white/10 to-transparent" />
 
-                        {/* Popular ribbon */}
                         {service.popular && (
-                          <div className="absolute top-5 right-5 z-10">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-foreground text-background text-[10px] font-semibold shadow-md">
-                              <Star className="w-3 h-3 fill-current" />
+                          <div className="absolute top-6 right-6">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold tracking-wide uppercase">
                               Popular
                             </span>
                           </div>
                         )}
 
-                        <div className="p-6 md:p-7 flex flex-col h-full">
-                          {/* Icon + Category */}
-                          <div className="flex items-start justify-between mb-5">
-                            <div className="w-11 h-11 rounded-xl bg-secondary border border-border/40 flex items-center justify-center text-foreground transition-transform duration-300 group-hover:scale-105">
-                              {IconComp && <IconComp className="h-5 w-5" />}
-                            </div>
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-border/40 bg-secondary/40 text-[11px] text-muted-foreground font-medium">
-                              {service.category}
-                            </span>
+                        <div className="flex flex-col flex-grow">
+                          {/* Icon */}
+                          <div className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-white/5 flex items-center justify-center text-gray-900 dark:text-white mb-6 group-hover:scale-105 transition-transform duration-300">
+                            {IconComp && <IconComp className="h-5 w-5" />}
                           </div>
+
+                          {/* Category Tag */}
+                          <p className="text-[11px] font-semibold tracking-wider text-gray-400 dark:text-gray-500 uppercase mb-2">
+                            {service.category}
+                          </p>
 
                           {/* Title & description */}
                           <Link
                             to={`/services/${service.id}`}
-                            className="text-lg md:text-xl font-semibold leading-snug mb-2 hover:text-accent transition-colors duration-200 block"
+                            className="text-2xl font-semibold tracking-tight leading-tight mb-3 text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                           >
                             {service.title}
                           </Link>
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-5 line-clamp-2">
+                          <p className="text-[15px] text-gray-500 dark:text-gray-400 leading-relaxed mb-6 line-clamp-2">
                             {service.shortDesc}
                           </p>
 
-                          {/* Features — 3 max */}
-                          <ul className="space-y-2 mb-5 flex-grow">
+                          {/* Features */}
+                          <ul className="space-y-2.5 mb-8 flex-grow">
                             {service.features.slice(0, 3).map((f, i) => (
-                              <li key={i} className="flex items-start gap-2.5 text-sm">
-                                <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                                <span className="text-muted-foreground leading-snug">{f}</span>
+                              <li key={i} className="flex items-start gap-3 text-[13px] text-gray-600 dark:text-gray-300">
+                                <CheckCircle className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+                                <span className="leading-snug">{f}</span>
                               </li>
                             ))}
                           </ul>
 
-                          {/* Bottom: Pricing + CTA */}
-                          <div className="pt-5 border-t border-border/40">
-                            <div className="flex items-center justify-between mb-4">
+                          {/* Bottom Area */}
+                          <div className="mt-auto">
+                            <div className="flex items-end justify-between mb-6">
                               <div>
-                                <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-widest">From</p>
-                                <div className="flex items-baseline gap-0.5">
-                                  <IndianRupee className="w-4 h-4 self-start mt-0.5 text-foreground" />
-                                  <span className="text-2xl font-bold tracking-tight">
+                                <p className="text-[11px] text-gray-400 font-medium mb-0.5">Starting from</p>
+                                <div className="flex items-start gap-0.5">
+                                  <IndianRupee className="w-4 h-4 mt-1.5 text-gray-900 dark:text-white" />
+                                  <span className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
                                     {service.price.toLocaleString("en-IN")}
                                   </span>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1.5">
+                              <div className="flex flex-col items-end gap-1.5 text-[11px] font-medium text-gray-500">
+                                <span className="flex items-center gap-1.5 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded-md">
                                   <Clock className="w-3.5 h-3.5" />
                                   {service.duration}
-                                </span>
-                                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
-                                  <Shield className="w-3.5 h-3.5" />
-                                  Pay after
                                 </span>
                               </div>
                             </div>
 
-                            {/* CTA — plain CSS hover, no whileHover/whileTap */}
+                            {/* CTA Button */}
                             <button
                               onClick={() => handleRequestService(service.id)}
                               disabled={isRequesting}
-                              className={`w-full h-11 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all duration-300 active:scale-[0.97] ${
+                              className={`w-full h-11 rounded-full flex items-center justify-center gap-2 text-[14px] font-medium transition-all duration-300 ${
                                 isRequesting
-                                  ? "bg-secondary text-muted-foreground cursor-not-allowed"
-                                  : "bg-foreground text-background hover:bg-foreground/90 hover:shadow-md"
+                                  ? "bg-gray-100 dark:bg-white/5 text-gray-400 cursor-not-allowed"
+                                  : "bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 active:scale-[0.98]"
                               }`}
                             >
                               {isRequesting ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  Requesting…
-                                </>
+                                <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
-                                <>
-                                  Request Service
-                                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                                </>
+                                "Request Service"
                               )}
                             </button>
                           </div>
@@ -377,28 +360,20 @@ export default function Services() {
         </section>
 
         {/* ── CTA Section ────────────────────────────────────────────── */}
-        <section className="py-20 md:py-28 bg-foreground text-background relative overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 70% 30%, hsl(var(--accent) / 0.08) 0%, transparent 60%)" }}
-          />
-
-          <div className="max-w-3xl mx-auto px-6 lg:px-12 text-center relative">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-6 leading-tight tracking-tight text-background">
-              Don't see what you need?
+        <section className="py-24 md:py-32 bg-white dark:bg-[#111] text-center border-t border-gray-100 dark:border-white/5">
+          <div className="max-w-3xl mx-auto px-6">
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.04em] mb-5 text-gray-900 dark:text-white">
+              Need something custom?
             </h2>
-            <p className="text-background/60 mb-10 max-w-xl mx-auto text-base leading-relaxed">
-              Every business is unique. Let's discuss how we can tailor our services to your exact requirements.
+            <p className="text-lg text-gray-500 dark:text-gray-400 mb-8 tracking-tight max-w-xl mx-auto">
+              Our experts can build a tailored solution for your exact requirements.
             </p>
             <Button
               asChild
-              size="lg"
-              variant="secondary"
-              className="h-12 px-8 rounded-xl text-sm font-medium gap-2 transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] hover:shadow-xl"
+              className="h-12 px-8 rounded-full text-[15px] font-medium bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-none hover:scale-105 transition-transform"
             >
               <Link to="/contact">
-                Get in Touch
-                <ArrowRight className="w-4 h-4" />
+                Talk to an Expert
               </Link>
             </Button>
           </div>
