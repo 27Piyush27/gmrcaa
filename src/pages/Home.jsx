@@ -231,11 +231,14 @@ export default function Home() {
             {/* Headline — Split text reveal */}
             <div className="mb-6 overflow-hidden" style={{ perspective: "1000px" }}>
               <TextReveal delay={0.15}>
-                <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[1.02] text-balance">
-                  {t("home.hero.line1")}{" "}
-                  <br className="hidden md:block" />
-                  <span className="gradient-text-premium italic">{t("home.hero.line2")}</span>
+                <h1 className="text-5xl md:text-7xl lg:text-8xl leading-[1.02] text-balance tracking-tight">
+                  {t("home.hero.line1")}
                 </h1>
+              </TextReveal>
+              <TextReveal delay={0.25}>
+                <span className="block mt-4 mb-10 text-[5rem] md:text-[8rem] lg:text-[10rem] font-['Dancing_Script'] text-primary font-bold leading-[0.8] tracking-normal drop-shadow-sm">
+                  {t("home.hero.line2")}
+                </span>
               </TextReveal>
             </div>
 
