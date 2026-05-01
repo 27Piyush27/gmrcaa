@@ -477,7 +477,7 @@ export function AIChatbot() {
         : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
 
       // Fallback for Vercel deployment if env var is not set in Vercel dashboard
-      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBpJyErR-NB-gKnNHx_0aIjex2oItEYF4Q";
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyDKTatPogBBVW24Z56AEPBaG9mGqW6cFrw";
       if (!GEMINI_KEY) throw new Error("Gemini API key is not configured");
 
       const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
