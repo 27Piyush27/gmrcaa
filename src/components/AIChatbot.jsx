@@ -476,8 +476,9 @@ export function AIChatbot() {
         ? `You are an expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage their platform, clients, and workflow. Use markdown for formatting. If the user wants to navigate to an admin feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`
         : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
 
-      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!GEMINI_KEY) throw new Error("Gemini API key is not configured in .env file");
+      // Fallback for Vercel deployment if env var is not set in Vercel dashboard
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyAZh5GmMwuw6nPJ8BkrxRRE5zGOg6PTlj0";
+      if (!GEMINI_KEY) throw new Error("Gemini API key is not configured");
 
       const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
 
@@ -629,11 +630,12 @@ export function AIChatbot() {
     }
 
     const mdComponents = {
-      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+      p: ({ children }) => <p className="mb-2 last:mb-0 break-words whitespace-pre-wrap">{children}</p>,
       ul: ({ children }) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
       ol: ({ children }) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
-      li: ({ children }) => <li className="mb-1">{children}</li>,
+      li: ({ children }) => <li className="mb-1 break-words">{children}</li>,
       strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+      a: ({ children, href }) => <a href={href} className="text-blue-500 hover:underline break-all" target="_blank" rel="noopener noreferrer">{children}</a>,
     };
 
     if (parts.length === 1 && parts[0].type === 'text') {
@@ -982,7 +984,7 @@ export function AIChatbot() {
               <div className="space-y-3">
                 {messages.map((msg, i) => (
                   <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
-                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm relative group",
+                    <div className={cn("max-w-[85%] rounded-2xl px-3 py-2 text-sm relative group break-words overflow-x-hidden",
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground rounded-br-md"
                         : "bg-secondary text-secondary-foreground rounded-bl-md"
