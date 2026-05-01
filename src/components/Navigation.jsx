@@ -326,17 +326,7 @@ export const Navigation = () => {
               </AnimatePresence>
             </motion.button>
 
-            {/* Language Toggle */}
-            <motion.button
-              onClick={toggleLanguage}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="h-8 px-2 flex items-center gap-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200 text-xs font-medium"
-              aria-label="Toggle language"
-            >
-              <Languages className="h-[14px] w-[14px]" />
-              {language === "en" ? "हि" : "EN"}
-            </motion.button>
+            {/* Removed Language Toggle */}
 
             {/* Auth Section */}
             {!loading && user ? (
@@ -600,13 +590,7 @@ export const Navigation = () => {
                   {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   {isDark ? t("nav.lightMode") : t("nav.darkMode")}
                 </button>
-                <button
-                  onClick={toggleLanguage}
-                  className="text-[13px] text-muted-foreground flex items-center gap-2 hover:text-foreground transition-colors"
-                >
-                  <Languages className="h-4 w-4" />
-                  {language === "en" ? "हिन्दी" : "English"}
-                </button>
+                {/* Removed Mobile Language Toggle */}
               </div>
 
               {!loading && user ? (

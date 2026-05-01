@@ -151,7 +151,7 @@ export function NotificationCenter() {
                             {notification.title}
                           </p>
                           <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
-                            {notification.message}
+                            {notification.body}
                           </p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{timeAgo(notification.created_at)}</p>
                         </div>

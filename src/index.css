@@ -127,6 +127,21 @@
     font-feature-settings: "kern" 1, "liga" 1;
     touch-action: manipulation;
     overscroll-behavior: none;
+    top: 0px !important; /* Force override Google Translate margin */
+    margin-top: 0px !important; /* Prevent Google Translate push-down */
+  }
+
+  /* ── Google Translate Banner Overrides ── */
+  .goog-te-banner-frame.skiptranslate {
+    display: none !important;
+  }
+  #goog-gt-tt, .goog-te-balloon-frame {
+    display: none !important;
+  }
+  .goog-text-highlight {
+    background-color: transparent !important;
+    border: none !important; 
+    box-shadow: none !important;
   }
 
   h1,

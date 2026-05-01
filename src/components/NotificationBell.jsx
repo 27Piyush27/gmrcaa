@@ -166,7 +166,7 @@ export function NotificationBell() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{n.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {n.message}
+                      {n.body}
                     </p>
                   </div>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
