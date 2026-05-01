@@ -144,7 +144,10 @@ export default function ServiceCheckout() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               payment_id: data.payment_id,
-              service_request_id: existingRequestId
+              service_request_id: existingRequestId,
+              user_id: user.id,
+              amount: service.price,
+              description: service.title
             });
 
             if (verifyError) {

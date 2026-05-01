@@ -19,7 +19,7 @@ export default function TermsOfService() {
               Terms of Service
             </motion.h1>
             <motion.p className="text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-              Last updated: March 24, 2026
+              Last updated: May 1, 2026
             </motion.p>
           </div>
         </section>

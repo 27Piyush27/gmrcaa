@@ -26,7 +26,10 @@ export default async function handler(req, res) {
     razorpay_payment_id,
     razorpay_signature,
     payment_id,
-    service_request_id
+    service_request_id,
+    user_id,
+    amount,
+    description
   } = req.body || {};
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -74,11 +77,66 @@ export default async function handler(req, res) {
           dbUpdated = true;
           console.log("[Payment API] service_request", service_request_id, "→ status: paid");
         }
+
+        // ── Insert into payments table ───────────────────────────────────────
+        if (user_id && amount) {
+          const baseAmount = Number(amount);
+          const gstAmount = Math.round(baseAmount * 0.18 * 100) / 100;
+          const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
+
+          const { error: insertError } = await supabase
+            .from("payments")
+            .insert({
+              user_id: user_id,
+              service_request_id: service_request_id || null,
+              amount: baseAmount,
+              gst_amount: gstAmount,
+              total_amount: totalAmount,
+              currency: "INR",
+              status: "completed",
+              razorpay_order_id: razorpay_order_id,
+              razorpay_payment_id: razorpay_payment_id,
+              description: description || "Service Payment"
+            });
+            
+          if (insertError) {
+            console.error("[Payment API] Failed to log payment in DB:", insertError.message);
+          } else {
+            console.log("[Payment API] Logged payment record successfully.");
+          }
+        }
+
       } catch (dbErr) {
-        console.error("[Payment API] Supabase update error:", dbErr.message);
+        console.error("[Payment API] Supabase DB error:", dbErr.message);
       }
     } else {
-      console.warn("[Payment API] Supabase credentials not configured — skipping DB update.");
+      console.warn("[Payment API] Supabase credentials not configured — skipping DB updates.");
+    }
+  } else if (user_id && amount) {
+    // If no service_request_id but we have user_id, still insert payment
+    const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        const baseAmount = Number(amount);
+        const gstAmount = Math.round(baseAmount * 0.18 * 100) / 100;
+        
+        await supabase.from("payments").insert({
+          user_id,
+          amount: baseAmount,
+          gst_amount: gstAmount,
+          total_amount: baseAmount + gstAmount,
+          currency: "INR",
+          status: "completed",
+          razorpay_order_id,
+          razorpay_payment_id,
+          description: description || "Service Payment"
+        });
+        console.log("[Payment API] Logged standalone payment successfully.");
+      } catch (e) {
+        console.error("[Payment API] Error logging standalone payment:", e.message);
+      }
     }
   }
 

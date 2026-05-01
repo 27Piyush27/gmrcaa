@@ -2,6 +2,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getServiceById, servicesData } from "@/lib/servicesData";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import {
   Calculator, FileCheck, Receipt, FileText, PieChart, Settings,
   CheckCircle, Shield, Search, AlertCircle, TrendingUp, Scale,
@@ -99,112 +102,164 @@ export default function ServiceDetail() {
   const discount = service.originalPrice ? service.originalPrice - service.price : 0;
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="py-20 gradient-hero text-white">
-        <div className="container mx-auto px-4">
-          <Button
-            asChild
-            variant="secondary"
-            className="mb-6">
-            
-            <Link to="/services">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Services
-            </Link>
-          </Button>
+    <PageTransition>
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <section className="relative pt-32 pb-24 overflow-hidden border-b border-border/40 bg-background">
+          <div className="absolute inset-0 bg-aurora opacity-30 dark:opacity-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background pointer-events-none" />
           
-          <div className="max-w-3xl">
-            <div className="bg-white/10 w-20 h-20 rounded-xl flex items-center justify-center text-white mb-6">
-              {iconMap[service.icon]}
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 animate-slide-up">
-              {service.title}
-            </h1>
-            <p className="text-xl opacity-95 animate-fade-in">{service.description}</p>
-
-            {/* Price display */}
-            <div className="mt-8 flex items-center gap-4">
-              <div className="flex items-baseline gap-1">
-                <IndianRupee className="w-6 h-6" />
-                <span className="text-4xl font-bold">{service.price.toLocaleString("en-IN")}</span>
+          <div className="container relative z-10 mx-auto px-6 max-w-5xl">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="mb-8 text-muted-foreground hover:text-foreground -ml-4">
+                <Link to="/services">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Services
+                </Link>
+              </Button>
+            </motion.div>
+            
+            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+              <motion.div 
+                animate={{ y: [0, -10, 0] }} 
+                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                className="bg-primary/10 w-24 h-24 rounded-2xl flex items-center justify-center text-primary shrink-0 shadow-lg border border-primary/20 backdrop-blur-md">
+                {iconMap[service.icon]}
+              </motion.div>
+              
+              <div className="flex-1">
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-3 mb-3">
+                   <Badge variant="secondary" className="px-3 py-1 font-medium bg-primary/10 text-primary border border-primary/20 shadow-sm">
+                     {service.category || "Professional Service"}
+                   </Badge>
+                </motion.div>
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                  className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-balance gradient-text-premium">
+                  {service.title}
+                </motion.h1>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                  className="text-xl text-muted-foreground max-w-2xl text-balance">
+                  {service.description}
+                </motion.p>
               </div>
-              {service.originalPrice && (
-                <span className="text-xl line-through opacity-60">
-                  ₹{service.originalPrice.toLocaleString("en-IN")}
-                </span>
-              )}
-              {discount > 0 && (
-                <span className="bg-green-500/20 text-green-100 px-3 py-1 rounded-full text-sm font-medium">
-                  Save ₹{discount.toLocaleString("en-IN")}
-                </span>
-              )}
             </div>
 
-            <div className="flex items-center gap-2 mt-3 text-white/70 text-sm">
-              <Clock className="w-4 h-4" />
-              <span>Estimated delivery: {service.duration}</span>
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              className="mt-12 gradient-border-glow spotlight-card">
+              <div className="p-6 md:p-8 rounded-2xl bg-card/90 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <span className="text-sm font-medium text-muted-foreground mb-1 block">Service Investment</span>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="flex items-baseline gap-1">
+                  <IndianRupee className="w-6 h-6 text-foreground" />
+                  <span className="text-4xl font-bold tracking-tight text-foreground">{service.price.toLocaleString("en-IN")}</span>
+                </div>
+                {service.originalPrice && (
+                  <span className="text-lg line-through text-muted-foreground decoration-destructive/40">
+                    ₹{service.originalPrice.toLocaleString("en-IN")}
+                  </span>
+                )}
+                {discount > 0 && (
+                  <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20 shadow-none font-semibold">
+                    Save ₹{discount.toLocaleString("en-IN")}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground text-sm font-medium">
+                <Clock className="w-4 h-4" />
+                <span>Estimated delivery: {service.duration}</span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={handleRequestService}
+                disabled={requesting}
+                size="lg"
+                variant="outline"
+                className="h-14 px-8 text-base shadow-sm bg-background hover-lift">
+                {requesting ? "Requesting..." : `Consult First`}
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                className="h-14 px-8 text-base shadow-md hover-lift">
+                <Link to={`/checkout/${service.id}`}>
+                  Pay & Enroll
+                </Link>
+              </Button>
             </div>
           </div>
+        </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">What's Included</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+      <section className="py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-noise opacity-5 pointer-events-none" />
+        <div className="container relative z-10 mx-auto px-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight mb-4">What's Included</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">Everything you need, handled by our expert team.</p>
+          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {service.features.map((feature, index) =>
-            <Card
-              key={index}
-              className="shadow-card animate-slide-up"
-              style={{ animationDelay: `${index * 0.1}s` }}>
-              
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 p-3 rounded-lg text-primary flex-shrink-0">
-                      <CheckCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">{feature}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <motion.div 
+                key={index} 
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }}
+                className="flex items-start gap-4 p-6 rounded-2xl border border-border/50 bg-card perspective-card">
+                <div className="bg-primary/10 p-3 rounded-xl text-primary shrink-0 animate-pulse-ring">
+                  <CheckCircle className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-medium leading-relaxed">{feature}</p>
+              </motion.div>
             )}
           </div>
         </div>
       </section>
 
       {/* Process Timeline */}
-      <section className="py-20 bg-secondary">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-center">Our Process</h2>
-          <div className="max-w-3xl mx-auto">
-            <div className="space-y-6">
+      <section className="py-24 bg-secondary/30 border-y border-border/40 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+        <div className="container relative z-10 mx-auto px-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Our Process</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">A seamless experience from start to finish.</p>
+          </motion.div>
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
               {[
-                { title: "Request Service", text: "Submit your service request through our platform. Our team reviews it within 24 hours." },
-                { title: "Document Collection", text: "We'll reach out to collect any necessary documents and information from you." },
-                { title: "Expert Processing", text: "Our experienced CAs handle your case with attention to detail and compliance." },
-                { title: "Delivery & Payment", text: "Once completed, review the work and make the payment. Full satisfaction guaranteed." },
+                { title: "Request", text: "Submit your details securely online." },
+                { title: "Review", text: "We analyze your documents." },
+                { title: "Process", text: "Our experts handle the filing." },
+                { title: "Deliver", text: "You get the final certified output." },
               ].map((step, index) =>
-              <div
-                key={index}
-                className="flex gap-6 animate-slide-up"
-                style={{ animationDelay: `${index * 0.1}s` }}>
-                
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold flex-shrink-0">
-                      {index + 1}
-                    </div>
-                    {index < 3 &&
-                  <div className="w-0.5 h-full bg-primary/30 mt-2" />
-                  }
+                <motion.div 
+                  key={index} 
+                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.15 }}
+                  className="relative flex flex-col items-center text-center group">
+                  <div className="w-14 h-14 rounded-2xl bg-card border border-border/60 text-primary flex items-center justify-center font-bold text-xl mb-4 shadow-sm z-10 relative group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">
+                    {index + 1}
                   </div>
-                  <div className="flex-1 pb-8">
-                    <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
-                    <p className="text-muted-foreground">{step.text}</p>
-                  </div>
-                </div>
+                  {index < 3 && <div className="hidden md:block absolute top-7 left-[60%] w-full h-[2px] bg-border/60 overflow-hidden">
+                    <motion.div 
+                      initial={{ x: "-100%" }} whileInView={{ x: "100%" }} viewport={{ once: true }} transition={{ duration: 1.5, delay: index * 0.2 }}
+                      className="w-full h-full bg-primary" 
+                    />
+                  </div>}
+                  <h3 className="font-semibold text-lg mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground px-2">{step.text}</p>
+                </motion.div>
               )}
             </div>
           </div>
@@ -212,34 +267,43 @@ export default function ServiceDetail() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 gradient-hero text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Get Started?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto opacity-95">
-            Request this service now and our expert team will get in touch with you within 24 hours.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+      <section className="relative py-32 bg-primary text-primary-foreground text-center px-6 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent pointer-events-none opacity-50" />
+        <div className="max-w-3xl mx-auto space-y-8 relative z-10">
+          <motion.h2 
+            initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
+            Ready to Get Started?
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+            className="text-xl opacity-90 max-w-2xl mx-auto text-balance">
+            Join hundreds of satisfied clients. Let our experts handle your {service.title} with precision and care.
+          </motion.p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
             <Button
               onClick={handleRequestService}
               disabled={requesting}
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 shadow-lg">
-              
-              {requesting ? "Requesting..." : `Request ${service.title}`}
+              variant="secondary"
+              className="h-14 px-8 text-base font-bold w-full sm:w-auto hover-lift text-primary shadow-xl">
+              {requesting ? "Processing..." : "Consult First"}
             </Button>
             <Button
               asChild
               size="lg"
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10">
+              className="h-14 px-8 text-base font-bold w-full sm:w-auto bg-transparent border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground hover-lift backdrop-blur-md">
               <Link to={`/checkout/${service.id}`}>
-                <IndianRupee className="w-4 h-4 mr-2" />
-                Pay & Enroll — ₹{service.price.toLocaleString("en-IN")}
+                Pay & Enroll Now
               </Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
       </section>
-    </div>);
-
+    </div>
+    </PageTransition>
+  );
 }

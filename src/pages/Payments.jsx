@@ -206,7 +206,10 @@ export default function Payments() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              payment_id: data.payment_id
+              payment_id: data.payment_id,
+              user_id: user.id,
+              amount: amount,
+              description: description
             });
 
             if (verifyError) {
