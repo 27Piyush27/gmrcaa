@@ -300,6 +300,49 @@ function buildContactConfirmHtml(name) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8" /><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:24px}.card{background:#fff;border-radius:12px;max-width:520px;margin:0 auto;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}.header{background:#0a0a0a;padding:24px 32px}.header h1{color:#fff;margin:0;font-size:18px;font-weight:600}.header p{color:rgba(255,255,255,.5);margin:4px 0 0;font-size:12px}.body{padding:28px 32px;font-size:14px;color:#555;line-height:1.7}.body h2{color:#111;font-size:16px;margin:0 0 12px}.cta{display:block;text-align:center;margin-top:20px;padding:12px;background:#0a0a0a;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;font-size:14px}.footer{padding:16px 32px;background:#fafafa;text-align:center;font-size:11px;color:#999}</style></head><body><div class="card"><div class="header"><h1>GMR &amp; Associates</h1><p>Chartered Accountants</p></div><div class="body"><h2>Thank you, ${name}!</h2><p>We've received your message and our team will get back to you within <strong>24 hours</strong>.</p><p>If your inquiry is urgent, feel free to call us directly:</p><p style="color:#111;font-weight:500">📞 +91 98712 09393 (Gurgaon)<br/>📞 +91 98710 84875 (Delhi)</p><a href="https://gmrassociates.com" class="cta">Visit Our Website →</a></div><div class="footer">GMR &amp; Associates · Chartered Accountants<br/>H.No.43, SF, Sector-7, Gurugram | AB 38, Shalimar Bagh, Delhi<br/>info@gmrindia.com</div></div></body></html>`;
 }
 
+// ─── Route: Chat via Gemini ───────────────────────────────────────────────────
+
+async function handleChat(body, res) {
+  const env = loadEnv("development", process.cwd(), "");
+  const GEMINI_KEY = env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+  if (!GEMINI_KEY) {
+    return jsonResponse(res, { error: { message: "Gemini API key not configured locally." } }, 500);
+  }
+
+  const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
+
+  try {
+    const resp = await fetch(URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      return jsonResponse(res, errData, resp.status);
+    }
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    });
+
+    const reader = resp.body.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(value);
+    }
+    res.end();
+  } catch (err) {
+    console.error("[Chat API] Error:", err);
+    return jsonResponse(res, { error: { message: "Failed to communicate with Gemini API" } }, 500);
+  }
+}
+
 // ─── Vite Plugin ──────────────────────────────────────────────────────────────
 
 export default function localPaymentPlugin() {
@@ -336,6 +379,12 @@ export default function localPaymentPlugin() {
         if (req.url === "/api/send-contact-email" && req.method === "POST") {
           const body = await readBody(req);
           return handleSendContactEmail(body, res);
+        }
+
+        // ── POST /api/chat ───────────────────────────────────────────────
+        if (req.url === "/api/chat" && req.method === "POST") {
+          const body = await readBody(req);
+          return handleChat(body, res);
         }
 
         next();
