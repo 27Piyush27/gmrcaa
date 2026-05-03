@@ -46,7 +46,7 @@ export function getTeamData() {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch {}
+  } catch (e) { console.error("Error parsing team data:", e); }
   return DEFAULT_TEAM;
 }
 

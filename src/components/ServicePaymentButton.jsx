@@ -209,14 +209,14 @@ export function ServicePaymentButton({
 
   }
 
-  const gst = Math.round(amount * 0.18);
-  const total = amount + gst;
+  const gst = Math.round(amount * 0.18 * 100) / 100;
+  const total = Math.round((amount + gst) * 100) / 100;
 
   return (
     <div className="space-y-2">
       <div className="text-xs text-muted-foreground">
-        Service: ₹{amount.toLocaleString()} + GST (18%): ₹{gst.toLocaleString()} ={" "}
-        <span className="font-semibold text-foreground">₹{total.toLocaleString()}</span>
+        Service: ₹{amount.toLocaleString()} + GST (18%): ₹{gst.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ={" "}
+        <span className="font-semibold text-foreground">₹{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
       </div>
       <Button
         onClick={handlePayment}
@@ -232,7 +232,7 @@ export function ServicePaymentButton({
 
         <>
             <IndianRupee className="w-4 h-4" />
-            {razorpayReady ? `Pay ₹${total.toLocaleString()}` : "Loading..."}
+            {razorpayReady ? `Pay ₹${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Loading..."}
           </>
         }
       </Button>

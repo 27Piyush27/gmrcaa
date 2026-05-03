@@ -132,6 +132,7 @@ export default function Appointments() {
   const [rescheduleTime, setRescheduleTime] = useState("");
 
   const handleCancel = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this appointment? This action cannot be undone.")) return;
     const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", id);
     if (error) toast.error("Failed to cancel");
     else { toast.success("Appointment cancelled"); fetchAppointments(); }

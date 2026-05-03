@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { servicesData } from "@/lib/servicesData";
 import { resolveServiceIdForDb } from "@/lib/serviceIdResolver";
@@ -294,7 +295,7 @@ export function AIChatbot() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState(null);
-  const [lang, setLang] = useState("en");
+  const { language: lang } = useLanguage();
   const [isListening, setIsListening] = useState(false);
   const [showDeadlines, setShowDeadlines] = useState(false);
   const [pendingFiles, setPendingFiles] = useState([]); // multi-file
@@ -563,7 +564,7 @@ export function AIChatbot() {
       }
     }
 
-    const updatedMessages = isRegen ? [...messages, userMsg] : [...messages, userMsg];
+    const updatedMessages = isRegen ? [...messages] : [...messages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
@@ -572,6 +573,12 @@ export function AIChatbot() {
 
     let convId = conversationId;
     if (user) convId = await ensureConversation();
+
+    if (user && convId && !isRegen) {
+      await supabase.from("chat_messages").insert({
+        conversation_id: convId, role: "user", content: userMsg.content,
+      });
+    }
 
     // Upload files to Supabase Storage so CAs can view them later
     if (user && pendingFiles.length > 0) {
@@ -629,9 +636,21 @@ export function AIChatbot() {
         };
       });
 
+      const companyContext = `
+COMPANY INFO:
+Name: GMR & Associates
+Offices: Gurugram (H.No.43, SF, Sector-7) & Delhi (AB 38, Shalimar Bagh)
+Contact: +91 98712 09393 (Gurugram), +91 98710 84875 (Delhi), info@gmrindia.com
+Office Hours: Monday to Saturday, 10:00 AM to 6:30 PM
+`;
+
+      const servicesContext = `
+SERVICES & PRICING:
+` + servicesData.map(s => `- ${s.title} (ID: ${s.id}): ₹${s.price}. ${s.shortDesc}. Duration: ${s.duration}.`).join('\n');
+
       const systemPrompt = isStaff 
-        ? `You are an expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage their platform, clients, and workflow. Use markdown for formatting. If the user wants to navigate to an admin feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`
-        : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance. Current language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
+        ? `You are an expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage their platform, clients, and workflow. Use markdown for formatting. If the user wants to navigate to an admin feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog.\n${companyContext}\nCurrent language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`
+        : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.\n${companyContext}\n${servicesContext}\nCurrent language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
 
       const URL = `/api/chat`;
 
@@ -731,7 +750,9 @@ export function AIChatbot() {
             const parsed = JSON.parse(jsonStr);
             const delta = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             if (delta) { assistantContent += delta; upsertAssistant(assistantContent); }
-          } catch { buffer = line + "\n" + buffer; break; }
+          } catch (e) {
+            console.warn("Failed to parse Gemini SSE line:", line);
+          }
         }
       }
 
@@ -814,6 +835,9 @@ export function AIChatbot() {
 
   // ── Render markdown ───────────────────────────────────────────────
   const renderContent = (content) => {
+    let cleanContent = content.replace(/\[SHOW_BOOKING_FORM\]/g, "").replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+    cleanContent = cleanContent.replace(/\[(SHOW_BOOKING_FORM|NAVIGATE)[^\]]*$/, "");
+
     const combinedRegex = /\[(SERVICE|REQUEST_SERVICE):([\w-]+)\]/g;
     const parts = [];
     let lastIndex = 0;
@@ -821,15 +845,15 @@ export function AIChatbot() {
     
     combinedRegex.lastIndex = 0;
 
-    while ((match = combinedRegex.exec(content)) !== null) {
+    while ((match = combinedRegex.exec(cleanContent)) !== null) {
       if (match.index > lastIndex) {
-        parts.push({ type: 'text', content: content.slice(lastIndex, match.index) });
+        parts.push({ type: 'text', content: cleanContent.slice(lastIndex, match.index) });
       }
       parts.push({ type: match[1], id: match[2] });
       lastIndex = combinedRegex.lastIndex;
     }
-    if (lastIndex < content.length) {
-      parts.push({ type: 'text', content: content.slice(lastIndex) });
+    if (lastIndex < cleanContent.length) {
+      parts.push({ type: 'text', content: cleanContent.slice(lastIndex) });
     }
 
     const mdComponents = {

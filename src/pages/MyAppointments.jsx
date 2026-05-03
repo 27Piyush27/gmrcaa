@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
@@ -45,9 +45,9 @@ export default function MyAppointments() {
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
     if (user) fetchAppointments();
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, fetchAppointments]);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -63,7 +63,7 @@ export default function MyAppointments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const handleCancel = async (id) => {
     setCancelling(id);

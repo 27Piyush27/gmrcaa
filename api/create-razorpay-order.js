@@ -1,8 +1,16 @@
 import crypto from "crypto";
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // CORS — restrict to known origins only
+  const origin = req.headers?.origin || "";
+  const allowedOrigins = [
+    "https://chartered-insight-hub-32-3d4b2fdf-main.vercel.app",
+    "http://localhost:8080",
+    "http://localhost:5173",
+  ];
+  // Also allow Vercel preview deploys (*.vercel.app)
+  const isAllowed = allowedOrigins.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
+  res.setHeader("Access-Control-Allow-Origin", isAllowed ? origin : allowedOrigins[0]);
   res.setHeader("Access-Control-Allow-Headers", "content-type, authorization");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
 
@@ -67,7 +75,7 @@ export default async function handler(req, res) {
       try {
         const errJson = JSON.parse(errText);
         razorpayError = errJson.error?.description || errJson.error?.reason || razorpayError;
-      } catch {}
+      } catch (parseErr) { /* Non-JSON error body — use default message */ }
       return res.status(500).json({
         error: razorpayError,
         razorpay_status: rzpRes.status

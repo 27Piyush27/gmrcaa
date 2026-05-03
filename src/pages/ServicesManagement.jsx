@@ -35,7 +35,7 @@ export function getServicesData() {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch {}
+  } catch (e) { console.error("Error parsing services data:", e); }
   // Add visible=true to defaults
   return DEFAULT_SERVICES.map((s) => ({ ...s, visible: true }));
 }

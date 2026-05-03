@@ -25,7 +25,7 @@ export default function TestimonialApproval() {
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
-    if (!authLoading && user && role !== null && role !== "admin" && role !== "ca") {
+    if (!authLoading && user && role !== "admin" && role !== "ca") {
       toast.error("Access denied"); navigate("/dashboard");
     }
   }, [user, role, authLoading, navigate]);

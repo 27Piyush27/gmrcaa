@@ -64,6 +64,15 @@ export default function UserRolesManagement() {
       toast.error("You cannot change your own role");
       return;
     }
+
+    const targetUser = users.find(u => u.user_id === userId);
+    const targetName = targetUser?.name || targetUser?.email || "this user";
+
+    if (newRole === "admin" || newRole === "ca") {
+      if (!window.confirm(`Are you sure you want to promote "${targetName}" to ${newRole.toUpperCase()}? They will gain access to the admin dashboard and all management features.`)) return;
+    } else {
+      if (!window.confirm(`Demote "${targetName}" to client? They will lose admin dashboard access.`)) return;
+    }
     
     setUpdatingId(userId);
     try {

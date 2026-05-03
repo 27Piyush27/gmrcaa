@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +32,8 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Guard against double-fetching when both getSession and onAuthStateChange fire
+  const fetchingForRef = useRef(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -50,10 +52,13 @@ export function AuthProvider({ children }) {
         if (session?.user) {
           // Only re-fetch profile/role on real auth state changes, not the initial trigger
           if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
+            // Skip if we're already fetching for this exact user (race condition guard)
+            if (fetchingForRef.current === session.user.id) return;
             setLoading(true);
             fetchUserData(session.user.id);
           }
         } else {
+          fetchingForRef.current = null;
           setProfile(null);
           setRole(null);
           setLoading(false);
@@ -66,7 +71,10 @@ export function AuthProvider({ children }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserData(session.user.id);
+        // Only fetch if onAuthStateChange hasn't already started fetching
+        if (fetchingForRef.current !== session.user.id) {
+          fetchUserData(session.user.id);
+        }
       } else {
         setLoading(false);
       }
@@ -76,6 +84,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const fetchUserData = async (userId) => {
+    fetchingForRef.current = userId;
     try {
       // Fetch profile
       const { data: profileData } = await supabase.

@@ -157,7 +157,7 @@ res)
     return jsonResponse(res, { error: "Payment gateway not configured." }, 500);
   }
 
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, service_request_id, user_id, amount, description, payment_id } = body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return jsonResponse(
@@ -181,11 +181,66 @@ res)
 
   console.log("[Payment API] Payment verified successfully:", razorpay_payment_id);
 
+  let dbUpdated = false;
+  
+  if (service_request_id || user_id) {
+    const SUPABASE_URL = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+      try {
+        const { createClient } = await import("@supabase/supabase-js");
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        
+        if (service_request_id) {
+          const { error: updateError } = await supabase
+            .from("service_requests")
+            .update({
+              status: "paid",
+              payment_id: razorpay_payment_id,
+              paid_at: new Date().toISOString()
+            })
+            .eq("id", service_request_id);
+            
+          if (!updateError) {
+            dbUpdated = true;
+            console.log("[Payment API] Local Dev: service_request", service_request_id, "→ status: paid");
+          }
+        }
+
+        if (user_id && amount) {
+          const baseAmount = Number(amount);
+          const gstAmount = Math.round(baseAmount * 0.18 * 100) / 100;
+          const totalAmount = Math.round((baseAmount + gstAmount) * 100) / 100;
+
+          await supabase.from("payments").insert({
+            user_id: user_id,
+            service_request_id: service_request_id || null,
+            amount: baseAmount,
+            gst_amount: gstAmount,
+            total_amount: totalAmount,
+            currency: "INR",
+            status: "completed",
+            razorpay_order_id: razorpay_order_id,
+            razorpay_payment_id: razorpay_payment_id,
+            description: description || "Service Payment"
+          });
+          console.log("[Payment API] Local Dev: Logged payment record successfully.");
+        }
+      } catch (err) {
+        console.error("[Payment API] Local Dev Supabase error:", err.message);
+      }
+    } else {
+      console.warn("[Payment API] Local Dev: Supabase credentials not found. Skipping DB updates.");
+    }
+  }
+
   return jsonResponse(res, {
     success: true,
     message: "Payment verified successfully.",
+    db_updated: dbUpdated,
     payment: {
-      id: body.payment_id,
+      id: payment_id || body.payment_id,
       status: "completed",
       razorpay_payment_id
     }
@@ -310,7 +365,7 @@ async function handleChat(body, res) {
     return jsonResponse(res, { error: { message: "Gemini API key not configured locally." } }, 500);
   }
 
-  const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
+  const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_KEY}`;
 
   try {
     const resp = await fetch(URL, {

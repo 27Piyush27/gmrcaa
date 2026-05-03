@@ -68,7 +68,8 @@ export default function AdminAppointmentsPanel() {
       const { data, error } = await supabase
         .from("appointments")
         .select("*")
-        .order("appointment_date", { ascending: false });
+        .order("appointment_date", { ascending: false })
+        .limit(200);
       if (error) throw error;
       setAppointments(data || []);
     } catch (err) {
