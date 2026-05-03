@@ -111,6 +111,41 @@ serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
+    // ── Authentication & Authorization ─────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    
+    // Verify identity and role via user JWT
+    const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) return json({ error: "Unauthorized" }, 401);
+
+    // Verify the user is an admin or CA using the service role
+    const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: roleRow } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .in("role", ["admin", "ca"])
+        .maybeSingle();
+
+    if (!roleRow) {
+      return json({ error: "Forbidden: admin or CA access required" }, 403);
+    }
+
     const body = await req.json();
     const { clientEmail, clientName, serviceName, newStatus, notes, amount } = body;
 

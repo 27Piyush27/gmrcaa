@@ -88,6 +88,96 @@ function getSuggestions(text, lang) {
   return [];
 }
 
+// ── FAQ Interception Mapping ───────────────────────────────────────────
+const FAQ_RESPONSES = {
+  en: [
+    {
+      keywords: ["office hours", "timing", "open", "working hours", "when do you open"],
+      response: "Our office is open from **Monday to Saturday, 10:00 AM to 6:30 PM**. We are closed on Sundays and public holidays."
+    },
+    {
+      keywords: ["address", "location", "where are you", "office address", "visit"],
+      response: "We have two offices:\n\n📍 **Gurugram**: H.No.43, SF, Sector-7, Gurugram\n📍 **Delhi**: AB 38, Shalimar Bagh, Delhi\n\nYou can visit us during our office hours or book an appointment online."
+    },
+    {
+      keywords: ["contact", "phone", "call", "email", "number", "reach you"],
+      response: "You can reach us at:\n\n📞 **Gurugram**: +91 98712 09393\n📞 **Delhi**: +91 98710 84875\n✉️ **Email**: info@gmrindia.com"
+    },
+    {
+      keywords: ["pricing", "cost", "fees", "how much", "charges"],
+      response: "Our fees vary depending on the service you require. For standard packages, please visit our [Services](/services) page. For a customized quote, please [Contact Us](/contact) or book a consultation."
+    },
+    {
+      keywords: ["what services", "what do you do", "offerings", "how can you help"],
+      response: "We offer a wide range of services including:\n\n- Income Tax Return (ITR) Filing\n- GST Registration & Filing\n- Company Incorporation\n- Audit & Assurance\n- Payroll & TDS Compliance\n\nYou can explore all our services [here](/services)."
+    }
+  ],
+  hi: [
+    {
+      keywords: ["ऑफिस का समय", "खुलने का समय", "टाइमिंग", "काम करने का समय"],
+      response: "हमारा कार्यालय **सोमवार से शनिवार सुबह 10:00 बजे से शाम 6:30 बजे** तक खुला रहता है। रविवार और सार्वजनिक अवकाश को बंद रहता है।"
+    },
+    {
+      keywords: ["पता", "लोकेशन", "कहाँ हैं", "ऑफिस एड्रेस"],
+      response: "हमारे दो कार्यालय हैं:\n\n📍 **गुरुग्राम**: H.No.43, SF, Sector-7, Gurugram\n📍 **दिल्ली**: AB 38, Shalimar Bagh, Delhi\n\nआप हमसे मिल सकते हैं या अपॉइंटमेंट बुक कर सकते हैं।"
+    },
+    {
+      keywords: ["संपर्क", "फोन", "कॉल", "ईमेल", "नंबर"],
+      response: "आप हमसे संपर्क कर सकते हैं:\n\n📞 **गुरुग्राम**: +91 98712 09393\n📞 **दिल्ली**: +91 98710 84875\n✉️ **ईमेल**: info@gmrindia.com"
+    },
+    {
+      keywords: ["फीस", "कीमत", "खर्च", "चार्ज"],
+      response: "हमारी फीस सेवा पर निर्भर करती है। मानक पैकेजों के लिए, कृपया हमारे [सर्विसेज](/services) पेज पर जाएँ। अनुकूलित कोटेशन के लिए, कृपया [संपर्क करें](/contact) या परामर्श बुक करें।"
+    },
+    {
+      keywords: ["क्या सेवाएं", "आप क्या करते हैं"],
+      response: "हम विभिन्न सेवाएं प्रदान करते हैं जिनमें शामिल हैं:\n\n- इनकम टैक्स रिटर्न (ITR) फाइलिंग\n- GST रजिस्ट्रेशन और फाइलिंग\n- कंपनी निगमन\n- ऑडिट\n- पेरोल और TDS अनुपालन\n\nआप हमारी सभी सेवाएं [यहाँ](/services) देख सकते हैं।"
+    }
+  ],
+  navigation_staff: [
+    { keywords: ["dashboard", "home", "admin panel"], response: "Taking you to the Admin Dashboard now. [NAVIGATE: /admin]" },
+    { keywords: ["tasks", "my tasks", "todo", "service requests"], response: "Opening your Tasks and Service Requests. [NAVIGATE: /admin/tasks]" },
+    { keywords: ["services manage", "edit services"], response: "Taking you to Service Management. [NAVIGATE: /admin/services]" },
+    { keywords: ["team", "staff", "users"], response: "Navigating to Team Management. [NAVIGATE: /admin/team]" },
+    { keywords: ["appointments", "meetings", "calendar"], response: "Opening the Appointments calendar. [NAVIGATE: /admin/appointments]" },
+    { keywords: ["blog", "posts", "articles"], response: "Taking you to the Blog Editor. [NAVIGATE: /admin/blog]" }
+  ],
+  navigation_client: [
+    { keywords: ["dashboard", "my profile", "my account"], response: "Taking you to your Client Dashboard. [NAVIGATE: /dashboard]" },
+    { keywords: ["appointments", "meetings", "book appointment", "schedule"], response: "Navigating to Appointments. [NAVIGATE: /appointments]" },
+    { keywords: ["services", "all services", "offerings"], response: "Taking you to our Services page. [NAVIGATE: /services]" },
+    { keywords: ["contact", "support", "help"], response: "Taking you to the Contact Support page. [NAVIGATE: /contact]" },
+    { keywords: ["resources", "documents", "downloads"], response: "Opening the Resources section. [NAVIGATE: /resources]" },
+    { keywords: ["tax calculator", "calculate tax"], response: "Taking you to the Tax Calculator. [NAVIGATE: /tax-calculator]" },
+    { keywords: ["tax optimizer", "ai tax optimizer"], response: "Navigating to the AI Tax Optimizer. [NAVIGATE: /ai-tax-optimizer]" },
+    { keywords: ["risk assessment", "audit risk"], response: "Taking you to Risk Assessment. [NAVIGATE: /risk-assessment]" },
+    { keywords: ["cash flow", "forecast"], response: "Opening the Cash Flow Forecast tool. [NAVIGATE: /cash-flow-forecast]" },
+    { keywords: ["home", "main page"], response: "Taking you to the Home page. [NAVIGATE: /]" }
+  ]
+};
+
+function getFaqResponse(text, lang, isStaff) {
+  const q = text.toLowerCase();
+  
+  // 1. Check navigation commands based on role
+  const navMap = isStaff ? FAQ_RESPONSES.navigation_staff : FAQ_RESPONSES.navigation_client;
+  for (const entry of navMap) {
+    if (entry.keywords.some((k) => q.includes(k.toLowerCase()))) {
+      return entry.response;
+    }
+  }
+
+  // 2. Check general FAQs
+  const faqMap = FAQ_RESPONSES[lang] || FAQ_RESPONSES.en;
+  for (const entry of faqMap) {
+    if (entry.keywords.some((k) => q.includes(k.toLowerCase()))) {
+      return entry.response;
+    }
+  }
+  
+  return null;
+}
+
 // ── helpers ─────────────────────────────────────────────────────────────
 function getDaysUntil(dateStr) {
   const target = new Date(dateStr + "T23:59:59");
@@ -404,14 +494,13 @@ export function AIChatbot() {
       role: "user",
       content: text.trim() || (isHindi ? "इस डॉक्यूमेंट का विश्लेषण करें" : "Analyze this document"),
     };
-    // Attach first image for API (multi-file: send first image, show all in UI)
+    // Attach images for API (multi-file: send all supported files)
     if (pendingFiles.length > 0) {
-      userMsg.image = {
-        base64: pendingFiles[0].base64,
-        mimeType: pendingFiles[0].mimeType,
-        preview: pendingFiles[0].preview,
-        isSupportedByAI: pendingFiles[0].isSupportedByAI
-      };
+      userMsg.images = pendingFiles.filter(f => f.isSupportedByAI).map(f => ({
+        base64: f.base64,
+        mimeType: f.mimeType,
+        preview: f.preview
+      }));
       userMsg.allFiles = pendingFiles.map((f) => ({ preview: f.preview, name: f.file.name, isPdf: f.isPdf }));
       
       const hasSupportedFiles = pendingFiles.some(f => f.isSupportedByAI);
@@ -449,12 +538,26 @@ export function AIChatbot() {
 
     try {
       // Convert our messages to Gemini format for full multimodal support
-      const geminiContents = updatedMessages.map((m) => {
+      // OPTIMIZATION: Only send the last 5 messages to save Gemini tokens
+      const recentMessages = updatedMessages.slice(-5);
+      
+      const geminiContents = recentMessages.map((m) => {
         const parts = [];
         if (m.content) {
           parts.push({ text: m.content });
         }
-        if (m.image && m.image.isSupportedByAI) {
+        if (m.images && m.images.length > 0) {
+           m.images.forEach(img => {
+             const base64Data = img.base64.split(',')[1] || img.base64;
+             parts.push({
+               inlineData: {
+                 mimeType: img.mimeType,
+                 data: base64Data
+               }
+             });
+           });
+        } else if (m.image && m.image.isSupportedByAI) {
+           // Fallback for any messages in state before this fix
            const base64Data = m.image.base64.split(',')[1] || m.image.base64;
            parts.push({
              inlineData: {
@@ -506,6 +609,45 @@ export function AIChatbot() {
         });
       };
 
+      // FAQ Interception: Save Gemini tokens for basic questions and navigation
+      if (!pendingFiles.length) {
+        let faqMatch = getFaqResponse(text, lang, isStaff);
+        if (faqMatch) {
+          await new Promise((r) => setTimeout(r, 500)); // Simulate thinking delay
+          
+          let navRoute = null;
+          const navMatch = faqMatch.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-\/]*)\]/);
+          if (navMatch) {
+            navRoute = navMatch[1];
+            faqMatch = faqMatch.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+          }
+          
+          let currentContent = "";
+          const words = faqMatch.split(" ");
+          
+          for (let i = 0; i < words.length; i++) {
+            currentContent += words[i] + " ";
+            upsertAssistant(currentContent);
+            await new Promise((r) => setTimeout(r, 30)); // typing effect
+          }
+          
+          if (user && convId) {
+            await supabase.from("chat_messages").insert({
+              conversation_id: convId, role: "assistant", content: faqMatch,
+            });
+          }
+          
+          if (navRoute) {
+            toast.success(`Navigating to ${navRoute.replace('/', '')}...`);
+            setTimeout(() => navigate(navRoute), 1000);
+          } else {
+            setSuggestions(getSuggestions(faqMatch, lang));
+          }
+          setIsLoading(false);
+          return; // Exit early to skip the API call
+        }
+      }
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -535,10 +677,10 @@ export function AIChatbot() {
       }
 
       // Check for navigation commands
-      const navMatch = assistantContent.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-]+)\]/);
+      const navMatch = assistantContent.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-\/]*)\]/);
       if (navMatch) {
         const route = navMatch[1];
-        assistantContent = assistantContent.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-]+\]/g, "");
+        assistantContent = assistantContent.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
         upsertAssistant(assistantContent);
         toast.success(`Navigating to ${route.replace('/', '')}...`);
         setTimeout(() => navigate(route), 1500); // 1.5s delay so user can read message
