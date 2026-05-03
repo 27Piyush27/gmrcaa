@@ -19,10 +19,6 @@ import { resolveServiceIdForDb } from "@/lib/serviceIdResolver";
 import { notifyStaff } from "@/lib/notifications";
 
 // ── constants ──────────────────────────────────────────────────────────
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ca-chatbot`;
-const SUPABASE_CLIENT_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 const QUICK_OPTIONS_EN = [
   "I need help filing my Income Tax Return",
   "I want to register for GST",
@@ -110,6 +106,26 @@ const FAQ_RESPONSES = {
     {
       keywords: ["what services", "what do you do", "offerings", "how can you help"],
       response: "We offer a wide range of services including:\n\n- Income Tax Return (ITR) Filing\n- GST Registration & Filing\n- Company Incorporation\n- Audit & Assurance\n- Payroll & TDS Compliance\n\nYou can explore all our services [here](/services)."
+    },
+    {
+      keywords: ["documents for itr", "itr documents", "what do i need for income tax"],
+      response: "For basic ITR filing, you typically need:\n- PAN Card\n- Aadhaar Card\n- Form 16 (if salaried)\n- Bank statements for the financial year\n- Investment proofs (like LIC, PPF, for 80C deductions)\n\nYou can upload these directly in the chat or on your [Dashboard](/dashboard)."
+    },
+    {
+      keywords: ["track status", "check status", "my request status"],
+      response: "You can track the live progress of all your active service requests by visiting your [Dashboard](/dashboard). We also send email notifications whenever the status updates."
+    },
+    {
+      keywords: ["do i need gst", "what is gst", "gst registration required"],
+      response: "GST registration is mandatory if your business turnover exceeds ₹40 Lakhs (₹20 Lakhs for services). It is also required for inter-state sales and e-commerce sellers. [Navigate to our Services](/services) to book a GST consultation."
+    },
+    {
+      keywords: ["payment methods", "how to pay", "can i pay online", "upi"],
+      response: "Yes, we accept 100% secure online payments through Razorpay. You can pay via UPI, Credit/Debit Cards, or Net Banking directly from your client dashboard once your service is marked as completed."
+    },
+    {
+      keywords: ["online consultation", "video call", "virtual meeting"],
+      response: "Absolutely! You can book an online video consultation with our Chartered Accountants. Just [Navigate to Appointments](/appointments) and select 'Video Consultation'."
     }
   ],
   hi: [
@@ -132,26 +148,64 @@ const FAQ_RESPONSES = {
     {
       keywords: ["क्या सेवाएं", "आप क्या करते हैं"],
       response: "हम विभिन्न सेवाएं प्रदान करते हैं जिनमें शामिल हैं:\n\n- इनकम टैक्स रिटर्न (ITR) फाइलिंग\n- GST रजिस्ट्रेशन और फाइलिंग\n- कंपनी निगमन\n- ऑडिट\n- पेरोल और TDS अनुपालन\n\nआप हमारी सभी सेवाएं [यहाँ](/services) देख सकते हैं।"
+    },
+    {
+      keywords: ["itr के लिए दस्तावेज़", "इनकम टैक्स के लिए क्या चाहिए"],
+      response: "मूल ITR फाइलिंग के लिए, आपको आम तौर पर आवश्यकता होती है:\n- पैन कार्ड\n- आधार कार्ड\n- फॉर्म 16 (यदि वेतनभोगी हैं)\n- वित्तीय वर्ष के लिए बैंक स्टेटमेंट\n- निवेश प्रमाण (80C के लिए)\n\nआप इन्हें सीधे चैट में या अपने [डैशबोर्ड](/dashboard) पर अपलोड कर सकते हैं।"
+    },
+    {
+      keywords: ["स्टेटस कैसे चेक करें", "मेरा स्टेटस"],
+      response: "आप अपने [डैशबोर्ड](/dashboard) पर जाकर अपने सभी सक्रिय सेवा अनुरोधों की लाइव प्रगति को ट्रैक कर सकते हैं।"
+    },
+    {
+      keywords: ["भुगतान कैसे करें", "पेमेंट", "ऑनलाइन पेमेंट"],
+      response: "हाँ, हम सुरक्षित ऑनलाइन भुगतान स्वीकार करते हैं। आप UPI, क्रेडिट/डेबिट कार्ड या नेट बैंकिंग के माध्यम से भुगतान कर सकते हैं।"
     }
   ],
   navigation_staff: [
-    { keywords: ["dashboard", "home", "admin panel"], response: "Taking you to the Admin Dashboard now. [NAVIGATE: /admin]" },
-    { keywords: ["tasks", "my tasks", "todo", "service requests"], response: "Opening your Tasks and Service Requests. [NAVIGATE: /admin/tasks]" },
-    { keywords: ["services manage", "edit services"], response: "Taking you to Service Management. [NAVIGATE: /admin/services]" },
-    { keywords: ["team", "staff", "users"], response: "Navigating to Team Management. [NAVIGATE: /admin/team]" },
-    { keywords: ["appointments", "meetings", "calendar"], response: "Opening the Appointments calendar. [NAVIGATE: /admin/appointments]" },
-    { keywords: ["blog", "posts", "articles"], response: "Taking you to the Blog Editor. [NAVIGATE: /admin/blog]" }
+    { keywords: ["dashboard", "home", "admin panel", "control center"], response: "Taking you to the Admin Dashboard. [NAVIGATE: /admin]" },
+    { keywords: ["tasks", "my tasks", "todo", "service requests", "kanban"], response: "Opening your Task Board. [NAVIGATE: /admin/tasks]" },
+    { keywords: ["services manage", "edit services", "service management"], response: "Taking you to Service Management. [NAVIGATE: /admin/services]" },
+    { keywords: ["team", "staff", "users", "manage team"], response: "Navigating to Team Management. [NAVIGATE: /admin/team]" },
+    { keywords: ["appointments", "meetings", "calendar manage"], response: "Opening Appointment Management. [NAVIGATE: /admin/appointments]" },
+    { keywords: ["blog manage", "posts", "articles edit"], response: "Taking you to the Blog Editor. [NAVIGATE: /admin/blog]" },
+    { keywords: ["clients", "manage clients", "customer list"], response: "Taking you to Client Management. [NAVIGATE: /clients]" },
+    { keywords: ["calendar", "tax calendar"], response: "Opening the Tax Calendar. [NAVIGATE: /admin/calendar]" },
+    { keywords: ["careers manage", "job postings"], response: "Navigating to Careers Management. [NAVIGATE: /admin/careers]" },
+    { keywords: ["chatbot docs", "ai documents"], response: "Opening Chatbot Documents. [NAVIGATE: /admin/chatbot-documents]" },
+    { keywords: ["job applications", "applicants"], response: "Viewing Job Applications. [NAVIGATE: /admin/job-applications]" },
+    { keywords: ["roles", "permissions", "user roles"], response: "Taking you to User Roles Management. [NAVIGATE: /admin/roles]" },
+    { keywords: ["testimonials approve", "reviews manage"], response: "Opening Testimonial Approval. [NAVIGATE: /admin/testimonials]" },
+    { keywords: ["ai insights", "client analysis"], response: "Navigating to AI Client Insights. [NAVIGATE: /admin/ai-insights]" },
+    { keywords: ["workload", "optimizer"], response: "Taking you to the Workload Optimizer. [NAVIGATE: /admin/workload]" },
+    { keywords: ["anomalies", "detect errors", "anomaly console"], response: "Opening the Anomaly Console. [NAVIGATE: /admin/anomalies]" },
+    { keywords: ["analytics", "reports", "stats", "revenue"], response: "Taking you to Analytics & Reports. [NAVIGATE: /analytics]" }
   ],
   navigation_client: [
     { keywords: ["dashboard", "my profile", "my account"], response: "Taking you to your Client Dashboard. [NAVIGATE: /dashboard]" },
-    { keywords: ["appointments", "meetings", "book appointment", "schedule"], response: "Navigating to Appointments. [NAVIGATE: /appointments]" },
+    { keywords: ["profile edit", "settings"], response: "Taking you to your Profile Settings. [NAVIGATE: /profile]" },
+    { keywords: ["book appointment", "schedule meeting", "consultation"], response: "I can help you schedule an appointment right here. Please choose your preferred date and time below: [SHOW_BOOKING_FORM]" },
+    { keywords: ["appointments", "meetings", "my bookings"], response: "Navigating to your Appointments. [NAVIGATE: /my-appointments]" },
+    { keywords: ["book", "all appointments"], response: "Taking you to the booking page. [NAVIGATE: /appointments]" },
     { keywords: ["services", "all services", "offerings"], response: "Taking you to our Services page. [NAVIGATE: /services]" },
     { keywords: ["contact", "support", "help"], response: "Taking you to the Contact Support page. [NAVIGATE: /contact]" },
-    { keywords: ["resources", "documents", "downloads"], response: "Opening the Resources section. [NAVIGATE: /resources]" },
+    { keywords: ["resources", "knowledge base"], response: "Opening the Knowledge Base. [NAVIGATE: /resources]" },
     { keywords: ["tax calculator", "calculate tax"], response: "Taking you to the Tax Calculator. [NAVIGATE: /tax-calculator]" },
+    { keywords: ["calculators", "financial tools"], response: "Opening Financial Calculators. [NAVIGATE: /calculators]" },
     { keywords: ["tax optimizer", "ai tax optimizer"], response: "Navigating to the AI Tax Optimizer. [NAVIGATE: /ai-tax-optimizer]" },
     { keywords: ["risk assessment", "audit risk"], response: "Taking you to Risk Assessment. [NAVIGATE: /risk-assessment]" },
     { keywords: ["cash flow", "forecast"], response: "Opening the Cash Flow Forecast tool. [NAVIGATE: /cash-flow-forecast]" },
+    { keywords: ["ai tools", "ai hub"], response: "Taking you to the AI Hub. [NAVIGATE: /ai-tools]" },
+    { keywords: ["documents", "vault", "files"], response: "Opening your Document Vault. [NAVIGATE: /documents]" },
+    { keywords: ["invoices", "bills", "payments"], response: "Viewing your Invoice History. [NAVIGATE: /invoices]" },
+    { keywords: ["gst tracker", "track gst"], response: "Opening the GST Tracker. [NAVIGATE: /gst-tracker]" },
+    { keywords: ["compliance", "score"], response: "Viewing your Compliance Score. [NAVIGATE: /compliance]" },
+    { keywords: ["feedback", "suggestions"], response: "Taking you to the Feedback page. [NAVIGATE: /feedback]" },
+    { keywords: ["notifications", "alerts"], response: "Managing your Notification Preferences. [NAVIGATE: /notifications]" },
+    { keywords: ["blog", "news"], response: "Opening the Blog. [NAVIGATE: /blog]" },
+    { keywords: ["team", "our cas", "staff"], response: "Taking you to our Team page. [NAVIGATE: /team]" },
+    { keywords: ["careers", "jobs", "hiring"], response: "Opening the Careers page. [NAVIGATE: /careers]" },
+    { keywords: ["faq", "frequently asked questions"], response: "Taking you to the FAQ page. [NAVIGATE: /faq]" },
     { keywords: ["home", "main page"], response: "Taking you to the Home page. [NAVIGATE: /]" }
   ]
 };
@@ -616,10 +670,17 @@ export function AIChatbot() {
           await new Promise((r) => setTimeout(r, 500)); // Simulate thinking delay
           
           let navRoute = null;
+          let showBooking = false;
+          
           const navMatch = faqMatch.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-\/]*)\]/);
           if (navMatch) {
             navRoute = navMatch[1];
             faqMatch = faqMatch.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+          }
+          
+          if (faqMatch.includes("[SHOW_BOOKING_FORM]")) {
+            showBooking = true;
+            faqMatch = faqMatch.replace(/\[SHOW_BOOKING_FORM\]/g, "");
           }
           
           let currentContent = "";
@@ -635,6 +696,10 @@ export function AIChatbot() {
             await supabase.from("chat_messages").insert({
               conversation_id: convId, role: "assistant", content: faqMatch,
             });
+          }
+          
+          if (showBooking) {
+            setShowBookingForm(true);
           }
           
           if (navRoute) {
