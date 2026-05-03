@@ -36,8 +36,8 @@ export default function Analytics() {
   const fetchData = async () => {
     try {
       const [reqRes, payRes] = await Promise.all([
-        supabase.from("service_requests").select("id, service_id, status, amount, created_at, services(name)").order("created_at", { ascending: true }),
-        supabase.from("payments").select("id, amount, gst_amount, total_amount, status, description, created_at").order("created_at", { ascending: true })
+        supabase.from("service_requests").select("id, service_id, status, amount, created_at, services(name)").order("created_at", { ascending: true }).limit(1000),
+        supabase.from("payments").select("id, amount, gst_amount, total_amount, status, description, created_at").order("created_at", { ascending: true }).limit(1000)
       ]);
       setRequests(reqRes.data || []);
       setPayments(payRes.data || []);

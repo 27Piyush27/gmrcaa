@@ -137,7 +137,7 @@ export default function AdminDashboard() {
           amount, document_url, assigned_ca, created_at, updated_at,
           services (name)
         `).
-      order("created_at", { ascending: false });
+      order("created_at", { ascending: false }).limit(1000);
 
       if (error) throw error;
 
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       setRequests(enriched);
 
       // Also fetch payments for revenue charts
-      const { data: payData } = await supabase.from("payments").select("*").order("created_at", { ascending: true });
+      const { data: payData } = await supabase.from("payments").select("*").order("created_at", { ascending: true }).limit(1000);
       setPayments(payData || []);
     } catch (error) {
       console.error("Error fetching requests:", error);

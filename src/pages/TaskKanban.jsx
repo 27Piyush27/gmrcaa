@@ -83,7 +83,7 @@ export default function TaskKanban() {
         id, user_id, service_id, status, progress, notes,
         amount, document_url, assigned_ca, created_at, updated_at,
         services (name)
-      `).order("created_at", { ascending: false });
+      `).order("created_at", { ascending: false }).limit(1000);
 
       if (role === "ca") {
         query = query.eq("assigned_ca", user.id);
