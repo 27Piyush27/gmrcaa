@@ -6,31 +6,31 @@ import { TextReveal, BlurFadeIn } from "@/components/PremiumAnimations";
 const testimonials = [
   {
     name: "Rajesh Kumar",
-    role: "CEO, TechFlow Solutions",
+    role: "CEO, Technology Sector",
     initials: "RK",
     content: "GMR & Associates transformed our financial operations. Their auditing process was meticulous and brought a level of clarity we've never had before.",
   },
   {
     name: "Priya Sharma",
-    role: "Founder, Zenith Retail",
+    role: "Founder, Retail Sector",
     initials: "PS",
     content: "The tax advisory team here is exceptionally proactive. They not only ensured compliance but helped us restructure our strategy for long-term growth.",
   },
   {
     name: "Amit Desai",
-    role: "Director, BuildCorp Infrastructure",
+    role: "Director, Infrastructure",
     initials: "AD",
     content: "Finding an accounting partner who truly understands the nuances of the construction industry was tough, until we met GMR. Highly recommended.",
   },
   {
     name: "Neha Gupta",
-    role: "Managing Partner, LegalFirst",
+    role: "Managing Partner, Legal Services",
     initials: "NG",
     content: "Accurate, timely, and professional. The monthly MIS reports they generate give us exact visibility into our cash flow.",
   },
   {
     name: "Vikram Singh",
-    role: "CFO, GlobalTrade Inc.",
+    role: "CFO, Corporate Client",
     initials: "VS",
     content: "Handling intricate GST and corporate law matters requires absolute precision, and the team at GMR consistently delivers flawless execution.",
   },

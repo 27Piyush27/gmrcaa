@@ -15,21 +15,21 @@ const easing = [0.22, 1, 0.36, 1];
 
 // ── Static fallback (shown when DB has no approved testimonials) ───────────
 const STATIC_TESTIMONIALS = [
-  { id: "s1", name: "Rajesh Kumar", role_title: "Director, TechVista Solutions", rating: 5,
+  { id: "s1", name: "Rajesh Kumar", role_title: "Director, IT Services", rating: 5,
     text: "GMR & Associates handled our company's entire audit process flawlessly. Their attention to detail and proactive approach saved us from potential compliance issues." },
   { id: "s2", name: "Priya Sharma", role_title: "Freelancer, Content Creator", rating: 5,
     text: "As a freelancer, I was always confused about tax filing. The team made it so simple and even helped me save ₹45,000 in taxes with smart planning." },
-  { id: "s3", name: "Amit Gupta", role_title: "CEO, GreenTech Pvt Ltd", rating: 5,
+  { id: "s3", name: "Amit Gupta", role_title: "CEO, Manufacturing Sector", rating: 5,
     text: "From GST registration to monthly returns, everything is handled seamlessly. The most reliable CA firm we've worked with in 10 years." },
-  { id: "s4", name: "Sunita Verma", role_title: "Partner, Verma & Sons", rating: 4,
+  { id: "s4", name: "Sunita Verma", role_title: "Partner, Retail Business", rating: 4,
     text: "Their company incorporation service was exceptional. Got our Pvt Ltd registered in just 12 days with all compliance paperwork sorted." },
   { id: "s5", name: "Vikram Singh", role_title: "NRI, Software Engineer", rating: 5,
     text: "Being an NRI, filing taxes in India was a nightmare. GMR Associates made it effortless — everything done remotely with excellent communication." },
-  { id: "s6", name: "Meera Joshi", role_title: "Owner, Joshi Textiles", rating: 5,
+  { id: "s6", name: "Meera Joshi", role_title: "Owner, Textile Business", rating: 5,
     text: "Switched from our previous CA firm 2 years ago and haven't looked back. The digital platform makes document sharing and tracking so convenient." },
   { id: "s7", name: "Ankit Patel", role_title: "Startup Founder", rating: 4,
     text: "They helped us get DPIIT recognition and guided us through all the startup-related tax benefits. Great support for new entrepreneurs." },
-  { id: "s8", name: "Kavitha Nair", role_title: "Doctor, Apollo Clinic", rating: 5,
+  { id: "s8", name: "Kavitha Nair", role_title: "Medical Professional", rating: 5,
     text: "Professional, punctual, and thorough. They manage my personal and clinic finances with equal expertise. Highly recommend for medical professionals." },
 ];
 
@@ -225,9 +225,9 @@ export default function Testimonials() {
                         placeholder="John Doe" required />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="rrole" className="text-sm">Role / Company (optional)</Label>
+                      <Label htmlFor="rrole" className="text-sm">Role / Industry (optional)</Label>
                       <Input id="rrole" value={reviewRole} onChange={e => setReviewRole(e.target.value)}
-                        placeholder="CEO, Acme Corp" />
+                        placeholder="CEO, Technology Sector" />
                     </div>
                   </div>
 
