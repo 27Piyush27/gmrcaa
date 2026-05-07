@@ -1,27 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#0f172a" />
-  <title>GMR & Associates — Chartered Accountants</title>
+  <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <title>GMR & Associates — Chartered Accountants | Tax, Audit & Advisory</title>
   <meta name="description"
-    content="Premium chartered accountancy services. Expert financial solutions for discerning businesses." />
+    content="GMR & Associates — Trusted Chartered Accountants in Gurgaon & Delhi. Expert services in tax filing, GST compliance, auditing, and business advisory for 500+ clients." />
   <meta name="author" content="GMR & Associates" />
+  <meta name="keywords" content="chartered accountant, CA firm, tax filing, GST compliance, audit, Gurgaon, Delhi, financial advisory" />
+  <link rel="canonical" href="https://gmrassociates.com/" />
 
   <!-- Preconnect to critical origins -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="dns-prefetch" href="https://xyzcompany.supabase.co" />
 
-  <!-- Preload fonts to avoid FOUT (Flash of Unstyled Text) -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap" />
-  
+  <!-- Preconnect to Supabase — eliminates DNS+TLS delay on first API call -->
+  <link rel="dns-prefetch" href="https://bkcpywsosbqsjhzsynfd.supabase.co" />
+  <link rel="preconnect" href="https://bkcpywsosbqsjhzsynfd.supabase.co" crossorigin />
+
   <!-- Non-blocking Google Fonts — loads async, no render blocking -->
   <link
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap"
@@ -35,9 +39,14 @@
   <meta property="og:title" content="GMR & Associates — Chartered Accountants" />
   <meta property="og:description" content="Expert financial solutions for discerning businesses" />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://gmrassociates.com/" />
   <meta property="og:image" content="/og-image.png" />
+  <meta property="og:site_name" content="GMR & Associates" />
+  <meta property="og:locale" content="en_IN" />
 
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="GMR & Associates — Chartered Accountants" />
+  <meta name="twitter:description" content="Expert financial solutions for discerning businesses" />
   <meta name="twitter:image" content="/og-image.png" />
 
   <!-- iOS safe areas -->
@@ -45,16 +54,45 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="mobile-web-app-capable" content="yes" />
 
+  <!-- Structured Data — Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AccountingService",
+    "name": "GMR & Associates",
+    "description": "Chartered Accountants providing tax, audit, and advisory services",
+    "url": "https://gmrassociates.com",
+    "telephone": "+91-98712-09393",
+    "email": "info@gmrindia.com",
+    "address": [
+      {
+        "@type": "PostalAddress",
+        "streetAddress": "H.No.43, SF, Sector-7",
+        "addressLocality": "Gurugram",
+        "addressRegion": "Haryana",
+        "addressCountry": "IN"
+      },
+      {
+        "@type": "PostalAddress",
+        "streetAddress": "AB 38, Ground Floor, Shalimar Bagh",
+        "addressLocality": "Delhi",
+        "addressRegion": "Delhi",
+        "addressCountry": "IN"
+      }
+    ],
+    "openingHours": ["Mo-Fr 09:00-18:00", "Sa 09:00-13:00"],
+    "priceRange": "₹₹",
+    "areaServed": "India",
+    "sameAs": []
+  }
+  </script>
+
   <!-- Prevent theme flash: apply dark class before first paint -->
   <script>
     (function () {
-      const stored = localStorage.getItem('darkMode');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (stored === 'true' || (stored === null && prefersDark)) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      var s = localStorage.getItem('darkMode');
+      var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (s === 'true' || (s === null && d)) document.documentElement.classList.add('dark');
     })();
   </script>
 </head>
@@ -66,19 +104,28 @@
       <p>Please enable JavaScript to use GMR & Associates.</p>
     </div>
   </noscript>
-  <div id="root"></div>
-  <!-- Force-clear any cached service workers BEFORE loading the app -->
+  <div id="root">
+    <!-- Skip to main content link for accessibility — hidden until React mounts -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[99999] focus:px-4 focus:py-2 focus:bg-foreground focus:text-background focus:rounded-lg focus:text-sm focus:font-medium">Skip to main content</a>
+    <!-- Pre-React CSS prevents FOUC -->
+    <style>
+      /* Prevent FOUC for screen-reader text before Tailwind loads */
+      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+      
+      /* Base background to prevent white flash before Tailwind loads */
+      body { background-color: #ffffff; }
+      html.dark body { background-color: #000000; }
+    </style>
+  </div>
+  <!-- Defer service worker cleanup — non-blocking -->
   <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        registrations.forEach(function(r) { r.unregister(); });
-      });
-      if (typeof caches !== 'undefined') {
-        caches.keys().then(function(keys) {
-          keys.forEach(function(k) { caches.delete(k); });
+    window.addEventListener('load', function() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(r) {
+          r.forEach(function(sw) { sw.unregister(); });
         });
       }
-    }
+    });
   </script>
   <script type="module" src="/src/main.jsx"></script>
 </body>

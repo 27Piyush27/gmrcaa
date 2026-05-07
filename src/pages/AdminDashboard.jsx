@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       setRequests(enriched);
 
       // Also fetch payments for revenue charts
-      const { data: payData } = await supabase.from("payments").select("*").order("created_at", { ascending: true }).limit(1000);
+      const { data: payData } = await supabase.from("payments").select("id, amount, gst_amount, total_amount, status, created_at").order("created_at", { ascending: true }).limit(1000);
       setPayments(payData || []);
     } catch (error) {
       console.error("Error fetching requests:", error);

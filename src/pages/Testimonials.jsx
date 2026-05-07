@@ -15,23 +15,34 @@ const easing = [0.22, 1, 0.36, 1];
 
 // ── Static fallback (shown when DB has no approved testimonials) ───────────
 const STATIC_TESTIMONIALS = [
-  { id: "s1", name: "Rajesh Kumar", role_title: "Director, IT Services", rating: 5,
+  { id: "s1", name: "Rajesh K.", role_title: "Director, IT Sector", rating: 5,
     text: "GMR & Associates handled our company's entire audit process flawlessly. Their attention to detail and proactive approach saved us from potential compliance issues." },
-  { id: "s2", name: "Priya Sharma", role_title: "Freelancer, Content Creator", rating: 5,
+  { id: "s2", name: "Priya S.", role_title: "Freelancer, Content Industry", rating: 5,
     text: "As a freelancer, I was always confused about tax filing. The team made it so simple and even helped me save ₹45,000 in taxes with smart planning." },
-  { id: "s3", name: "Amit Gupta", role_title: "CEO, Manufacturing Sector", rating: 5,
+  { id: "s3", name: "Amit G.", role_title: "CEO, Manufacturing Sector", rating: 5,
     text: "From GST registration to monthly returns, everything is handled seamlessly. The most reliable CA firm we've worked with in 10 years." },
-  { id: "s4", name: "Sunita Verma", role_title: "Partner, Retail Business", rating: 4,
+  { id: "s4", name: "Sunita V.", role_title: "Partner, Retail Business", rating: 4,
     text: "Their company incorporation service was exceptional. Got our Pvt Ltd registered in just 12 days with all compliance paperwork sorted." },
-  { id: "s5", name: "Vikram Singh", role_title: "NRI, Software Engineer", rating: 5,
+  { id: "s5", name: "Vikram S.", role_title: "NRI, Software Industry", rating: 5,
     text: "Being an NRI, filing taxes in India was a nightmare. GMR Associates made it effortless — everything done remotely with excellent communication." },
-  { id: "s6", name: "Meera Joshi", role_title: "Owner, Textile Business", rating: 5,
+  { id: "s6", name: "Meera J.", role_title: "Owner, Textile Industry", rating: 5,
     text: "Switched from our previous CA firm 2 years ago and haven't looked back. The digital platform makes document sharing and tracking so convenient." },
-  { id: "s7", name: "Ankit Patel", role_title: "Startup Founder", rating: 4,
+  { id: "s7", name: "Ankit P.", role_title: "Startup Founder", rating: 4,
     text: "They helped us get DPIIT recognition and guided us through all the startup-related tax benefits. Great support for new entrepreneurs." },
-  { id: "s8", name: "Kavitha Nair", role_title: "Medical Professional", rating: 5,
+  { id: "s8", name: "Kavitha N.", role_title: "Medical Professional", rating: 5,
     text: "Professional, punctual, and thorough. They manage my personal and clinic finances with equal expertise. Highly recommend for medical professionals." },
 ];
+
+/**
+ * Anonymize a client name for public display.
+ * "Rajesh Kumar" → "Rajesh K."  |  "Priya" → "Priya"
+ */
+function anonymizeName(name) {
+  if (!name) return "Verified Client";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
 
 export default function Testimonials() {
   const { user, profile } = useAuth();
@@ -167,7 +178,7 @@ export default function Testimonials() {
                       </div>
                       <p className="text-sm leading-relaxed text-foreground/80 mb-4">{t.text}</p>
                       <div className="border-t border-border/40 pt-3">
-                        <p className="text-sm font-semibold">{t.name}</p>
+                        <p className="text-sm font-semibold">{anonymizeName(t.name)}</p>
                         <p className="text-xs text-muted-foreground">{t.role_title}</p>
                       </div>
                     </div>
@@ -227,7 +238,7 @@ export default function Testimonials() {
                     <div className="space-y-1">
                       <Label htmlFor="rrole" className="text-sm">Role / Industry (optional)</Label>
                       <Input id="rrole" value={reviewRole} onChange={e => setReviewRole(e.target.value)}
-                        placeholder="CEO, Technology Sector" />
+                        placeholder="e.g. Business Owner, IT Sector" />
                     </div>
                   </div>
 

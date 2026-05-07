@@ -27,7 +27,8 @@ export default function JobApplications() {
         .from("contact_inquiries")
         .select("*")
         .like("subject", "[Job Application]%")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (error) throw error;
       setApplications(data || []);

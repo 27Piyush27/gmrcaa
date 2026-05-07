@@ -36,7 +36,8 @@ export default function TestimonialApproval() {
       const { data, error } = await supabase
         .from("testimonials")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
       if (error) throw error;
       setTestimonials(data || []);
     } catch {

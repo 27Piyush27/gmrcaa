@@ -68,7 +68,7 @@ export default function DocumentVault() {
 
   const handleDownload = async (filePath, fileName) => {
     try {
-      const { data, error } = await supabase.storage.from("service-documents").download(filePath);
+      const { data, error } = await supabase.storage.from("client-uploads").download(filePath);
       if (error) throw error;
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");

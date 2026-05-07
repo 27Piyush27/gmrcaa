@@ -13,14 +13,13 @@ export function TextReveal({ children, className = "", delay = 0, as: Tag = "div
   return (
     <Tag ref={ref} className={`overflow-hidden ${className}`}>
       <motion.div
-        initial={{ y: "100%", opacity: 0 }}
-        animate={isInView ? { y: "0%", opacity: 1 } : {}}
+        initial={{ opacity: 0, transform: "translateY(40%)" }}
+        animate={isInView ? { opacity: 1, transform: "translateY(0%)" } : {}}
         transition={{
           duration: 0.75,
           ease,
           delay,
         }}
-        style={{ transformOrigin: "bottom center" }}
       >
         {children}
       </motion.div>
@@ -239,8 +238,8 @@ export function GlowCounter({ target, suffix = "", prefix = "", className = "", 
     <motion.span
       ref={ref}
       className={`${className} ${glowing ? "animate-number-glow" : ""}`}
-      initial={{ opacity: 0, y: 24 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 0.6, ease }}
     >
       {prefix}{display}{suffix}
@@ -254,25 +253,14 @@ export function BlurFadeIn({ children, className = "", delay = 0, direction = "u
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
-  const dirMap = {
-    up: { y: 20, x: 0 },
-    down: { y: -20, x: 0 },
-    left: { y: 0, x: -20 },
-    right: { y: 0, x: 20 },
-    none: { y: 0, x: 0 },
-  };
-
   return (
     <motion.div
       ref={ref}
       className={className}
-      initial={{
-        opacity: 0,
-        ...dirMap[direction],
-      }}
+      initial={{ opacity: 0 }}
       animate={
         isInView
-          ? { opacity: 1, y: 0, x: 0 }
+          ? { opacity: 1 }
           : {}
       }
       transition={{ duration: 0.55, ease, delay }}
@@ -313,10 +301,9 @@ export function StaggerGridItem({ children, className = "" }) {
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 24 },
+        hidden: { opacity: 0 },
         visible: {
           opacity: 1,
-          y: 0,
           transition: { duration: 0.5, ease },
         },
       }}
@@ -357,5 +344,228 @@ export function RotatingText({ words, className = "", interval = 3000 }) {
         </motion.span>
       ))}
     </span>
+  );
+}
+
+// ─── Character Reveal — Per-character stagger entrance ──────────────────────
+
+export function CharacterReveal({ text, className = "", delay = 0, charDelay = 0.025 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const chars = text.split("");
+
+  return (
+    <span ref={ref} className={className} aria-label={text}>
+      {chars.map((char, i) => (
+        <motion.span
+          key={i}
+          className="inline-block"
+          initial={{ opacity: 0, y: "40%", rotateX: -40 }}
+          animate={isInView ? { opacity: 1, y: "0%", rotateX: 0 } : {}}
+          transition={{
+            duration: 0.4,
+            ease,
+            delay: delay + i * charDelay,
+          }}
+          style={{ transformOrigin: "bottom", display: char === " " ? "inline" : "inline-block" }}
+          aria-hidden="true"
+        >
+          {char === " " ? "\u00A0" : char}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
+// ─── Smooth Counter — Odometer-style digit morphing ─────────────────────────
+
+export function SmoothCounter({ target, suffix = "", prefix = "", className = "", duration = 2 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [display, setDisplay] = useState("0");
+  const rafRef = useRef(0);
+  const startRef = useRef(null);
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    const totalMs = duration * 1000;
+    startRef.current = null;
+
+    const tick = (now) => {
+      if (!startRef.current) startRef.current = now;
+      const elapsed = now - startRef.current;
+      const progress = Math.min(elapsed / totalMs, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * target);
+      setDisplay(current.toString());
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [isInView, target, duration]);
+
+  return (
+    <motion.span
+      ref={ref}
+      className={`inline-flex items-baseline tabular-nums ${className}`}
+      initial={{ opacity: 0, y: 15 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease }}
+    >
+      {prefix}{display}{suffix}
+    </motion.span>
+  );
+}
+
+// ─── Typewriter Text — Character-by-character reveal with blinking cursor ───
+
+export function TypewriterText({ text, className = "", speed = 40, delay = 0 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const [displayText, setDisplayText] = useState("");
+  const [showCursor, setShowCursor] = useState(true);
+
+  useEffect(() => {
+    if (!isInView) return;
+    let i = 0;
+    const delayTimer = setTimeout(() => {
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          setDisplayText(text.slice(0, i + 1));
+          i++;
+        } else {
+          clearInterval(interval);
+          // Keep cursor blinking for 2s then hide
+          setTimeout(() => setShowCursor(false), 2000);
+        }
+      }, speed);
+      return () => clearInterval(interval);
+    }, delay * 1000);
+    return () => clearTimeout(delayTimer);
+  }, [isInView, text, speed, delay]);
+
+  return (
+    <span ref={ref} className={className}>
+      {displayText}
+      {showCursor && isInView && (
+        <span
+          className="inline-block w-[2px] h-[1em] bg-accent ml-0.5 align-middle"
+          style={{ animation: "cursor-blink 0.8s step-end infinite" }}
+        />
+      )}
+    </span>
+  );
+}
+
+// ─── Shimmer Button — CTA with shine sweep + spring hover ───────────────────
+
+export function ShimmerButton({ children, className = "", onClick, as: Tag = "button", ...props }) {
+  return (
+    <Tag
+      onClick={onClick}
+      className={`btn-shine magnetic ${className}`}
+      {...props}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+// ─── Gradient Border Card — Animated rotating conic gradient on hover ────────
+
+export function GradientBorderCard({ children, className = "" }) {
+  const ref = useRef(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`hover-border-glow shimmer-sweep ${className}`}
+      onMouseMove={handleMouseMove}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─── Stagger Reveal List — Children reveal with clip-path stagger ───────────
+
+export function StaggerRevealList({ children, className = "", staggerDelay = 0.08 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-40px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      variants={{
+        visible: {
+          transition: {
+            staggerChildren: staggerDelay,
+            delayChildren: 0.05,
+          },
+        },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+export function StaggerRevealItem({ children, className = "" }) {
+  return (
+    <motion.div
+      className={className}
+      variants={{
+        hidden: { opacity: 0, y: 20, scale: 0.97 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0.5, ease },
+        },
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Reveal On Scroll — Intersection-based reveal with direction ────────────
+
+export function RevealOnScroll({ children, className = "", direction = "up", delay = 0 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  const dirs = {
+    up: { y: 30 },
+    down: { y: -30 },
+    left: { x: 30 },
+    right: { x: -30 },
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={{ opacity: 0, ...dirs[direction] }}
+      animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
+      transition={{ duration: 0.6, ease, delay }}
+    >
+      {children}
+    </motion.div>
   );
 }

@@ -152,9 +152,17 @@ export function CustomCursor() {
 // ── 3. Back to Top ──────────────────────────────────────────────────────────
 export function BackToTop() {
   const [show, setShow] = useState(false);
+  const ticking = useRef(false);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 500);
+    const onScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        setShow(window.scrollY > 500);
+        ticking.current = false;
+      });
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);

@@ -34,24 +34,37 @@ export default function ClientManagement() {
 
   const fetchClients = useCallback(async () => {
     try {
-      // Get all service requests with client profiles
+      // Step 1: Get all service requests (no profile join — FK goes through auth.users, not directly to profiles)
       const { data: requests, error } = await supabase
         .from("service_requests")
-        .select(`id, user_id, status, amount, created_at, services(name), profiles:user_id(name, email, phone)`)
-        .order("created_at", { ascending: false });
+        .select(`id, user_id, status, amount, created_at, services(name)`)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (error) throw error;
 
-      // Group by client
+      // Step 2: Fetch profiles for all unique user_ids
+      const userIds = [...new Set((requests || []).map(r => r.user_id))];
+      let profileMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, name, email, phone")
+          .in("user_id", userIds);
+        profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      }
+
+      // Step 3: Group by client
       const clientMap = new Map();
       for (const req of requests || []) {
         const uid = req.user_id;
+        const profile = profileMap.get(uid);
         if (!clientMap.has(uid)) {
           clientMap.set(uid, {
             user_id: uid,
-            name: req.profiles?.name || "Unknown",
-            email: req.profiles?.email || "",
-            phone: req.profiles?.phone || "",
+            name: profile?.name || "Unknown",
+            email: profile?.email || "",
+            phone: profile?.phone || "",
             requests: [],
             totalPaid: 0,
           });

@@ -3,27 +3,38 @@ import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 
 const ease = [0.22, 1, 0.36, 1];
 
-// ─── Device Detection — Skip heavy 3D on mobile/tablet ─────────────────────
-// Uses hardwareConcurrency + screen width to detect low-power devices.
-// Returns true on phones, tablets, and low-core-count machines.
+// ─── Device Detection — Skip heavy 3D on mobile/tablet/low-end ──────────────
+// Uses hardwareConcurrency, deviceMemory, screen width, and touch detection.
+// Returns true on phones, tablets, and low-spec machines to preserve 60fps.
 function useIsLowPowerDevice() {
   const [isLow, setIsLow] = useState(() => {
     if (typeof window === "undefined") return false;
     const cores = navigator.hardwareConcurrency || 2;
     const narrow = window.innerWidth < 1024;
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    return narrow || isTouch || cores <= 4;
+    const lowRAM = navigator.deviceMemory != null && navigator.deviceMemory < 4;
+    const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    return narrow || isTouch || cores <= 4 || lowRAM || prefersReduced;
   });
 
   useEffect(() => {
+    let timer;
     const check = () => {
-      const cores = navigator.hardwareConcurrency || 2;
-      const narrow = window.innerWidth < 1024;
-      const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-      setIsLow(narrow || isTouch || cores <= 4);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const cores = navigator.hardwareConcurrency || 2;
+        const narrow = window.innerWidth < 1024;
+        const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        const lowRAM = navigator.deviceMemory != null && navigator.deviceMemory < 4;
+        const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        setIsLow(narrow || isTouch || cores <= 4 || lowRAM || prefersReduced);
+      }, 250); // Debounce resize to prevent layout thrashing
     };
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener("resize", check, { passive: true });
+    return () => {
+      window.removeEventListener("resize", check);
+      clearTimeout(timer);
+    };
   }, []);
 
   return isLow;

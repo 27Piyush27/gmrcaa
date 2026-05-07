@@ -54,7 +54,8 @@ export default function MyAppointments() {
         .from("appointments")
         .select("*")
         .eq("user_id", user.id)
-        .order("appointment_date", { ascending: false });
+        .order("appointment_date", { ascending: false })
+        .limit(100);
       if (error) throw error;
       setAppointments(data || []);
     } catch (err) {

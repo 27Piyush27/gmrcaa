@@ -145,7 +145,7 @@ export default function About() {
             >
               <MagneticWrap strength={0.15}>
                 <Link to="/services">
-                  <span className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group">
+                  <span className="btn-shine flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group">
                     Explore Services
                     <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
@@ -153,7 +153,7 @@ export default function About() {
               </MagneticWrap>
               <MagneticWrap strength={0.15}>
                 <Link to="/contact">
-                  <span className="flex items-center gap-2 px-8 py-3.5 bg-secondary/80 backdrop-blur-md text-foreground font-medium rounded-full border border-border/50 hover:bg-secondary transition-all duration-500 hover:scale-[1.03] active:scale-[0.98]">
+                  <span className="flex items-center gap-2 px-8 py-3.5 bg-secondary/80 backdrop-blur-md text-foreground font-medium rounded-full border border-border/50 hover:bg-secondary transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] shimmer-sweep">
                     Talk to an Expert
                   </span>
                 </Link>
@@ -268,7 +268,7 @@ export default function About() {
               {values.map((v, i) => (
                 <StaggerGridItem key={i}>
                   <Tilt3DCard tiltStrength={6} glareEnabled={true}>
-                    <SpotlightCard className="p-8 md:p-12 h-full group">
+                    <SpotlightCard className="p-8 md:p-12 h-full group shimmer-sweep">
                       <div className="relative">
                         <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mb-6 group-hover:bg-accent/10 transition-all duration-500 group-hover:shadow-glow">
                           <span className="text-muted-foreground group-hover:text-accent transition-colors duration-500">{v.icon}</span>

@@ -7,7 +7,7 @@ import {
   Calendar, MessageCircle, Gift, TrendingUp, Columns3, ShieldCheck,
   Brain, FileSearch, BarChart3, Activity, Receipt, Search, Users, Layers, AlertTriangle, Sparkles, Package
 } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -102,7 +102,7 @@ function NavDropdown({ label, children, isActive, align = "center" }) {
   );
 }
 
-export const Navigation = () => {
+export const Navigation = memo(function Navigation() {
   const location = useLocation();
   const [isDark, setIsDark] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -141,6 +141,15 @@ export const Navigation = () => {
     };
   }, [handleScroll]);
 
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isMenuOpen]);
+
   const toggleTheme = () => {
     const newDark = !isDark;
     setIsDark(newDark);
@@ -155,25 +164,30 @@ export const Navigation = () => {
 
   const isStaff = role === "admin" || role === "ca";
 
-  const primaryLinks = [
+  const primaryLinks = useMemo(() => [
     { name: t("nav.home"), path: "/" },
     { name: t("nav.about"), path: "/about" },
     { name: t("nav.services"), path: "/services" },
     { name: t("nav.careers"), path: "/careers" },
     { name: t("nav.contact"), path: "/contact" },
-  ];
+  ], [t]);
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "";
   const initials = displayName ? displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2) : "U";
 
-  const toolsPaths = [...TOOLS_ITEMS.map(t => t.path), ...AI_TOOLS_ITEMS.map(t => t.path)];
-  const isToolsActive = toolsPaths.includes(location.pathname);
+  const isToolsActive = useMemo(
+    () => [...TOOLS_ITEMS.map(t => t.path), ...AI_TOOLS_ITEMS.map(t => t.path)].includes(location.pathname),
+    [location.pathname]
+  );
 
-  const accountPaths = [...ACCOUNT_ITEMS.map(a => a.path), ...ADMIN_ITEMS.map(a => a.path)];
-  const isAccountActive = accountPaths.includes(location.pathname);
+  const isAccountActive = useMemo(
+    () => [...ACCOUNT_ITEMS.map(a => a.path), ...ADMIN_ITEMS.map(a => a.path)].includes(location.pathname),
+    [location.pathname]
+  );
 
   return (
     <nav
+      aria-label="Main navigation"
       style={{
         transform: hidden ? "translateY(-100%)" : "translateY(0)",
         transition: "transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -184,14 +198,21 @@ export const Navigation = () => {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-[64px]">
-          {/* Logo */}
+          {/* Logo — with shimmer hover */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
-            <span className="text-[17px] font-semibold tracking-tight group-hover:opacity-80 transition-opacity duration-200">
-              GMR<span className="text-accent">&</span>Associates
-            </span>
+            <motion.span
+              className="text-[17px] font-semibold tracking-tight"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            >
+              <span className="group-hover:text-shimmer-hover transition-all duration-300">
+                GMR<span className="text-accent">&</span>Associates
+              </span>
+            </motion.span>
           </Link>
 
-          {/* Desktop Navigation — clean & grouped */}
+          {/* Desktop Navigation — clean & grouped with sliding pill */}
           <div className="hidden lg:flex items-center gap-7">
             {primaryLinks.map((link) => (
               <Link
@@ -205,8 +226,10 @@ export const Navigation = () => {
               >
                 {link.name}
                 {location.pathname === link.path && (
-                  <span
-                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-foreground rounded-full"
+                  <motion.span
+                    layoutId="nav-pill"
+                    className="absolute -bottom-0.5 left-0 right-0 h-[2px] bg-accent rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
               </Link>
@@ -305,21 +328,22 @@ export const Navigation = () => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-2">
-            {/* Theme Toggle */}
+            {/* Theme Toggle — enhanced spring animation */}
             <motion.button
               onClick={toggleTheme}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200"
+              whileHover={{ scale: 1.15, rotate: 15 }}
+              whileTap={{ scale: 0.85 }}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all duration-200"
               aria-label="Toggle theme"
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <AnimatePresence mode="wait">
                 <motion.div
                   key={isDark ? "sun" : "moon"}
-                  initial={{ rotate: -30, opacity: 0, scale: 0.7 }}
+                  initial={{ rotate: -90, opacity: 0, scale: 0 }}
                   animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                  exit={{ rotate: 30, opacity: 0, scale: 0.7 }}
-                  transition={{ duration: 0.15 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   {isDark ? <Sun className="h-[15px] w-[15px]" /> : <Moon className="h-[15px] w-[15px]" />}
                 </motion.div>
@@ -337,9 +361,14 @@ export const Navigation = () => {
                   align="right"
                   label={
                     <span className="flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-[11px] font-bold">
+                      <motion.span
+                        className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center text-white text-[11px] font-bold animate-soft-pulse"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      >
                         {initials}
-                      </span>
+                      </motion.span>
                     </span>
                   }
                   isActive={isAccountActive}
@@ -420,7 +449,7 @@ export const Navigation = () => {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
-            className="lg:hidden border-t border-border/40 glass overflow-hidden"
+            className="lg:hidden border-t border-border/40 glass max-h-[calc(100vh-64px)] overflow-y-auto"
           >
             <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col gap-0.5">
               {/* Primary Links */}
@@ -613,4 +642,4 @@ export const Navigation = () => {
       </AnimatePresence>
     </nav>
   );
-};
+});

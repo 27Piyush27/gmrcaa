@@ -38,7 +38,9 @@ function usePrefetchRoutes() {
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Use instant scroll — smooth scroll during route changes fights
+    // framer-motion page transitions and causes visible jank
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
   return null;
 }
@@ -112,10 +114,13 @@ const AIChatbotLazy = lazy(() =>
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000,
-      retry: 1
-    }
-  }
+      staleTime: 5 * 60 * 1000,      // 5 min — reduces refetch storms
+      gcTime: 10 * 60 * 1000,         // 10 min garbage collection
+      refetchOnWindowFocus: false,     // Prevent jank on tab switch
+      retry: 1,
+      refetchOnReconnect: "always",
+    },
+  },
 });
 
 const AnimatedRoutes = () => {
@@ -202,7 +207,7 @@ const App = () => {
             {/* Fixed nav sits above content; pt-16 compensates for its 64px height */}
             <Navigation />
           <div className="pt-16 min-h-screen flex flex-col">
-            <main className="flex-1">
+            <main id="main-content" className="flex-1">
               <ErrorBoundary>
                 <AnimatedRoutes />
               </ErrorBoundary>

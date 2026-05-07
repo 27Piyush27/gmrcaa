@@ -33,15 +33,18 @@ export function CookieConsent() {
           exit={{ opacity: 0, y: 100 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-md z-50"
+          role="dialog"
+          aria-label="Cookie consent"
+          aria-describedby="cookie-desc"
         >
           <div className="glass-frosted rounded-2xl p-5 shadow-float">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0" aria-hidden="true">
                 <Cookie className="w-5 h-5 text-muted-foreground" />
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold mb-1">Cookie Notice</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+                <p id="cookie-desc" className="text-xs text-muted-foreground leading-relaxed mb-3">
                   We use essential cookies for authentication and session management to ensure a secure experience.
                 </p>
                 <div className="flex items-center gap-2">
@@ -49,7 +52,7 @@ export function CookieConsent() {
                   <Button size="sm" variant="ghost" onClick={decline} className="h-8 text-xs rounded-lg px-4 text-muted-foreground">Decline</Button>
                 </div>
               </div>
-              <button onClick={decline} className="text-muted-foreground hover:text-foreground">
+              <button onClick={decline} className="text-muted-foreground hover:text-foreground" aria-label="Dismiss cookie notice">
                 <X className="w-4 h-4" />
               </button>
             </div>

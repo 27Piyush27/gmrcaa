@@ -298,7 +298,7 @@ export default function Auth() {
                         <div className="flex gap-2">
                           <Input type="email" placeholder="your@email.com" value={forgotEmail}
                             onChange={e => setForgotEmail(e.target.value)} className="premium-input text-sm h-9" />
-                          <Button size="sm" onClick={handleForgotPassword} disabled={sendingReset} className="rounded-lg h-9 px-4 text-xs">
+                          <Button type="button" size="sm" onClick={handleForgotPassword} disabled={sendingReset} className="rounded-lg h-9 px-4 text-xs">
                             {sendingReset ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
                           </Button>
                         </div>

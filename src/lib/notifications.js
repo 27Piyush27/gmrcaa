@@ -19,10 +19,11 @@ export async function notifyStaff(title, message, type = "system") {
 
     if (!staffRoles || staffRoles.length === 0) return;
 
+    // NOTE: The DB column is "body", not "message"
     const notifications = staffRoles.map((r) => ({
       user_id: r.user_id,
       title,
-      message,
+      body: message,
       type,
     }));
 

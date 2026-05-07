@@ -99,19 +99,19 @@ const PATTERNS = {
   gstin: /\d{2}[A-Z]{5}\d{4}[A-Z]\d[A-Z\d][Z][A-Z\d]/g,
   aadhaar: /\d{4}\s?\d{4}\s?\d{4}/g,
   amounts: /(?:₹|Rs\.?|INR)\s*[\d,]+(?:\.\d{1,2})?/gi,
-  dates: /\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/g,
-  invoiceNo: /(?:invoice|inv|bill)\s*(?:#|no\.?|number)?\s*[:\-]?\s*([A-Z0-9\-\/]+)/gi,
+  dates: /\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/g,
+  invoiceNo: /(?:invoice|inv|bill)\s*(?:#|no\.?|number)?\s*[:-]?\s*([A-Z0-9-/]+)/gi,
   email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
   phone: /(?:\+91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}/g,
   ifsc: /[A-Z]{4}0[A-Z0-9]{6}/g,
-  accountNo: /(?:a\/?c|account)\s*(?:no\.?|#|number)?\s*[:\-]?\s*(\d{9,18})/gi,
+  accountNo: /(?:a\/?c|account)\s*(?:no\.?|#|number)?\s*[:-]?\s*(\d{9,18})/gi,
   tan: /[A-Z]{4}\d{5}[A-Z]/g,
-  assessmentYear: /(?:assessment\s*year|ay)\s*[:\-]?\s*(\d{4}\s*[\-–]\s*\d{2,4})/gi,
-  financialYear: /(?:financial\s*year|fy)\s*[:\-]?\s*(\d{4}\s*[\-–]\s*\d{2,4})/gi,
-  gstRate: /(?:gst|tax)\s*(?:rate|@)\s*[:\-]?\s*(\d{1,2})\s*%/gi,
-  hsnCode: /(?:hsn|sac)\s*(?:code)?\s*[:\-]?\s*(\d{4,8})/gi,
-  totalAmount: /(?:total|grand\s*total|net\s*amount|amount\s*payable)\s*[:\-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
-  name: /(?:name|employee|tenant|account\s*holder)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/gi,
+  assessmentYear: /(?:assessment\s*year|ay)\s*[:-]?\s*(\d{4}\s*[-–]\s*\d{2,4})/gi,
+  financialYear: /(?:financial\s*year|fy)\s*[:-]?\s*(\d{4}\s*[-–]\s*\d{2,4})/gi,
+  gstRate: /(?:gst|tax)\s*(?:rate|@)\s*[:-]?\s*(\d{1,2})\s*%/gi,
+  hsnCode: /(?:hsn|sac)\s*(?:code)?\s*[:-]?\s*(\d{4,8})/gi,
+  totalAmount: /(?:total|grand\s*total|net\s*amount|amount\s*payable)\s*[:-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
+  name: /(?:name|employee|tenant|account\s*holder)\s*[:-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})/gi,
 };
 
 // ── Content-based document classification ──────────────────────────────────
@@ -230,7 +230,7 @@ export function extractFieldsFromText(text, docType) {
   // Extract total amounts specifically
   const totalMatches = [];
   let totalMatch;
-  const totalRegex = /(?:total|grand\s*total|net\s*amount|amount\s*payable|net\s*pay|gross\s*salary|closing\s*balance)\s*[:\-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/gi;
+  const totalRegex = /(?:total|grand\s*total|net\s*amount|amount\s*payable|net\s*pay|gross\s*salary|closing\s*balance)\s*[:-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/gi;
   while ((totalMatch = totalRegex.exec(text)) !== null) {
     totalMatches.push(totalMatch[1].replace(/,/g, ""));
   }
@@ -238,7 +238,7 @@ export function extractFieldsFromText(text, docType) {
   // Clean name extraction
   const cleanName = (match) => {
     if (!match) return null;
-    return match.replace(/(?:name|employee|tenant|account\s*holder)\s*[:\-]?\s*/i, "").trim();
+    return match.replace(/(?:name|employee|tenant|account\s*holder)\s*[:-]?\s*/i, "").trim();
   };
 
   switch (docType) {
@@ -257,7 +257,7 @@ export function extractFieldsFromText(text, docType) {
       if (names?.[0]) fields["Account Holder"] = cleanName(names[0]);
       {
         const accMatch = text.match(PATTERNS.accountNo);
-        if (accMatch) fields["Account Number"] = accMatch[0].replace(/(?:a\/?c|account)\s*(?:no\.?|#|number)?\s*[:\-]?\s*/i, "");
+        if (accMatch) fields["Account Number"] = accMatch[0].replace(/(?:a\/?c|account)\s*(?:no\.?|#|number)?\s*[:-]?\s*/i, "");
       }
       {
         const ifscMatch = text.match(PATTERNS.ifsc);
@@ -273,7 +273,7 @@ export function extractFieldsFromText(text, docType) {
     case "invoice":
       {
         const invMatch = text.match(PATTERNS.invoiceNo);
-        if (invMatch) fields["Invoice Number"] = invMatch[0].replace(/(?:invoice|inv|bill)\s*(?:#|no\.?|number)?\s*[:\-]?\s*/i, "");
+        if (invMatch) fields["Invoice Number"] = invMatch[0].replace(/(?:invoice|inv|bill)\s*(?:#|no\.?|number)?\s*[:-]?\s*/i, "");
       }
       if (gstins?.[0]) fields["GSTIN"] = gstins[0];
       if (dates?.[0]) fields["Date"] = dates[0];
@@ -312,7 +312,7 @@ export function extractFieldsFromText(text, docType) {
       if (gstins?.[0]) fields["GSTIN"] = gstins[0];
       {
         const fyMatch = text.match(PATTERNS.financialYear);
-        if (fyMatch) fields["Filing Period"] = fyMatch[0].replace(/(?:financial\s*year|fy)\s*[:\-]?\s*/i, "");
+        if (fyMatch) fields["Filing Period"] = fyMatch[0].replace(/(?:financial\s*year|fy)\s*[:-]?\s*/i, "");
       }
       if (amounts?.length) {
         fields["Turnover"] = amounts[0];
@@ -325,7 +325,7 @@ export function extractFieldsFromText(text, docType) {
       if (pans?.[0]) fields["PAN"] = pans[0];
       {
         const ayMatch = text.match(PATTERNS.assessmentYear);
-        if (ayMatch) fields["Assessment Year"] = ayMatch[0].replace(/(?:assessment\s*year|ay)\s*[:\-]?\s*/i, "");
+        if (ayMatch) fields["Assessment Year"] = ayMatch[0].replace(/(?:assessment\s*year|ay)\s*[:-]?\s*/i, "");
       }
       if (amounts?.length) {
         fields["Total Income"] = amounts[0];
@@ -384,22 +384,22 @@ export function extractInvoiceFields(text, filename) {
   const t = text.toLowerCase();
 
   // Vendor / Seller name — try to find from content
-  const vendorMatch = text.match(/(?:from|vendor|seller|supplier|company)\s*[:\-]?\s*([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{3})/i);
+  const vendorMatch = text.match(/(?:from|vendor|seller|supplier|company)\s*[:-]?\s*([A-Z][A-Za-z\s&.]+?)(?:\n|,|\s{3})/i);
   fields.vendor = vendorMatch?.[1]?.trim() || guessVendorFromFilename(filename);
 
   // Invoice number
-  const invMatch = text.match(/(?:invoice|inv|bill|receipt)\s*(?:#|no\.?|number|num)?\s*[:\-]?\s*([A-Z0-9][\w\-\/]{2,20})/i);
+  const invMatch = text.match(/(?:invoice|inv|bill|receipt)\s*(?:#|no\.?|number|num)?\s*[:-]?\s*([A-Z0-9][\w-/]{2,20})/i);
   fields.invoiceNo = invMatch?.[1] || `INV-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
   // Date
-  const dates = text.match(/\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/g);
+  const dates = text.match(/\d{1,2}[/-]\d{1,2}[/-]\d{2,4}/g);
   fields.date = dates?.[0] || new Date().toLocaleDateString("en-IN");
 
   // Amounts — look for specific labeled amounts first
-  const baseMatch = text.match(/(?:base|subtotal|taxable\s*value|amount\s*before\s*tax)\s*[:\-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const totalMatch = text.match(/(?:total|grand\s*total|net\s*amount|amount\s*payable|balance\s*due)\s*[:\-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const gstMatch = text.match(/(?:gst|tax|cgst\s*\+\s*sgst|igst)\s*(?:amount)?\s*[:\-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-  const gstRateMatch = text.match(/(?:gst|tax)\s*(?:rate|@)\s*[:\-]?\s*(\d{1,2})\s*%/i);
+  const baseMatch = text.match(/(?:base|subtotal|taxable\s*value|amount\s*before\s*tax)\s*[:-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const totalMatch = text.match(/(?:total|grand\s*total|net\s*amount|amount\s*payable|balance\s*due)\s*[:-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const gstMatch = text.match(/(?:gst|tax|cgst\s*\+\s*sgst|igst)\s*(?:amount)?\s*[:-]?\s*(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  const gstRateMatch = text.match(/(?:gst|tax)\s*(?:rate|@)\s*[:-]?\s*(\d{1,2})\s*%/i);
 
   // Parse amounts
   const parseAmt = (s) => s ? Number(s.replace(/,/g, "")) : 0;
@@ -461,7 +461,7 @@ export function extractInvoiceFields(text, filename) {
 }
 
 function guessVendorFromFilename(filename) {
-  const name = filename.replace(/\.[^.]+$/, "").replace(/[_\-]/g, " ");
+  const name = filename.replace(/\.[^.]+$/, "").replace(/[_-]/g, " ");
   // Remove common prefixes
   const cleaned = name.replace(/^(invoice|bill|receipt|scan|img|doc)\s*/i, "").trim();
   return cleaned.length > 2 ? cleaned.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : "Unknown Vendor";

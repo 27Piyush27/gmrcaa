@@ -1,8 +1,26 @@
 import { createClient } from "@supabase/supabase-js";
 
+// ── HTML sanitization to prevent XSS in email templates ──────────────
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // CORS — restrict to known origins only (matches payment API security)
+  const origin = req.headers?.origin || "";
+  const allowedOrigins = [
+    "https://chartered-insight-hub-32-3d4b2fdf-main.vercel.app",
+    "http://localhost:8080",
+    "http://localhost:5173",
+  ];
+  const isAllowed = allowedOrigins.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin);
+  res.setHeader("Access-Control-Allow-Origin", isAllowed ? origin : allowedOrigins[0]);
   res.setHeader("Access-Control-Allow-Headers", "content-type, authorization");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
 
@@ -121,6 +139,11 @@ export default async function handler(req, res) {
 
 /* ── Email HTML for GMR Team (info@gmrindia.com) ─────────────────────── */
 function buildTeamNotificationHtml({ name, email, subject, message }) {
+  // Sanitize all user-supplied values before inserting into HTML
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeSubject = escapeHtml(subject);
+  const safeMessage = escapeHtml(message);
   const now = new Date().toLocaleDateString("en-IN", {
     day: "numeric",
     month: "long",
@@ -159,21 +182,21 @@ function buildTeamNotificationHtml({ name, email, subject, message }) {
       <div class="badge">New Inquiry</div>
       <div class="row">
         <span class="label">Name</span>
-        <span class="value">${name}</span>
+        <span class="value">${safeName}</span>
       </div>
       <div class="row">
         <span class="label">Email</span>
-        <span class="value"><a href="mailto:${email}" style="color:#2563eb;text-decoration:none">${email}</a></span>
+        <span class="value"><a href="mailto:${safeEmail}" style="color:#2563eb;text-decoration:none">${safeEmail}</a></span>
       </div>
       <div class="row">
         <span class="label">Subject</span>
-        <span class="value">${subject}</span>
+        <span class="value">${safeSubject}</span>
       </div>
       <div class="message-box">
         <span class="label" style="margin-bottom:8px">Message</span>
-        ${message}
+        ${safeMessage}
       </div>
-      <a href="mailto:${email}?subject=Re: ${encodeURIComponent(subject)}" class="cta">Reply to ${name} →</a>
+      <a href="mailto:${safeEmail}?subject=Re: ${encodeURIComponent(subject)}" class="cta">Reply to ${safeName} →</a>
     </div>
     <div class="footer">
       Received on ${now}
@@ -185,6 +208,7 @@ function buildTeamNotificationHtml({ name, email, subject, message }) {
 
 /* ── Confirmation email for the visitor ──────────────────────────────── */
 function buildConfirmationHtml(name) {
+  const safeName = escapeHtml(name);
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -208,7 +232,7 @@ function buildConfirmationHtml(name) {
       <p>Chartered Accountants</p>
     </div>
     <div class="body">
-      <h2>Thank you, ${name}!</h2>
+      <h2>Thank you, ${safeName}!</h2>
       <p>We've received your message and our team will get back to you within <strong>24 hours</strong>.</p>
       <p>If your inquiry is urgent, feel free to call us directly:</p>
       <p style="color:#111;font-weight:500">📞 +91 98712 09393 (Gurgaon)<br/>📞 +91 98710 84875 (Delhi)</p>

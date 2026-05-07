@@ -43,7 +43,7 @@ export function NotificationCenter() {
     // Subscribe to realtime notifications
     if (!user) return;
     const channel = supabase
-      .channel("user_notifications")
+      .channel(`user_notifications_${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
           setNotifications(prev => [payload.new, ...prev]);
@@ -141,7 +141,7 @@ export function NotificationCenter() {
                         key={notification.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className={`flex items-start gap-3 px-4 py-3 border-b border-border/20 hover:bg-secondary/30 transition-colors ${!notification.read ? "bg-accent/5" : ""}`}
+                        className={`group flex items-start gap-3 px-4 py-3 border-b border-border/20 hover:bg-secondary/30 transition-colors ${!notification.read ? "bg-accent/5" : ""}`}
                       >
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${!notification.read ? "bg-accent/10" : "bg-secondary"}`}>
                           <Icon className={`w-4 h-4 ${!notification.read ? "text-accent" : "text-muted-foreground"}`} />

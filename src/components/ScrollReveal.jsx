@@ -13,19 +13,12 @@ export const ScrollReveal = ({
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
 
-  const dirMap = {
-    up: { y: 20, x: 0 },
-    left: { y: 0, x: -20 },
-    right: { y: 0, x: 20 },
-    none: { y: 0, x: 0 },
-  };
-
   return (
     <motion.div
       ref={ref}
       className={className}
-      initial={{ opacity: 0, ...dirMap[direction] }}
-      animate={inView ? { opacity: 1, y: 0, x: 0 } : {}}
+      initial={{ opacity: 0 }}
+      animate={inView ? { opacity: 1 } : {}}
       transition={{ duration: 0.5, ease: easing, delay }}
     >
       {children}
@@ -61,15 +54,14 @@ export const StaggerContainer = ({
   );
 };
 
-// Stagger item — opacity + transform only (no blur for mobile perf)
+// Stagger item — opacity only (no y offset to avoid CLS)
 export const StaggerItem = ({ children, className = "" }) => (
   <motion.div
     className={className}
     variants={{
-      hidden: { opacity: 0, y: 18 },
+      hidden: { opacity: 0 },
       visible: {
         opacity: 1,
-        y: 0,
         transition: { duration: 0.45, ease: easing },
       },
     }}

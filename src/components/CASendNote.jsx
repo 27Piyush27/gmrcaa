@@ -24,9 +24,9 @@ export function CASendNote({ targetUserId, clientName, serviceRequestId }) {
       const { error } = await supabase.from("notifications").insert({
         user_id: targetUserId,
         title: "Message from your CA",
-        message: note.trim(),
-        type: "ca_note",
-        link: serviceRequestId ? "/dashboard" : null,
+        body: note.trim(),
+        type: "system",
+        data: serviceRequestId ? { link: "/dashboard" } : {},
       });
       if (error) throw error;
       toast.success(`Note sent to ${clientName || "client"} successfully.`);

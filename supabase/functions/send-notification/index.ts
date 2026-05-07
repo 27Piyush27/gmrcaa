@@ -15,7 +15,7 @@ const corsHeaders = {
 
 const VALID_TYPES = [
     "service_update", "payment_received", "document_uploaded",
-    "document_reviewed", "system", "chat",
+    "document_reviewed", "system", "chat", "appointment", "success", "warning", "info"
 ] as const;
 
 function json(data: unknown, status = 200) {

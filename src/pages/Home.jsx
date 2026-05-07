@@ -9,6 +9,7 @@ import {
   TextReveal,
   BlurFadeIn,
   GlowCounter,
+  SmoothCounter,
   MagneticWrap,
   SpotlightCard,
   AnimatedDivider,
@@ -16,12 +17,12 @@ import {
   StaggerGridItem,
   RotatingText,
   ScaleOnScroll,
+  RevealOnScroll,
 } from "@/components/PremiumAnimations";
 import {
   FloatingCube,
   FloatingRing,
   FloatingSphere,
-  FloatingDots,
   Tilt3DCard,
   IsometricGrid,
   RotatingEmblem,
@@ -106,6 +107,7 @@ export default function Home() {
         <section
           ref={heroRef}
           className="relative min-h-[100svh] flex items-center justify-center overflow-hidden"
+          aria-label="Hero section"
         >
           {/* Ambient background — CSS-only, no JS animation for scroll perf */}
           <motion.div
@@ -171,42 +173,17 @@ export default function Home() {
               opacity={0.1}
             />
 
-            {/* 3D Ring — right side, smaller */}
-            <FloatingRing
-              size={90}
-              className="bottom-[25%] right-[8%] hidden lg:block"
-              color="hsl(280 80% 60%)"
-              delay={1.5}
-              duration={22}
-              opacity={0.08}
-              strokeWidth={1}
-            />
-
-            {/* Glowing spheres */}
+            {/* Glowing sphere */}
             <FloatingSphere
               size={50}
               className="top-[20%] left-[20%] hidden md:block"
               delay={0.3}
               glowIntensity={0.08}
             />
-            <FloatingSphere
-              size={30}
-              className="bottom-[30%] right-[20%] hidden md:block"
-              color="hsl(280 80% 60%)"
-              delay={1}
-              glowIntensity={0.06}
-            />
-
-            {/* Floating dots ambience */}
-            <FloatingDots
-              count={15}
-              className="top-[10%] left-[10%] hidden lg:block"
-              spread={300}
-            />
           </div>
 
           {/* Noise texture overlay */}
-          <div className="absolute inset-0 bg-noise pointer-events-none opacity-40" />
+          <div className="absolute inset-0 bg-noise pointer-events-none opacity-40" aria-hidden="true" />
 
           {/* Hero content — fades + scales on scroll (no blur filter) */}
           <motion.div
@@ -219,8 +196,8 @@ export default function Home() {
           >
             {/* Floating badge with pulse */}
             <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.6, ease: easing, delay: 0.1 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-border/60 bg-secondary/60 backdrop-blur-sm text-xs text-muted-foreground tracking-widest uppercase mb-8"
             >
@@ -254,14 +231,14 @@ export default function Home() {
 
             {/* CTAs — Magnetic hover */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.55, ease: easing, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-3 justify-center"
             >
               <MagneticWrap strength={0.15}>
                 <Link to="/services">
-                  <span className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group">
+                  <span className="btn-shine flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group">
                     {t("home.cta.explore")}
                     <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
@@ -269,7 +246,7 @@ export default function Home() {
               </MagneticWrap>
               <MagneticWrap strength={0.15}>
                 <Link to="/contact">
-                  <span className="flex items-center gap-2 px-8 py-3.5 bg-secondary/80 backdrop-blur-md text-foreground font-medium rounded-full border border-border/50 hover:bg-secondary transition-all duration-500 hover:scale-[1.03] active:scale-[0.98]">
+                  <span className="flex items-center gap-2 px-8 py-3.5 bg-secondary/80 backdrop-blur-md text-foreground font-medium rounded-full border border-border/50 hover:bg-secondary transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] shimmer-sweep">
                     {t("home.cta.expert")}
                   </span>
                 </Link>
@@ -317,7 +294,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 md:divide-x divide-border/40">
               {stats.map((stat, i) => (
                 <div key={i} className="text-center py-8 px-8">
-                  <GlowCounter
+                  <SmoothCounter
                     target={stat.value}
                     suffix={stat.suffix}
                     className="text-6xl md:text-7xl font-light tracking-tight mb-3 block"
@@ -374,7 +351,7 @@ export default function Home() {
                   <StaggerGridItem key={index}>
                     <Link to={service.link} className="group block">
                       <Tilt3DCard tiltStrength={6} glareEnabled={true}>
-                        <SpotlightCard className="p-8 md:p-12 h-full">
+                        <SpotlightCard className="p-8 md:p-12 h-full shimmer-sweep">
                           {/* Background gradient on hover */}
                           <div
                             className={`absolute inset-0 bg-gradient-to-br ${service.color} opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
@@ -567,7 +544,7 @@ export default function Home() {
                   <div className="flex-shrink-0">
                     <MagneticWrap strength={0.12}>
                       <button onClick={() => setBookingOpen(true)}>
-                        <span className="flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group whitespace-nowrap">
+                        <span className="btn-shine flex items-center gap-2 px-8 py-3.5 bg-foreground text-background font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] group whitespace-nowrap">
                           Book Now
                           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                         </span>

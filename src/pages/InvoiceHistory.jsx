@@ -35,7 +35,8 @@ export default function InvoiceHistory() {
         .from("invoices")
         .select("id, invoice_number, service_title, base_amount, gst_amount, total_amount, generated_at, payment_id")
         .eq("user_id", user.id)
-        .order("generated_at", { ascending: false });
+        .order("generated_at", { ascending: false })
+        .limit(200);
       if (error) throw error;
       setInvoices(data || []);
     } catch (err) {

@@ -25,11 +25,13 @@ export default defineConfig({
     include: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
   build: {
-    // Modern output — works on all current platforms (Chrome 80+, Safari 14+, Firefox 80+)
-    target: "es2020",
+    // Modern output — latest syntax, less polyfill = smaller bundles
+    target: "esnext",
     // Strip console.log/warn in prod bundles to avoid data leaks
     // console.error is kept for error tracking
     minify: "esbuild",
+    // Minify CSS aggressively
+    cssMinify: "esbuild",
     // Enable CSS code splitting for better caching
     cssCodeSplit: true,
     // Split vendor code into separate cacheable chunks
@@ -46,11 +48,19 @@ export default defineConfig({
           "vendor-supabase": ["@supabase/supabase-js"],
           // Icon library — large, used everywhere, cache separately
           "vendor-icons": ["lucide-react"],
+          // Date utilities — moderately heavy, used across many pages
+          "vendor-date": ["date-fns"],
+          // PDF generation — only used on invoice/export pages
+          "vendor-pdf": ["jspdf", "jspdf-autotable"],
+          // Markdown renderer — only used in chatbot/blog
+          "vendor-markdown": ["react-markdown"],
         },
       },
     },
     // Increase chunk warning threshold (we're code-splitting intentionally)
     chunkSizeWarningLimit: 600,
+    // Generate source maps for debugging but exclude from deployment
+    sourcemap: false,
   },
   esbuild: {
     // Drop console.log/warn in production builds but keep console.error for debugging

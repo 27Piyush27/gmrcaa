@@ -89,12 +89,24 @@ function getSuggestions(text, lang) {
 const FAQ_RESPONSES = {
   en: [
     {
+      keywords: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "namaste"],
+      response: "Hello! 👋 Welcome to **GMR & Associates**. I'm your AI tax assistant powered by Gemini. I can help you with:\n\n- 📋 **Tax filing & advisory**\n- 🏢 **Company incorporation**\n- 📊 **GST compliance**\n- 📄 **Document analysis**\n- 📅 **Booking appointments**\n\nHow can I assist you today?"
+    },
+    {
+      keywords: ["thank you", "thanks", "dhanyavaad", "shukriya", "appreciate"],
+      response: "You're welcome! 😊 If you need any further assistance with tax filing, GST, or any of our services, feel free to ask anytime. We're here to help!"
+    },
+    {
+      keywords: ["bye", "goodbye", "see you", "quit", "exit"],
+      response: "Goodbye! 👋 Thank you for using GMR Assistant. We're always here when you need us. Have a great day!"
+    },
+    {
       keywords: ["office hours", "timing", "open", "working hours", "when do you open"],
       response: "Our office is open from **Monday to Saturday, 10:00 AM to 6:30 PM**. We are closed on Sundays and public holidays."
     },
     {
       keywords: ["address", "location", "where are you", "office address", "visit"],
-      response: "We have two offices:\n\n📍 **Gurugram**: H.No.43, SF, Sector-7, Gurugram\n📍 **Delhi**: AB 38, Shalimar Bagh, Delhi\n\nYou can visit us during our office hours or book an appointment online."
+      response: "We have two offices:\n\n📍 **Gurugram**: H.No.43, SF, Sector-7, Gurugram 122001\n📍 **Delhi**: AB 38, Shalimar Bagh, Delhi 110088\n\nYou can visit us during our office hours or book an appointment online."
     },
     {
       keywords: ["contact", "phone", "call", "email", "number", "reach you"],
@@ -106,19 +118,19 @@ const FAQ_RESPONSES = {
     },
     {
       keywords: ["what services", "what do you do", "offerings", "how can you help"],
-      response: "We offer a wide range of services including:\n\n- Income Tax Return (ITR) Filing\n- GST Registration & Filing\n- Company Incorporation\n- Audit & Assurance\n- Payroll & TDS Compliance\n\nYou can explore all our services [here](/services)."
+      response: "We offer a wide range of services including:\n\n- **Income Tax Return (ITR) Filing** — from ₹2,999\n- **GST Registration & Filing** — from ₹999\n- **Company Incorporation** — from ₹9,999\n- **Audit & Assurance** — from ₹15,000\n- **Payroll & TDS Compliance** — from ₹2,499\n- **Project Finance** — from ₹19,999\n\nYou can explore all our services [here](/services)."
     },
     {
       keywords: ["documents for itr", "itr documents", "what do i need for income tax"],
-      response: "For basic ITR filing, you typically need:\n- PAN Card\n- Aadhaar Card\n- Form 16 (if salaried)\n- Bank statements for the financial year\n- Investment proofs (like LIC, PPF, for 80C deductions)\n\nYou can upload these directly in the chat or on your [Dashboard](/dashboard)."
+      response: "For basic ITR filing, you typically need:\n- PAN Card\n- Aadhaar Card\n- Form 16 (if salaried)\n- Bank statements for the financial year\n- Investment proofs (like LIC, PPF, for 80C deductions)\n- AIS/TIS from the Income Tax portal\n\nYou can upload these directly in the chat or on your [Dashboard](/dashboard)."
     },
     {
       keywords: ["track status", "check status", "my request status"],
       response: "You can track the live progress of all your active service requests by visiting your [Dashboard](/dashboard). We also send email notifications whenever the status updates."
     },
     {
-      keywords: ["do i need gst", "what is gst", "gst registration required"],
-      response: "GST registration is mandatory if your business turnover exceeds ₹40 Lakhs (₹20 Lakhs for services). It is also required for inter-state sales and e-commerce sellers. [Navigate to our Services](/services) to book a GST consultation."
+      keywords: ["do i need gst", "what is gst", "gst registration required", "gst threshold"],
+      response: "GST registration is mandatory if:\n\n- **Goods**: Turnover exceeds **₹40 Lakhs** (₹20 Lakhs for NE states)\n- **Services**: Turnover exceeds **₹20 Lakhs** (₹10 Lakhs for NE states)\n- Inter-state sales or e-commerce sellers — **mandatory** regardless of turnover\n\nWe offer GST Registration for **₹1,999**. Would you like to get started?"
     },
     {
       keywords: ["payment methods", "how to pay", "can i pay online", "upi"],
@@ -126,17 +138,81 @@ const FAQ_RESPONSES = {
     },
     {
       keywords: ["online consultation", "video call", "virtual meeting"],
-      response: "Absolutely! You can book an online video consultation with our Chartered Accountants. Just [Navigate to Appointments](/appointments) and select 'Video Consultation'."
+      response: "Absolutely! You can book an online video consultation with our Chartered Accountants. Just [Navigate to Appointments](/appointments) and select 'Video Consultation'. [SHOW_BOOKING_FORM]"
+    },
+    {
+      keywords: ["about gmr", "who are you", "about your firm", "about the company", "founded"],
+      response: "**GMR & Associates** is a leading Chartered Accountancy firm founded in **2011** by **CA Gaurav Mahajan (FCA, DISA)**. With **15+ years** of experience and **500+ clients**, we specialize in:\n\n- Tax Advisory & Filing\n- GST Compliance\n- Company Law & Incorporation\n- Audit & Assurance\n- Payroll Management\n- Project Finance\n\nOur offices are in **Gurugram** and **Delhi**."
+    },
+    {
+      keywords: ["new regime", "old regime", "which regime", "tax regime comparison", "new vs old"],
+      response: "**Tax Regime Comparison (FY 2025-26):**\n\n| Feature | Old Regime | New Regime (Default) |\n|---|---|---|\n| Standard Deduction | ₹50,000 | ₹75,000 |\n| 80C Deductions | ✅ Up to ₹1.5L | ❌ Not available |\n| 80D (Health) | ✅ Up to ₹25K | ❌ Not available |\n| HRA Exemption | ✅ Available | ❌ Not available |\n| Rebate u/s 87A | Up to ₹5L income | Up to ₹12L income |\n\n**Tip:** If your total deductions exceed ~₹3.75 Lakh, the Old Regime may save more. Use our [Tax Calculator](/tax-calculator) for a personalized comparison."
+    },
+    {
+      keywords: ["80c", "section 80c", "tax saving investments", "how to save tax"],
+      response: "**Section 80C** allows deductions up to **₹1.5 Lakh** per year (Old Regime only). Eligible investments:\n\n- **PPF** — ₹500 to ₹1.5L/year, tax-free returns\n- **ELSS Mutual Funds** — 3-year lock-in, equity returns\n- **Life Insurance (LIC)** — Premium payments\n- **NSC** — 5-year fixed deposit\n- **EPF/VPF** — Salary deduction\n- **Home Loan Principal** — Repayment\n- **Tuition Fees** — Up to 2 children\n- **5-Year FD** — Tax-saving fixed deposit\n\nWould you like personalized tax planning advice?"
+    },
+    {
+      keywords: ["itr deadline", "filing deadline", "last date", "due date itr"],
+      response: "**ITR Filing Deadlines (AY 2026-27):**\n\n- **Individuals (non-audit):** 31st July 2026\n- **Audit cases (businesses):** 31st October 2026\n- **Transfer Pricing cases:** 30th November 2026\n- **Revised/Belated return:** 31st December 2026\n\n⚠️ Late filing attracts a penalty of ₹1,000 to ₹5,000 under Section 234F."
+    },
+    {
+      keywords: ["advance tax", "advance tax due", "advance tax dates"],
+      response: "**Advance Tax Due Dates (FY 2025-26):**\n\n| Instalment | Due Date | Cumulative % |\n|---|---|---|\n| 1st | 15th June 2026 | 15% |\n| 2nd | 15th September 2026 | 45% |\n| 3rd | 15th December 2026 | 75% |\n| 4th | 15th March 2027 | 100% |\n\nAdvance tax is applicable if your total tax liability exceeds **₹10,000** in a year."
+    },
+    {
+      keywords: ["tds rate", "tds on salary", "tds rates", "tds percentage"],
+      response: "**Common TDS Rates (FY 2025-26):**\n\n- **Salary (Section 192):** As per slab rates\n- **Interest on FD (194A):** 10% (above ₹40K)\n- **Professional fees (194J):** 10%\n- **Rent (194I):** 10% (above ₹2.4L/year)\n- **Property sale (194-IA):** 1% (above ₹50L)\n- **Commission (194H):** 5%\n\nNo TDS if PAN is linked with Aadhaar and income is below threshold."
+    },
+    {
+      keywords: ["nri", "non resident", "nri tax", "nri itr"],
+      response: "**NRI Tax Filing:**\n\nNRIs must file ITR in India if:\n- Indian income exceeds **₹2.5 Lakh**\n- Capital gains from Indian assets\n- Rental income from Indian property\n\nWe specialize in NRI taxation including DTAA benefits, TDS refunds, and property-related compliance. Book a consultation for personalized advice. [SHOW_BOOKING_FORM]"
+    },
+    {
+      keywords: ["startup", "startup registration", "register startup", "dpiit"],
+      response: "**Startup Registration Services:**\n\n1. **Company Incorporation** (Pvt Ltd/LLP/OPC) — ₹9,999\n2. **DPIIT Startup Recognition** — Tax benefits for 3 years\n3. **MSME/Udyam Registration** — Free government benefits\n4. **GST Registration** — ₹1,999\n5. **Trademark Filing** — Brand protection\n\nWe've helped **100+ startups** incorporate and scale. Shall I request the Company Incorporation service for you?"
+    },
+    {
+      keywords: ["audit required", "when is audit mandatory", "tax audit limit", "audit threshold"],
+      response: "**Tax Audit (Section 44AB) is mandatory when:**\n\n- **Business turnover** exceeds ₹1 Crore (₹10 Cr if 95%+ digital transactions)\n- **Professional receipts** exceed ₹50 Lakhs\n- **Presumptive taxation** opted but income declared below prescribed limits\n\nAudit deadline: **30th September** of the assessment year.\n\nOur Audit & Assurance service starts at **₹15,000**."
+    },
+    {
+      keywords: ["form 16", "what is form 16", "form 16 not received"],
+      response: "**Form 16** is a TDS certificate issued by your employer showing:\n- Salary income & deductions\n- TDS deducted on salary\n- Tax computation\n\nIf you haven't received Form 16:\n1. Request from your HR/Employer\n2. Download **Form 26AS** from the IT portal (shows all TDS)\n3. Check **AIS (Annual Information Statement)** for complete data\n\nWe can file your ITR even without Form 16 using Form 26AS and payslips."
+    },
+    {
+      keywords: ["huf", "hindu undivided family", "huf benefits"],
+      response: "**HUF (Hindu Undivided Family)** is a separate tax entity:\n\n✅ **Benefits:**\n- Separate ₹2.5L basic exemption\n- Separate 80C deduction (₹1.5L)\n- Can own property, run business\n- Lower tax outgo for the family\n\n❌ **Limitations:**\n- Cannot be salaried\n- Only Hindu, Sikh, Jain, Buddhist families\n\nWe can help you set up and manage your HUF. [Contact us](/contact) for details."
+    },
+    {
+      keywords: ["refund", "income tax refund", "refund status", "when will i get refund"],
+      response: "**Income Tax Refund Timeline:**\n\n- Refunds are typically processed within **20-45 days** of e-verification\n- Check status on [incometax.gov.in](https://www.incometax.gov.in) → Refund Status\n- Ensure your **bank account is pre-validated** and linked with PAN\n- Refund is credited directly to your bank account via ECS\n\n⚠️ If refund is delayed beyond 60 days, you can raise a grievance on the portal."
+    },
+    {
+      keywords: ["upload documents", "how to upload", "send files", "document vault", "where to put pan"],
+      response: "You can securely upload and manage all your tax documents (PAN, Aadhaar, Form 16, Bank Statements) in our encrypted **Document Vault**. Only our authorized CAs have access to these files.\n\n[NAVIGATE: /documents]"
+    },
+    {
+      keywords: ["pay invoice", "billing", "how to pay", "pay ca fee", "invoices"],
+      response: "You can view and pay all your pending CA service fees directly through our secure platform using UPI, Credit/Debit cards, or Net Banking. Once paid, the receipt is instantly generated.\n\n[NAVIGATE: /invoices]"
     }
   ],
   hi: [
+    {
+      keywords: ["हेलो", "नमस्ते", "नमस्कार", "हाय", "शुभ प्रभात"],
+      response: "नमस्ते! 👋 **GMR & Associates** में आपका स्वागत है। मैं आपका AI टैक्स सहायक हूँ। मैं आपकी इन चीज़ों में मदद कर सकता हूँ:\n\n- 📋 **टैक्स फाइलिंग और सलाह**\n- 🏢 **कंपनी निगमन**\n- 📊 **GST अनुपालन**\n- 📄 **दस्तावेज़ विश्लेषण**\n- 📅 **अपॉइंटमेंट बुकिंग**\n\nमैं आज आपकी कैसे मदद कर सकता हूँ?"
+    },
+    {
+      keywords: ["धन्यवाद", "शुक्रिया", "थैंक्स"],
+      response: "आपका स्वागत है! 😊 अगर आपको टैक्स फाइलिंग, GST या हमारी किसी भी सेवा के बारे में और मदद चाहिए, तो बेझिझक पूछें।"
+    },
     {
       keywords: ["ऑफिस का समय", "खुलने का समय", "टाइमिंग", "काम करने का समय"],
       response: "हमारा कार्यालय **सोमवार से शनिवार सुबह 10:00 बजे से शाम 6:30 बजे** तक खुला रहता है। रविवार और सार्वजनिक अवकाश को बंद रहता है।"
     },
     {
       keywords: ["पता", "लोकेशन", "कहाँ हैं", "ऑफिस एड्रेस"],
-      response: "हमारे दो कार्यालय हैं:\n\n📍 **गुरुग्राम**: H.No.43, SF, Sector-7, Gurugram\n📍 **दिल्ली**: AB 38, Shalimar Bagh, Delhi\n\nआप हमसे मिल सकते हैं या अपॉइंटमेंट बुक कर सकते हैं।"
+      response: "हमारे दो कार्यालय हैं:\n\n📍 **गुरुग्राम**: H.No.43, SF, Sector-7, Gurugram 122001\n📍 **दिल्ली**: AB 38, Shalimar Bagh, Delhi 110088\n\nआप हमसे मिल सकते हैं या अपॉइंटमेंट बुक कर सकते हैं।"
     },
     {
       keywords: ["संपर्क", "फोन", "कॉल", "ईमेल", "नंबर"],
@@ -148,11 +224,11 @@ const FAQ_RESPONSES = {
     },
     {
       keywords: ["क्या सेवाएं", "आप क्या करते हैं"],
-      response: "हम विभिन्न सेवाएं प्रदान करते हैं जिनमें शामिल हैं:\n\n- इनकम टैक्स रिटर्न (ITR) फाइलिंग\n- GST रजिस्ट्रेशन और फाइलिंग\n- कंपनी निगमन\n- ऑडिट\n- पेरोल और TDS अनुपालन\n\nआप हमारी सभी सेवाएं [यहाँ](/services) देख सकते हैं।"
+      response: "हम विभिन्न सेवाएं प्रदान करते हैं:\n\n- **इनकम टैक्स रिटर्न (ITR) फाइलिंग** — ₹2,999 से\n- **GST रजिस्ट्रेशन और फाइलिंग** — ₹999 से\n- **कंपनी निगमन** — ₹9,999 से\n- **ऑडिट और एश्योरेंस** — ₹15,000 से\n- **पेरोल और TDS अनुपालन** — ₹2,499 से\n\nआप हमारी सभी सेवाएं [यहाँ](/services) देख सकते हैं।"
     },
     {
       keywords: ["itr के लिए दस्तावेज़", "इनकम टैक्स के लिए क्या चाहिए"],
-      response: "मूल ITR फाइलिंग के लिए, आपको आम तौर पर आवश्यकता होती है:\n- पैन कार्ड\n- आधार कार्ड\n- फॉर्म 16 (यदि वेतनभोगी हैं)\n- वित्तीय वर्ष के लिए बैंक स्टेटमेंट\n- निवेश प्रमाण (80C के लिए)\n\nआप इन्हें सीधे चैट में या अपने [डैशबोर्ड](/dashboard) पर अपलोड कर सकते हैं।"
+      response: "मूल ITR फाइलिंग के लिए, आपको आम तौर पर आवश्यकता होती है:\n- पैन कार्ड\n- आधार कार्ड\n- फॉर्म 16 (यदि वेतनभोगी हैं)\n- वित्तीय वर्ष के लिए बैंक स्टेटमेंट\n- निवेश प्रमाण (80C के लिए)\n- AIS/TIS इनकम टैक्स पोर्टल से\n\nआप इन्हें सीधे चैट में या अपने [डैशबोर्ड](/dashboard) पर अपलोड कर सकते हैं।"
     },
     {
       keywords: ["स्टेटस कैसे चेक करें", "मेरा स्टेटस"],
@@ -161,13 +237,49 @@ const FAQ_RESPONSES = {
     {
       keywords: ["भुगतान कैसे करें", "पेमेंट", "ऑनलाइन पेमेंट"],
       response: "हाँ, हम सुरक्षित ऑनलाइन भुगतान स्वीकार करते हैं। आप UPI, क्रेडिट/डेबिट कार्ड या नेट बैंकिंग के माध्यम से भुगतान कर सकते हैं।"
+    },
+    {
+      keywords: ["जीएमआर के बारे में", "आप कौन हैं", "फर्म के बारे में"],
+      response: "**GMR & Associates** एक प्रमुख चार्टर्ड एकाउंटेंसी फर्म है जिसकी स्थापना **2011** में **CA गौरव महाजन (FCA, DISA)** ने की थी। **15+ वर्षों** के अनुभव और **500+ ग्राहकों** के साथ, हम टैक्स सलाह, GST, कंपनी कानून, ऑडिट और प्रोजेक्ट फाइनेंस में विशेषज्ञता रखते हैं।"
+    },
+    {
+      keywords: ["नई व्यवस्था", "पुरानी व्यवस्था", "कौन सी व्यवस्था", "टैक्स व्यवस्था"],
+      response: "**टैक्स व्यवस्था तुलना (FY 2025-26):**\n\n- **पुरानी व्यवस्था:** स्टैंडर्ड डिडक्शन ₹50,000। 80C/80D कटौती उपलब्ध। ₹5 लाख तक छूट।\n- **नई व्यवस्था (डिफ़ॉल्ट):** स्टैंडर्ड डिडक्शन ₹75,000। कोई 80C/80D कटौती नहीं। ₹12 लाख तक छूट।\n\nयदि आपकी कुल कटौतियाँ ~₹3.75 लाख से अधिक हैं, तो पुरानी व्यवस्था बेहतर हो सकती है। हमारे [टैक्स कैलकुलेटर](/tax-calculator) का उपयोग करें।"
+    },
+    {
+      keywords: ["80सी", "टैक्स कैसे बचाएं", "निवेश से बचत"],
+      response: "**धारा 80C** के तहत **₹1.5 लाख** तक की कटौती (पुरानी व्यवस्था में):\n\n- **PPF** — ₹500 से ₹1.5L/वर्ष\n- **ELSS म्यूचुअल फंड** — 3 साल का लॉक-इन\n- **जीवन बीमा (LIC)** — प्रीमियम\n- **EPF/VPF** — वेतन से कटौती\n- **होम लोन मूलधन** — भुगतान\n- **ट्यूशन फीस** — 2 बच्चों तक\n\nक्या आप व्यक्तिगत टैक्स प्लानिंग सलाह चाहते हैं?"
+    },
+    {
+      keywords: ["itr की अंतिम तिथि", "फाइलिंग डेडलाइन", "आखिरी तारीख"],
+      response: "**ITR फाइलिंग की अंतिम तिथियाँ (AY 2026-27):**\n\n- **व्यक्तिगत (बिना ऑडिट):** 31 जुलाई 2026\n- **ऑडिट वाले (व्यापार):** 31 अक्टूबर 2026\n- **संशोधित/विलंबित रिटर्न:** 31 दिसंबर 2026\n\n⚠️ देर से फाइलिंग पर ₹1,000 से ₹5,000 तक जुर्माना (धारा 234F)।"
+    },
+    {
+      keywords: ["जीएसटी जरूरी", "जीएसटी रजिस्ट्रेशन कब", "gst कब लगता है"],
+      response: "GST रजिस्ट्रेशन अनिवार्य है यदि:\n\n- **सामान:** टर्नओवर **₹40 लाख** से अधिक\n- **सेवाएं:** टर्नओवर **₹20 लाख** से अधिक\n- अंतर-राज्यीय बिक्री या ई-कॉमर्स — **अनिवार्य**\n\nहम GST रजिस्ट्रेशन **₹1,999** में करते हैं।"
+    },
+    {
+      keywords: ["एनआरआई", "अनिवासी भारतीय", "nri टैक्स"],
+      response: "**NRI टैक्स फाइलिंग:**\n\nNRI को भारत में ITR फाइल करना होगा यदि:\n- भारतीय आय **₹2.5 लाख** से अधिक\n- भारतीय संपत्ति से पूंजीगत लाभ\n- भारतीय संपत्ति से किराया\n\nहम DTAA लाभ, TDS रिफंड और संपत्ति अनुपालन में विशेषज्ञ हैं। परामर्श बुक करें। [SHOW_BOOKING_FORM]"
+    },
+    {
+      keywords: ["रिफंड", "इनकम टैक्स रिफंड", "रिफंड कब मिलेगा"],
+      response: "**इनकम टैक्स रिफंड:**\n\n- रिफंड आमतौर पर ई-सत्यापन के **20-45 दिनों** में प्रोसेस होता है\n- स्टेटस [incometax.gov.in](https://www.incometax.gov.in) पर चेक करें\n- सुनिश्चित करें कि बैंक खाता **प्री-वैलिडेट** है और PAN से लिंक है\n\n⚠️ 60 दिनों से अधिक देरी होने पर पोर्टल पर शिकायत दर्ज करें।"
+    },
+    {
+      keywords: ["दस्तावेज अपलोड", "डॉक्यूमेंट कैसे भेजें", "फाइल अपलोड"],
+      response: "आप अपने सभी टैक्स दस्तावेज़ (PAN, आधार, फॉर्म 16, बैंक स्टेटमेंट) हमारे सुरक्षित **डॉक्यूमेंट वॉल्ट** में अपलोड कर सकते हैं। केवल हमारे अधिकृत CA ही इन फाइलों को देख सकते हैं।\n\n[NAVIGATE: /documents]"
+    },
+    {
+      keywords: ["बिल", "इनवॉइस भुगतान", "फीस कैसे दें", "पेमेंट"],
+      response: "आप UPI, क्रेडिट/डेबिट कार्ड या नेट बैंकिंग का उपयोग करके सीधे हमारे सुरक्षित प्लेटफॉर्म के माध्यम से अपनी सभी लंबित CA सेवा फीस देख और चुका सकते हैं।\n\n[NAVIGATE: /invoices]"
     }
   ],
   navigation_staff: [
-    { keywords: ["dashboard", "home", "admin panel", "control center"], response: "Taking you to the Admin Dashboard. [NAVIGATE: /admin]" },
+    { keywords: ["dashboard", "admin panel", "control center", "admin home"], response: "Taking you to the Admin Dashboard. [NAVIGATE: /admin]" },
     { keywords: ["tasks", "my tasks", "todo", "service requests", "kanban"], response: "Opening your Task Board. [NAVIGATE: /admin/tasks]" },
     { keywords: ["services manage", "edit services", "service management"], response: "Taking you to Service Management. [NAVIGATE: /admin/services]" },
-    { keywords: ["team", "staff", "users", "manage team"], response: "Navigating to Team Management. [NAVIGATE: /admin/team]" },
+    { keywords: ["team", "staff", "manage team"], response: "Navigating to Team Management. [NAVIGATE: /admin/team]" },
     { keywords: ["appointments", "meetings", "calendar manage"], response: "Opening Appointment Management. [NAVIGATE: /admin/appointments]" },
     { keywords: ["blog manage", "posts", "articles edit"], response: "Taking you to the Blog Editor. [NAVIGATE: /admin/blog]" },
     { keywords: ["clients", "manage clients", "customer list"], response: "Taking you to Client Management. [NAVIGATE: /clients]" },
@@ -185,11 +297,11 @@ const FAQ_RESPONSES = {
   navigation_client: [
     { keywords: ["dashboard", "my profile", "my account"], response: "Taking you to your Client Dashboard. [NAVIGATE: /dashboard]" },
     { keywords: ["profile edit", "settings"], response: "Taking you to your Profile Settings. [NAVIGATE: /profile]" },
-    { keywords: ["book appointment", "schedule meeting", "consultation"], response: "I can help you schedule an appointment right here. Please choose your preferred date and time below: [SHOW_BOOKING_FORM]" },
+    { keywords: ["book appointment", "schedule meeting", "consultation", "talk to ca"], response: "I can help you schedule an appointment right here. Please choose your preferred date and time below: [SHOW_BOOKING_FORM]" },
     { keywords: ["appointments", "meetings", "my bookings"], response: "Navigating to your Appointments. [NAVIGATE: /my-appointments]" },
     { keywords: ["book", "all appointments"], response: "Taking you to the booking page. [NAVIGATE: /appointments]" },
     { keywords: ["services", "all services", "offerings"], response: "Taking you to our Services page. [NAVIGATE: /services]" },
-    { keywords: ["contact", "support", "help"], response: "Taking you to the Contact Support page. [NAVIGATE: /contact]" },
+    { keywords: ["contact", "support", "help", "customer care"], response: "Taking you to the Contact Support page. [NAVIGATE: /contact]" },
     { keywords: ["resources", "knowledge base"], response: "Opening the Knowledge Base. [NAVIGATE: /resources]" },
     { keywords: ["tax calculator", "calculate tax"], response: "Taking you to the Tax Calculator. [NAVIGATE: /tax-calculator]" },
     { keywords: ["calculators", "financial tools"], response: "Opening Financial Calculators. [NAVIGATE: /calculators]" },
@@ -197,17 +309,17 @@ const FAQ_RESPONSES = {
     { keywords: ["risk assessment", "audit risk"], response: "Taking you to Risk Assessment. [NAVIGATE: /risk-assessment]" },
     { keywords: ["cash flow", "forecast"], response: "Opening the Cash Flow Forecast tool. [NAVIGATE: /cash-flow-forecast]" },
     { keywords: ["ai tools", "ai hub"], response: "Taking you to the AI Hub. [NAVIGATE: /ai-tools]" },
-    { keywords: ["documents", "vault", "files"], response: "Opening your Document Vault. [NAVIGATE: /documents]" },
-    { keywords: ["invoices", "bills", "payments"], response: "Viewing your Invoice History. [NAVIGATE: /invoices]" },
+    { keywords: ["documents", "vault", "files", "upload file", "document vault"], response: "Opening your Secure Document Vault. You can upload PAN, Aadhaar, Form 16, and Bank Statements there. [NAVIGATE: /documents]" },
+    { keywords: ["invoices", "bills", "payments", "pay fee", "receipt"], response: "Viewing your Invoice History. You can securely pay your pending CA fees here. [NAVIGATE: /invoices]" },
     { keywords: ["gst tracker", "track gst"], response: "Opening the GST Tracker. [NAVIGATE: /gst-tracker]" },
     { keywords: ["compliance", "score"], response: "Viewing your Compliance Score. [NAVIGATE: /compliance]" },
     { keywords: ["feedback", "suggestions"], response: "Taking you to the Feedback page. [NAVIGATE: /feedback]" },
     { keywords: ["notifications", "alerts"], response: "Managing your Notification Preferences. [NAVIGATE: /notifications]" },
-    { keywords: ["blog", "news"], response: "Opening the Blog. [NAVIGATE: /blog]" },
-    { keywords: ["team", "our cas", "staff"], response: "Taking you to our Team page. [NAVIGATE: /team]" },
+    { keywords: ["blog", "news", "articles"], response: "Opening the Blog. [NAVIGATE: /blog]" },
+    { keywords: ["team", "our cas", "staff", "who are you", "partners"], response: "Taking you to our Team page to meet our expert Chartered Accountants. [NAVIGATE: /team]" },
     { keywords: ["careers", "jobs", "hiring"], response: "Opening the Careers page. [NAVIGATE: /careers]" },
     { keywords: ["faq", "frequently asked questions"], response: "Taking you to the FAQ page. [NAVIGATE: /faq]" },
-    { keywords: ["home", "main page"], response: "Taking you to the Home page. [NAVIGATE: /]" }
+    { keywords: ["home page", "main page", "go home"], response: "Taking you to the Home page. [NAVIGATE: /]" }
   ]
 };
 
@@ -255,7 +367,9 @@ function getUpcomingDeadlines(lang = "en") {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(",")[1]);
+    // Return the FULL data URL (e.g. "data:image/png;base64,xxxx")
+    // so that the downstream split(',')[1] in sendMessage always works correctly.
+    reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -414,7 +528,14 @@ export function AIChatbot() {
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.onresult = (e) => {
-      setInput(Array.from(e.results).map((r) => r[0].transcript).join(""));
+      const transcript = Array.from(e.results).map((r) => r[0].transcript).join("");
+      setInput(transcript);
+      // Auto-send when the final result is received (user stopped speaking)
+      if (e.results[e.results.length - 1]?.isFinal) {
+        setTimeout(() => {
+          if (transcript.trim()) sendMessage(transcript);
+        }, 300);
+      }
     };
     recognition.onend = () => setIsListening(false);
     recognition.onerror = () => setIsListening(false);
@@ -532,17 +653,18 @@ export function AIChatbot() {
   const regenerateLastResponse = () => {
     const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
     if (!lastUserMsg) return;
-    // Remove last assistant message
-    setMessages((prev) => {
-      const idx = prev.length - 1;
-      if (prev[idx]?.role === "assistant") return prev.slice(0, idx);
-      return prev;
-    });
-    setTimeout(() => sendMessage(lastUserMsg.content, true), 100);
+    
+    // Safely slice the array without relying on async state closures
+    let newMessages = [...messages];
+    if (newMessages[newMessages.length - 1]?.role === "assistant") {
+      newMessages = newMessages.slice(0, -1);
+    }
+    
+    sendMessage(lastUserMsg.content, true, newMessages);
   };
 
   // ── Send message ──────────────────────────────────────────────────
-  const sendMessage = async (text, isRegen = false) => {
+  const sendMessage = async (text, isRegen = false, explicitMessages = null) => {
     if ((!text.trim() && !pendingFiles.length) || isLoading) return;
 
     const userMsg = {
@@ -564,7 +686,8 @@ export function AIChatbot() {
       }
     }
 
-    const updatedMessages = isRegen ? [...messages] : [...messages, userMsg];
+    const baseMessages = explicitMessages || messages;
+    const updatedMessages = isRegen ? baseMessages : [...baseMessages, userMsg];
     setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
@@ -637,41 +760,72 @@ export function AIChatbot() {
       });
 
       const companyContext = `
-COMPANY INFO:
-Name: GMR & Associates
-Offices: Gurugram (H.No.43, SF, Sector-7) & Delhi (AB 38, Shalimar Bagh)
-Contact: +91 98712 09393 (Gurugram), +91 98710 84875 (Delhi), info@gmrindia.com
-Office Hours: Monday to Saturday, 10:00 AM to 6:30 PM
+COMPANY IDENTITY:
+- Name: GMR & Associates, Chartered Accountants
+- Founded: 2011 | 15+ years of professional experience
+- Partner: CA Gaurav Mahajan (FCA, DISA)
+- Offices: Gurugram (H.No.43, SF, Sector-7, Gurugram 122001) & Delhi (AB 38, Shalimar Bagh, Delhi 110088)
+- Contact: Gurugram: +91 98712 09393 | Delhi: +91 98710 84875
+- Email: info@gmrindia.com | Website: gmrindia.com
+- Office Hours: Monday to Saturday, 10:00 AM to 6:30 PM (Closed on Sundays & public holidays)
+- Specialization: Tax advisory, GST, Company Law, Audit & Assurance, Payroll, Project Finance
+- Clientele: 500+ clients including startups, SMEs, HNIs, and NRIs
+
+KEY TAX KNOWLEDGE (FY 2025-26 / AY 2026-27):
+- ITR filing deadline (non-audit individuals): 31st July 2026
+- ITR filing deadline (audit cases): 31st October 2026
+- Advance Tax instalments: 15 Jun (15%), 15 Sep (45%), 15 Dec (75%), 15 Mar (100%)
+- Section 80C limit: ₹1.5 Lakh (PPF, ELSS, LIC, NSC, home loan principal, etc.)
+- Section 80D (Health Insurance): ₹25,000 self + ₹25,000 parents (₹50,000 if senior citizen)
+- New Tax Regime (default): Standard deduction ₹75,000. No 80C/80D deductions. Rebate u/s 87A up to ₹12 Lakh.
+- Old Tax Regime: Standard deduction ₹50,000. All deductions available. Rebate u/s 87A up to ₹5 Lakh.
+- GST Registration threshold: ₹40 Lakh goods / ₹20 Lakh services (₹10 Lakh for NE states)
+- GST rates: 5%, 12%, 18%, 28%. Composition scheme: up to ₹1.5 Cr turnover.
+- TDS on salary: As per applicable slab rates. Form 16 issued by employer.
 `;
 
       const servicesContext = `
 SERVICES & PRICING:
 ` + servicesData.map(s => `- ${s.title} (ID: ${s.id}): ₹${s.price}. ${s.shortDesc}. Duration: ${s.duration}.`).join('\n');
 
-      const systemPrompt = isStaff 
-        ? `You are an expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage their platform, clients, and workflow. Use markdown for formatting. If the user wants to navigate to an admin feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog.\n${companyContext}\nCurrent language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`
-        : `You are an expert Chartered Accountant AI for GMR & Associates. You provide tax, audit, and financial advice. Use markdown for formatting. If the user asks for a service, output exactly [SHOW_BOOKING_FORM] in your response. If the user wants to navigate to a feature or tool on the website, output EXACTLY [NAVIGATE: /route-name] in your response. Available routes: /tax-calculator, /dashboard, /appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast. If the user explicitly asks to purchase or request a specific service offered by us, output exactly [REQUEST_SERVICE:service-id] where service-id is one of: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.\n${companyContext}\n${servicesContext}\nCurrent language constraint: ${lang === 'hi' ? 'Respond in Hindi.' : 'Respond in English.'}`;
+      const behaviorRules = `
+RESPONSE RULES:
+1. Be professional, warm, and concise. Use markdown formatting (bold, lists, headers) for clarity.
+2. When the user asks about a service, quote the exact price and duration from SERVICES above.
+3. For tax questions, cite relevant sections (e.g., "under Section 80C") and mention current limits.
+4. Never fabricate information. If unsure, recommend booking a consultation with our CA.
+5. Proactively suggest next steps (e.g., "Would you like me to book an appointment?" or "Shall I request this service for you?").
+6. Keep responses under 250 words unless the user asks for detailed analysis.
+7. For document analysis (images/PDFs), extract key financial data and provide actionable insights.
+8. If the user wants to upload documents (PAN, Aadhaar, Form 16, Bank statements), tell them they can do so in the Secure Document Vault. Use the [NAVIGATE: /documents] command to take them there.
+9. If the user wants to pay fees or asks about bills, tell them they can view and pay all invoices in the Invoice section. Use the [NAVIGATE: /invoices] command to take them there.
+`;
 
-      const URL = `/api/chat`;
+      const staffRules = `You are the expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage the platform, track clients, and optimize workflows.
+${behaviorRules}
+COMMANDS:
+- To show the appointment booking form: output exactly [SHOW_BOOKING_FORM]
+- To navigate user to a page: output exactly [NAVIGATE: /route-name].
+  Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog, /clients, /admin/calendar, /admin/careers, /admin/chatbot-documents, /admin/job-applications, /admin/roles, /admin/testimonials, /admin/ai-insights, /admin/workload, /admin/anomalies, /analytics.
+  Available client routes: /tax-calculator, /dashboard, /appointments, /services, /contact, /documents, /gst-tracker, /compliance, /blog, /team, /careers.
+- To request a service on behalf of a client: output exactly [REQUEST_SERVICE:service-id]. Valid IDs: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.
+${companyContext}
+${servicesContext}
+Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
 
-      const resp = await fetch(URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          contents: geminiContents,
-          systemInstruction: { role: "user", parts: [{ text: systemPrompt }] }
-        }),
-      });
+      const clientRules = `You are the expert AI assistant for GMR & Associates, Chartered Accountants. You provide tax advisory, audit guidance, financial planning help, and service information.
+${behaviorRules}
+COMMANDS:
+- To show the appointment booking form: output exactly [SHOW_BOOKING_FORM]
+- To navigate user to a page: output exactly [NAVIGATE: /route-name]. Available routes: /tax-calculator, /dashboard, /appointments, /my-appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast, /documents, /gst-tracker, /compliance, /blog, /team, /careers, /calculators.
+- To request a service: output exactly [REQUEST_SERVICE:service-id]. Valid IDs: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.
+${companyContext}
+${servicesContext}
+Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
 
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.error?.message || "Failed to get response from Gemini");
-      }
-      
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      const systemPrompt = isStaff ? staffRules : clientRules;
 
+      // ── Helper to update the last assistant message in state ─────────
       const upsertAssistant = (content) => {
         setMessages((prev) => {
           const last = prev[prev.length - 1];
@@ -682,7 +836,8 @@ SERVICES & PRICING:
         });
       };
 
-      // FAQ Interception: Save Gemini tokens for basic questions and navigation
+      // ── FAQ Interception: MUST run BEFORE the API call ──────────────
+      // This saves Gemini tokens for basic questions and navigation
       if (!pendingFiles.length) {
         let faqMatch = getFaqResponse(text, lang, isStaff);
         if (faqMatch) {
@@ -691,10 +846,10 @@ SERVICES & PRICING:
           let navRoute = null;
           let showBooking = false;
           
-          const navMatch = faqMatch.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-\/]*)\]/);
-          if (navMatch) {
-            navRoute = navMatch[1];
-            faqMatch = faqMatch.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+          const navMatchFaq = faqMatch.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-/]*)\]/);
+          if (navMatchFaq) {
+            navRoute = navMatchFaq[1];
+            faqMatch = faqMatch.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-/]*\]/g, "");
           }
           
           if (faqMatch.includes("[SHOW_BOOKING_FORM]")) {
@@ -728,9 +883,31 @@ SERVICES & PRICING:
             setSuggestions(getSuggestions(faqMatch, lang));
           }
           setIsLoading(false);
-          return; // Exit early to skip the API call
+          clearPendingFiles();
+          return; // Exit early — no API call needed!
         }
       }
+
+      // ── Gemini API Call (only if FAQ didn't match) ──────────────────
+      const URL = `/api/chat`;
+
+      const resp = await fetch(URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          contents: geminiContents,
+          systemInstruction: { role: "user", parts: [{ text: systemPrompt }] }
+        }),
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.error?.message || "Failed to get response from Gemini");
+      }
+      
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -763,13 +940,23 @@ SERVICES & PRICING:
       }
 
       // Check for navigation commands
-      const navMatch = assistantContent.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-\/]*)\]/);
+      const navMatch = assistantContent.match(/\[NAVIGATE:\s*(\/[a-zA-Z0-9-/]*)\]/);
       if (navMatch) {
         const route = navMatch[1];
-        assistantContent = assistantContent.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+        assistantContent = assistantContent.replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-/]*\]/g, "");
         upsertAssistant(assistantContent);
         toast.success(`Navigating to ${route.replace('/', '')}...`);
-        setTimeout(() => navigate(route), 1500); // 1.5s delay so user can read message
+        setTimeout(() => navigate(route), 1500);
+      }
+
+      // Handle [REQUEST_SERVICE:service-id] commands from Gemini
+      const reqServiceMatch = assistantContent.match(/\[REQUEST_SERVICE:([\w-]+)\]/);
+      if (reqServiceMatch) {
+        const svcId = reqServiceMatch[1];
+        assistantContent = assistantContent.replace(/\[REQUEST_SERVICE:[\w-]+\]/g, "");
+        upsertAssistant(assistantContent);
+        // Auto-trigger the service request
+        handleRequestService(svcId);
       }
 
       // Generate smart suggestions
@@ -807,6 +994,9 @@ SERVICES & PRICING:
     try {
       const { error } = await supabase.from("appointments").insert({
         user_id: user.id,
+        full_name: profile?.name || user.email?.split('@')[0] || 'Client',
+        email: profile?.email || user.email || '',
+        phone: profile?.phone || null,
         appointment_date: new Date(`${formData.date}T${(() => { const [t, p] = formData.time.split(' '); let [h, m] = t.split(':').map(Number); if (p === 'PM' && h !== 12) h += 12; if (p === 'AM' && h === 12) h = 0; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; })()}`).toISOString(),
         time_slot: formData.time.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1').trim(),
         meeting_type: formData.type, duration_minutes: 30, service_type: formData.topic || 'Tax Consultation',
@@ -823,7 +1013,7 @@ SERVICES & PRICING:
       notifyStaff(
         "Chatbot Appointment Booked",
         `A client booked a ${formData.type} appointment via the Chatbot for ${formData.date} at ${formData.time}.`,
-        "appointment"
+        "service_update"
       );
     } catch {
       setMessages((prev) => [...prev, {
@@ -835,7 +1025,7 @@ SERVICES & PRICING:
 
   // ── Render markdown ───────────────────────────────────────────────
   const renderContent = (content) => {
-    let cleanContent = content.replace(/\[SHOW_BOOKING_FORM\]/g, "").replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-\/]*\]/g, "");
+    let cleanContent = content.replace(/\[SHOW_BOOKING_FORM\]/g, "").replace(/\[NAVIGATE:\s*\/[a-zA-Z0-9-/]*\]/g, "");
     cleanContent = cleanContent.replace(/\[(SHOW_BOOKING_FORM|NAVIGATE)[^\]]*$/, "");
 
     const combinedRegex = /\[(SERVICE|REQUEST_SERVICE):([\w-]+)\]/g;
@@ -1178,7 +1368,7 @@ SERVICES & PRICING:
                   <p className="text-[13px] text-gray-500 dark:text-gray-400">Ask me about taxes, audits, or our services.</p>
                 </div>
                 <div className="grid gap-2 w-full mt-4">
-                  {(isStaff ? STAFF_QUICK_OPTIONS_EN : QUICK_OPTIONS_EN).map((opt) => (
+                  {quickOptions.map((opt) => (
                     <button key={opt} onClick={() => sendMessage(opt)}
                       className="text-left text-[13px] font-medium px-4 py-3.5 rounded-[16px] border border-gray-200/60 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 hover:-translate-y-[1px] transition-all duration-300 text-gray-700 dark:text-gray-300 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
                       {opt}
@@ -1189,8 +1379,8 @@ SERVICES & PRICING:
             ) : (
               <div className="space-y-6 pb-2">
                 {messages.map((msg, i) => (
-                  <div key={i} className={cn("flex flex-col", msg.role === "user" ? "items-end" : "items-start")}>
-                    <div className={cn("max-w-[85%] rounded-[24px] px-4 py-3 text-[14px] leading-relaxed relative group break-words shadow-sm",
+                  <div key={i} className={cn("flex flex-col group", msg.role === "user" ? "items-end" : "items-start")}>
+                    <div className={cn("max-w-[85%] rounded-[24px] px-4 py-3 text-[14px] leading-relaxed relative break-words shadow-sm",
                       msg.role === "user"
                         ? "bg-black text-white dark:bg-white dark:text-black rounded-br-[8px]"
                         : "bg-[#F5F5F7] dark:bg-[#2C2C2E] text-gray-900 dark:text-white rounded-bl-[8px]"

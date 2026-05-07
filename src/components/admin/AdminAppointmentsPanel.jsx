@@ -97,7 +97,7 @@ export default function AdminAppointmentsPanel() {
           await supabase.from("notifications").insert({
             user_id: appt.user_id,
             title: `Appointment ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
-            message: `Your appointment on ${formatDate(appt.appointment_date)} at ${getTimeLabel(appt.time_slot)} has been ${newStatus}.`,
+            body: `Your appointment on ${formatDate(appt.appointment_date)} at ${getTimeLabel(appt.time_slot)} has been ${newStatus}.`,
             type: "service_update",
           });
         } catch (e) { console.warn("Notification insert failed:", e); }

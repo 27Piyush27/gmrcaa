@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useSpring, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 
@@ -53,21 +53,33 @@ import { AIInsightsWidget } from "@/components/AIInsightsWidget";
 
 
 
-// ── Animated counter ──────────────────────────────────────────────────────────
+// ── Animated counter — rAF-based, no framer-motion subscription overhead ──────
 function AnimatedNumber({ value }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true });
-  const spring = useSpring(0, { stiffness: 100, damping: 20 });
+  const rafRef = useRef(0);
+  const startRef = useRef(null);
 
   useEffect(() => {
-    if (inView) spring.set(value);
-  }, [inView, value, spring]);
+    if (!inView || !ref.current) return;
+    const totalMs = 1200;
+    startRef.current = null;
 
-  useEffect(() => {
-    return spring.on("change", (v) => {
-      if (ref.current) ref.current.textContent = Math.round(v).toString();
-    });
-  }, [spring]);
+    const tick = (now) => {
+      if (!startRef.current) startRef.current = now;
+      const elapsed = now - startRef.current;
+      const progress = Math.min(elapsed / totalMs, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      if (ref.current) ref.current.textContent = Math.round(eased * value).toString();
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [inView, value]);
 
   return <span ref={ref}>0</span>;
 }
@@ -87,7 +99,7 @@ function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] ?? { color: "text-muted-foreground", bg: "bg-secondary", border: "border-border", label: status, dot: "bg-muted-foreground" };
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${cfg.bg} ${cfg.border} ${cfg.color}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${status === "in_progress" || status === "in_progress" ? "animate-pulse" : ""}`} />
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} ${status === "in_progress" ? "animate-pulse" : ""}`} />
       {cfg.label}
     </span>);
 
