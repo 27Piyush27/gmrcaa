@@ -50,6 +50,7 @@ const ADMIN_SECTIONS = [
     items: [
       { label: "Manage Clients", path: "/clients", icon: UserCheck, desc: "View & manage client accounts" },
       { label: "User Roles", path: "/admin/roles", icon: Shield, desc: "Promote users to CA or Admin" },
+      { label: "Invitations", path: "/admin/invitations", icon: UserCheck, desc: "Securely invite new staff" },
       { label: "Appointments", path: "/admin/appointments", icon: CalDays, desc: "Schedule & manage bookings" },
     ],
   },
