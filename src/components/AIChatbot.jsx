@@ -3,7 +3,8 @@ import {
   MessageSquare, X, Send, Trash2, ArrowRight, Mic, MicOff,
   Image as ImageIcon, Globe, Calendar, Calculator, Bell, Sparkles,
   Loader2, Copy, Check, RefreshCw, ThumbsUp, ThumbsDown,
-  Moon, Sun, History, ChevronLeft, Search, FileText, Paperclip, CheckCircle
+  Moon, Sun, History, ChevronLeft, Search, FileText, Paperclip, CheckCircle,
+  Zap, ShieldCheck, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import { servicesData } from "@/lib/servicesData";
 import { resolveServiceIdForDb } from "@/lib/serviceIdResolver";
 import { notifyStaff } from "@/lib/notifications";
+import { getToolPrompt, parseToolCalls, stripToolCalls, executeTool } from "@/lib/agentTools";
 
 // ── constants ──────────────────────────────────────────────────────────
 const QUICK_OPTIONS_EN = [
@@ -430,6 +432,10 @@ export function AIChatbot() {
   const [sharingLoading, setSharingLoading] = useState(false);
   const [selectedReqId, setSelectedReqId] = useState("");
 
+  // Agentic AI state
+  const [isExecutingTool, setIsExecutingTool] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState(null);
+
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -801,6 +807,8 @@ RESPONSE RULES:
 9. If the user wants to pay fees or asks about bills, tell them they can view and pay all invoices in the Invoice section. Use the [NAVIGATE: /invoices] command to take them there.
 `;
 
+      const agentToolPrompt = getToolPrompt(role || 'client');
+
       const staffRules = `You are the expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage the platform, track clients, and optimize workflows.
 ${behaviorRules}
 COMMANDS:
@@ -808,7 +816,7 @@ COMMANDS:
 - To navigate user to a page: output exactly [NAVIGATE: /route-name].
   Available admin routes: /admin, /admin/tasks, /admin/services, /admin/team, /admin/appointments, /admin/blog, /clients, /admin/calendar, /admin/careers, /admin/chatbot-documents, /admin/job-applications, /admin/roles, /admin/testimonials, /admin/ai-insights, /admin/workload, /admin/anomalies, /analytics.
   Available client routes: /tax-calculator, /dashboard, /appointments, /services, /contact, /documents, /gst-tracker, /compliance, /blog, /team, /careers.
-- To request a service on behalf of a client: output exactly [REQUEST_SERVICE:service-id]. Valid IDs: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.
+${agentToolPrompt}
 ${companyContext}
 ${servicesContext}
 Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
@@ -818,7 +826,7 @@ ${behaviorRules}
 COMMANDS:
 - To show the appointment booking form: output exactly [SHOW_BOOKING_FORM]
 - To navigate user to a page: output exactly [NAVIGATE: /route-name]. Available routes: /tax-calculator, /dashboard, /appointments, /my-appointments, /resources, /services, /contact, /ai-tax-optimizer, /risk-assessment, /cash-flow-forecast, /documents, /gst-tracker, /compliance, /blog, /team, /careers, /calculators.
-- To request a service: output exactly [REQUEST_SERVICE:service-id]. Valid IDs: income-tax-filing, gst-registration, gst-return-filing, company-incorporation, audit-assurance, compliance-services, tds-compliance, payroll-management, project-finance.
+${agentToolPrompt}
 ${companyContext}
 ${servicesContext}
 Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
@@ -949,14 +957,107 @@ Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professio
         setTimeout(() => navigate(route), 1500);
       }
 
-      // Handle [REQUEST_SERVICE:service-id] commands from Gemini
+      // Handle [REQUEST_SERVICE:service-id] commands from Gemini (legacy)
       const reqServiceMatch = assistantContent.match(/\[REQUEST_SERVICE:([\w-]+)\]/);
       if (reqServiceMatch) {
         const svcId = reqServiceMatch[1];
         assistantContent = assistantContent.replace(/\[REQUEST_SERVICE:[\w-]+\]/g, "");
         upsertAssistant(assistantContent);
-        // Auto-trigger the service request
         handleRequestService(svcId);
+      }
+
+      // ── AGENTIC AI: Parse and execute tool calls ────────────────────
+      const toolCalls = parseToolCalls(assistantContent);
+      if (toolCalls.length > 0) {
+        // Strip tool call syntax from displayed message
+        const cleanContent = stripToolCalls(assistantContent);
+        upsertAssistant(cleanContent);
+        assistantContent = cleanContent;
+
+        setIsExecutingTool(true);
+
+        for (const call of toolCalls) {
+          // Check if tool needs confirmation
+          if (call.tool?.requiresConfirmation) {
+            setPendingConfirmation({
+              toolName: call.toolName,
+              params: call.params,
+              description: call.tool.description,
+              convId,
+            });
+            // Don't execute yet — wait for user to confirm via the UI
+            setIsExecutingTool(false);
+            setIsLoading(false);
+            clearPendingFiles();
+            return; // Exit early, confirmation handler will resume
+          }
+
+          // Execute the tool immediately
+          const toolResult = await executeTool(call.toolName, call.params, {
+            userId: user?.id,
+            role: role || "client",
+          });
+
+          // Feed the tool result back as a system message for the AI to summarize
+          const toolResultText = `\n\n⚡ **Tool Result** (${call.toolName}):\n\`\`\`json\n${JSON.stringify(toolResult, null, 2)}\n\`\`\``;
+          assistantContent += toolResultText;
+          upsertAssistant(assistantContent);
+
+          // Now make a second API call to let AI summarize the tool result naturally
+          const summaryContents = [
+            { role: "user", parts: [{ text: text.trim() || "Analyze this" }] },
+            { role: "model", parts: [{ text: stripToolCalls(assistantContent) }] },
+            { role: "user", parts: [{ text: `The tool "${call.toolName}" returned this result. Summarize it in a human-friendly, professional way using markdown formatting. Do NOT output any more tool calls. Just present the data beautifully.\n\nResult: ${JSON.stringify(toolResult)}` }] },
+          ];
+
+          try {
+            const summaryResp = await fetch(`/api/chat`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: summaryContents,
+                systemInstruction: { role: "user", parts: [{ text: systemPrompt }] },
+              }),
+            });
+
+            if (summaryResp.ok) {
+              const summaryReader = summaryResp.body.getReader();
+              const summaryDecoder = new TextDecoder();
+              let summaryBuffer = "";
+              let summaryContent = "";
+
+              while (true) {
+                const { done, value } = await summaryReader.read();
+                if (done) break;
+                summaryBuffer += summaryDecoder.decode(value, { stream: true });
+                let newlineIdx;
+                while ((newlineIdx = summaryBuffer.indexOf("\n")) !== -1) {
+                  let line = summaryBuffer.slice(0, newlineIdx);
+                  summaryBuffer = summaryBuffer.slice(newlineIdx + 1);
+                  if (line.endsWith("\r")) line = line.slice(0, -1);
+                  if (!line.startsWith("data: ")) continue;
+                  const jsonStr = line.slice(6).trim();
+                  if (jsonStr === "[DONE]") break;
+                  try {
+                    const parsed = JSON.parse(jsonStr);
+                    const delta = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (delta) {
+                      summaryContent += delta;
+                      upsertAssistant(summaryContent);
+                    }
+                  } catch { /* skip malformed */ }
+                }
+              }
+
+              if (summaryContent) {
+                assistantContent = summaryContent;
+              }
+            }
+          } catch (summaryErr) {
+            console.warn("Tool summary API call failed, showing raw result:", summaryErr);
+          }
+        }
+        setIsExecutingTool(false);
       }
 
       // Generate smart suggestions
@@ -978,7 +1079,47 @@ Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professio
       setMessages((prev) => [...prev, { role: "assistant", content: fallback }]);
     } finally {
       setIsLoading(false);
+      setIsExecutingTool(false);
       clearPendingFiles();
+    }
+  };
+
+  // ── Agentic AI: Handle confirmation ──────────────────────────────
+  const handleConfirmAction = async (confirmed) => {
+    const conf = pendingConfirmation;
+    setPendingConfirmation(null);
+    if (!confirmed || !conf) return;
+
+    setIsExecutingTool(true);
+    setIsLoading(true);
+
+    try {
+      const toolResult = await executeTool(conf.toolName, conf.params, {
+        userId: user?.id,
+        role: role || "client",
+      });
+
+      const resultMsg = toolResult.success
+        ? toolResult.message || `✅ Action completed successfully.\n\`\`\`json\n${JSON.stringify(toolResult.data, null, 2)}\n\`\`\``
+        : `❌ Action failed: ${toolResult.error}`;
+
+      setMessages(prev => [...prev, { role: "assistant", content: resultMsg }]);
+
+      if (user && conf.convId) {
+        await supabase.from("chat_messages").insert({
+          conversation_id: conf.convId, role: "assistant", content: resultMsg,
+        });
+      }
+
+      if (toolResult.success) {
+        toast.success(isHindi ? "कार्रवाई सफल!" : "Action completed!");
+      }
+    } catch (err) {
+      console.error("Confirmation execution error:", err);
+      setMessages(prev => [...prev, { role: "assistant", content: `❌ Error: ${err.message}` }]);
+    } finally {
+      setIsLoading(false);
+      setIsExecutingTool(false);
     }
   };
 
@@ -1432,6 +1573,61 @@ Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professio
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "0ms" }} />
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "150ms" }} />
                         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Agentic AI: Tool Execution Indicator */}
+                {isExecutingTool && (
+                  <div className="flex items-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 border border-amber-200 dark:border-amber-500/20 rounded-[20px] rounded-bl-[8px] px-5 py-4 shadow-sm">
+                      <div className="flex items-center gap-2.5">
+                        <Zap className="h-4 w-4 text-amber-500 animate-pulse" />
+                        <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                          {isHindi ? "कार्रवाई निष्पादित हो रही है..." : "Executing action..."}
+                        </span>
+                        <Loader2 className="h-3.5 w-3.5 text-amber-500 animate-spin" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Agentic AI: Confirmation Card */}
+                {pendingConfirmation && (
+                  <div className="flex items-start animate-in fade-in slide-in-from-bottom-3 duration-400">
+                    <div className="w-full max-w-[340px] bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-500/10 dark:to-indigo-500/10 border border-blue-200 dark:border-blue-500/20 rounded-[20px] rounded-bl-[8px] p-5 shadow-md">
+                      <div className="flex items-center gap-2 mb-3">
+                        <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                          {isHindi ? "पुष्टि आवश्यक" : "Confirmation Required"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
+                        {isHindi ? "कार्रवाई:" : "Action:"} <span className="text-gray-800 dark:text-gray-200">{pendingConfirmation.toolName.replace(/_/g, " ")}</span>
+                      </p>
+                      {pendingConfirmation.params && Object.keys(pendingConfirmation.params).length > 0 && (
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-black/20 rounded-lg p-2.5 mb-3 font-mono">
+                          {Object.entries(pendingConfirmation.params).map(([k, v]) => (
+                            <div key={k}><span className="text-gray-400">{k}:</span> {String(v)}</div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleConfirmAction(true)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all shadow-sm hover:shadow-md"
+                        >
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          {isHindi ? "पुष्टि करें" : "Confirm"}
+                        </button>
+                        <button
+                          onClick={() => handleConfirmAction(false)}
+                          className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/15 text-gray-600 dark:text-gray-300 text-xs font-semibold transition-all"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          {isHindi ? "रद्द करें" : "Cancel"}
+                        </button>
                       </div>
                     </div>
                   </div>
