@@ -1163,8 +1163,13 @@ Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professio
         email: profile?.email || user.email || '',
         phone: profile?.phone || null,
         appointment_date: new Date(`${formData.date}T${(() => { const [t, p] = formData.time.split(' '); let [h, m] = t.split(':').map(Number); if (p === 'PM' && h !== 12) h += 12; if (p === 'AM' && h === 12) h = 0; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; })()}`).toISOString(),
+        date: formData.date,
         time_slot: formData.time.replace(/\s+/g, '').replace(/(AM|PM)/, ' $1').trim(),
-        meeting_type: formData.type, duration_minutes: 30, service_type: formData.topic || 'Tax Consultation',
+        meeting_type: formData.type, 
+        type: formData.type === "in-person" ? "in_person" : (formData.type || "video"),
+        duration_minutes: 30, 
+        service_type: formData.topic || 'Tax Consultation',
+        topic: formData.topic || 'Tax Consultation',
         notes: formData.notes || null, status: "pending",
       });
       if (error) throw error;

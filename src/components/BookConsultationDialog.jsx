@@ -123,12 +123,15 @@ export function BookConsultationDialog({ open, onOpenChange }) {
       const { error } = await supabase.from("appointments").insert({
         user_id: user?.id || null,
         appointment_date: appointmentDate,
+        date: form.date, // for old schema constraint
         time_slot: form.time,
         full_name: form.fullName,
         email: form.email,
         phone: form.phone,
         service_type: form.serviceType,
+        topic: form.serviceType || "Consultation", // for old schema constraint
         meeting_type: form.meetingType,
+        type: form.meetingType === "in-person" ? "in_person" : form.meetingType, // map to old enum
         duration_minutes: 30,
         status: "pending",
         notes: form.message || null,
