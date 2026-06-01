@@ -62,9 +62,8 @@ function PasswordStrengthMeter({ password }) {
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const inviteToken = searchParams.get("invite_token");
   const { user, role, loading: authLoading, signIn, signUp } = useAuth();
-  const [activeTab, setActiveTab] = useState(searchParams.get("signup") || inviteToken ? "signup" : "login");
+  const [activeTab, setActiveTab] = useState(searchParams.get("signup") ? "signup" : "login");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -163,8 +162,7 @@ export default function Auth() {
     const { error } = await signUp(
       signupData.email,
       signupData.password,
-      signupData.name,
-      inviteToken
+      signupData.name
     );
 
     if (error) {
@@ -332,14 +330,6 @@ export default function Auth() {
 
               <TabsContent value="signup" className="space-y-6">
                   <form onSubmit={handleSignup} className="space-y-4">
-                    
-                    {inviteToken && (
-                      <motion.div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg text-sm text-primary font-medium flex items-center gap-2" custom={0} variants={fieldVariants} initial="hidden" animate="visible">
-                        <Shield className="h-4 w-4" />
-                        Secure Staff Invitation Detected
-                      </motion.div>
-                    )}
-
                     <motion.div className="space-y-2" custom={0.5} variants={fieldVariants} initial="hidden" animate="visible">
                       <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
                       <Input

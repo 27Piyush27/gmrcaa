@@ -114,20 +114,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const signUp = async (email, password, name, inviteToken = null) => {
+  const signUp = async (email, password, name) => {
     const redirectUrl = `${window.location.origin}/`;
-
-    const metadata = { name };
-    if (inviteToken) {
-      metadata.invite_token = inviteToken;
-    }
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: metadata
+        data: { name }
       }
     });
 
