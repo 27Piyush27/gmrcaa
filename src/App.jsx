@@ -94,6 +94,7 @@ const TeamManagement = lazy(() => import("./pages/TeamManagement"));
 const ServicesManagement = lazy(() => import("./pages/ServicesManagement"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ChatbotDocuments = lazy(() => import("./pages/ChatbotDocuments"));
+const AITraining = lazy(() => import("./pages/AITraining"));
 const JobApplications = lazy(() => import("./pages/JobApplications"));
 const UserRolesManagement = lazy(() => import("./pages/UserRolesManagement"));
 
@@ -170,6 +171,7 @@ const AnimatedRoutes = () => {
         <Route path="/admin/team" element={<TeamManagement />} />
         <Route path="/admin/services" element={<ServicesManagement />} />
         <Route path="/admin/chatbot-documents" element={<ChatbotDocuments />} />
+        <Route path="/admin/ai-training" element={<AITraining />} />
         <Route path="/admin/job-applications" element={<JobApplications />} />
         <Route path="/admin/roles" element={<UserRolesManagement />} />
 

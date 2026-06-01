@@ -435,6 +435,9 @@ export function AIChatbot() {
   // Agentic AI state
   const [isExecutingTool, setIsExecutingTool] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState(null);
+  
+  // Custom Training Knowledge
+  const [aiTrainingData, setAiTrainingData] = useState([]);
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -467,6 +470,20 @@ export function AIChatbot() {
         .then(({ data }) => setServiceRequests(data || []));
     }
   }, [user, isOpen]);
+
+  // Fetch AI Training Knowledge when chatbot opens
+  useEffect(() => {
+    if (isOpen) {
+      supabase.from("ai_knowledge_base")
+        .select("title, content, type")
+        .eq("is_active", true)
+        .then(({ data, error }) => {
+          if (!error && data) {
+            setAiTrainingData(data);
+          }
+        });
+    }
+  }, [isOpen]);
 
   const handleRequestService = async (serviceId) => {
     if (!user) {
@@ -807,6 +824,11 @@ RESPONSE RULES:
 9. If the user wants to pay fees or asks about bills, tell them they can view and pay all invoices in the Invoice section. Use the [NAVIGATE: /invoices] command to take them there.
 `;
 
+      const customTrainingContext = aiTrainingData.length > 0 ? `
+FIRM CUSTOM KNOWLEDGE & RULES:
+${aiTrainingData.map(k => `[${k.type.toUpperCase()}] ${k.title}: ${k.content}`).join('\n')}
+` : "";
+
       const agentToolPrompt = getToolPrompt(role || 'client');
 
       const staffRules = `You are the expert CA administrative assistant for GMR & Associates. You help CAs and Admins manage the platform, track clients, and optimize workflows.
@@ -819,6 +841,7 @@ COMMANDS:
 ${agentToolPrompt}
 ${companyContext}
 ${servicesContext}
+${customTrainingContext}
 Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
 
       const clientRules = `You are the expert AI assistant for GMR & Associates, Chartered Accountants. You provide tax advisory, audit guidance, financial planning help, and service information.
@@ -829,6 +852,7 @@ COMMANDS:
 ${agentToolPrompt}
 ${companyContext}
 ${servicesContext}
+${customTrainingContext}
 Language: ${lang === 'hi' ? 'Respond in Hindi (Devanagari script). Use professional Hindi.' : 'Respond in English.'}`;
 
       const systemPrompt = isStaff ? staffRules : clientRules;

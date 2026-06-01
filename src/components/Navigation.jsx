@@ -46,6 +46,7 @@ const ADMIN_ITEMS = [
   { name: "Task Board", path: "/admin/tasks", icon: Columns3 },
   { name: "Manage Services", path: "/admin/services", icon: Package },
   { name: "Chatbot Documents", path: "/admin/chatbot-documents", icon: FileSearch },
+  { name: "AI Training", path: "/admin/ai-training", icon: Brain },
   { name: "Job Applications", path: "/admin/job-applications", icon: Briefcase },
   { name: "Team Manager", path: "/admin/team", icon: Users },
   { name: "Client Insights", path: "/admin/ai-insights", icon: Users },
