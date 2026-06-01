@@ -54,7 +54,7 @@ export default function MyAppointments() {
         .from("appointments")
         .select("*")
         .eq("user_id", user.id)
-        .order("appointment_date", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       setAppointments(data || []);
@@ -163,8 +163,8 @@ export default function MyAppointments() {
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {appt.appointment_date
-                                  ? new Date(appt.appointment_date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                                {(appt.appointment_date || appt.date)
+                                  ? new Date(appt.appointment_date || appt.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
                                   : ""}
                               </span>
                               <span className="flex items-center gap-1">

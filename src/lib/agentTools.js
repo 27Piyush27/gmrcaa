@@ -156,18 +156,20 @@ export const AGENT_TOOLS = [
         .from("appointments")
         .select("id, appointment_date, appointment_type, status, notes")
         .eq("user_id", userId)
-        .gte("appointment_date", new Date().toISOString())
-        .order("appointment_date", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) return { success: false, error: error.message };
       if (!data?.length) return { success: true, data: [], message: "No upcoming appointments found." };
 
+      const upcoming = data.filter(a => new Date(a.appointment_date || a.date) >= new Date()).sort((a, b) => new Date(a.appointment_date || a.date) - new Date(b.appointment_date || b.date));
+      if (!upcoming.length) return { success: true, data: [], message: "No upcoming appointments found." };
+
       return {
         success: true,
-        data: data.map(a => ({
-          date: new Date(a.appointment_date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
-          time: new Date(a.appointment_date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+        data: upcoming.map(a => ({
+          date: new Date(a.appointment_date || a.date).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+          time: new Date(a.appointment_date || a.date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
           type: a.appointment_type || "Consultation",
           status: a.status || "confirmed",
         })),

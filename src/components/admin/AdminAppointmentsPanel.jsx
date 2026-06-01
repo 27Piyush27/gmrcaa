@@ -68,7 +68,7 @@ export default function AdminAppointmentsPanel() {
       const { data, error } = await supabase
         .from("appointments")
         .select("*")
-        .order("appointment_date", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
       setAppointments(data || []);
@@ -97,7 +97,7 @@ export default function AdminAppointmentsPanel() {
           await supabase.from("notifications").insert({
             user_id: appt.user_id,
             title: `Appointment ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`,
-            body: `Your appointment on ${formatDate(appt.appointment_date)} at ${getTimeLabel(appt.time_slot)} has been ${newStatus}.`,
+            body: `Your appointment on ${formatDate(appt.appointment_date || appt.date)} at ${getTimeLabel(appt.time_slot)} has been ${newStatus}.`,
             type: "service_update",
           });
         } catch (e) { console.warn("Notification insert failed:", e); }
@@ -124,7 +124,7 @@ export default function AdminAppointmentsPanel() {
     const headers = ["Name", "Email", "Phone", "Service", "Date", "Time", "Type", "Status", "Notes", "Booked"];
     const rows = filtered.map(a => [
       a.full_name || "", a.email || "", a.phone || "", a.service_type || "",
-      a.appointment_date ? new Date(a.appointment_date).toLocaleDateString() : "",
+      (a.appointment_date || a.date) ? new Date(a.appointment_date || a.date).toLocaleDateString() : "",
       getTimeLabel(a.time_slot), a.meeting_type || "", a.status || "",
       (a.notes || "").replace(/,/g, ";"),
       a.created_at ? new Date(a.created_at).toLocaleDateString() : "",
@@ -141,8 +141,8 @@ export default function AdminAppointmentsPanel() {
   // ── Filter ──
   const filtered = useMemo(() => {
     let list = appointments;
-    if (tab === "today") list = list.filter(a => a.appointment_date && new Date(a.appointment_date).toISOString().split("T")[0] === todayStr);
-    else if (tab === "upcoming") list = list.filter(a => a.appointment_date && new Date(a.appointment_date) >= new Date(todayStr));
+    if (tab === "today") list = list.filter(a => (a.appointment_date || a.date) && new Date(a.appointment_date || a.date).toISOString().split("T")[0] === todayStr);
+    else if (tab === "upcoming") list = list.filter(a => (a.appointment_date || a.date) && new Date(a.appointment_date || a.date) >= new Date(todayStr));
     else if (tab !== "all") list = list.filter(a => a.status === tab);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -158,8 +158,8 @@ export default function AdminAppointmentsPanel() {
 
   const counts = useMemo(() => {
     const c = { all: appointments.length };
-    c.today = appointments.filter(a => a.appointment_date && new Date(a.appointment_date).toISOString().split("T")[0] === todayStr).length;
-    c.upcoming = appointments.filter(a => a.appointment_date && new Date(a.appointment_date) >= new Date(todayStr)).length;
+    c.today = appointments.filter(a => (a.appointment_date || a.date) && new Date(a.appointment_date || a.date).toISOString().split("T")[0] === todayStr).length;
+    c.upcoming = appointments.filter(a => (a.appointment_date || a.date) && new Date(a.appointment_date || a.date) >= new Date(todayStr)).length;
     ["pending", "confirmed", "completed", "cancelled"].forEach(s => {
       c[s] = appointments.filter(a => a.status === s).length;
     });
@@ -180,8 +180,8 @@ export default function AdminAppointmentsPanel() {
   const appointmentsByDate = useMemo(() => {
     const map = {};
     appointments.forEach(a => {
-      if (!a.appointment_date) return;
-      const key = new Date(a.appointment_date).toISOString().split("T")[0];
+      if (!(a.appointment_date || a.date)) return;
+      const key = new Date(a.appointment_date || a.date).toISOString().split("T")[0];
       if (!map[key]) map[key] = [];
       map[key].push(a);
     });
@@ -326,7 +326,7 @@ export default function AdminAppointmentsPanel() {
 
                         {/* Date/Time */}
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(appt.appointment_date)}</span>
+                          <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(appt.appointment_date || appt.date)}</span>
                           <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{getTimeLabel(appt.time_slot)}</span>
                           {appt.duration_minutes && <span>({appt.duration_minutes} min)</span>}
                         </div>

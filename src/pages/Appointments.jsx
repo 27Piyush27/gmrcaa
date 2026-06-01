@@ -72,7 +72,7 @@ export default function Appointments() {
       .from("appointments")
       .select("*")
       .eq("user_id", user.id)
-      .order("appointment_date", { ascending: true });
+      .order("created_at", { ascending: true });
     if (error) console.error("Error fetching appointments:", error);
     else setAppointments(data || []);
     setLoading(false);
@@ -92,10 +92,13 @@ export default function Appointments() {
     const { error } = await supabase.from("appointments").insert({
       user_id: user.id,
       appointment_date: appointmentDate,
+      date: form.date, // backward compatibility
       time_slot: form.time,
       duration_minutes: parseInt(form.duration),
       meeting_type: form.meeting_type,
+      type: form.meeting_type === "in-person" ? "in_person" : form.meeting_type, // backward compatibility
       service_type: form.service_type,
+      topic: form.service_type || "Consultation", // backward compatibility
       full_name: profile?.name || "",
       email: profile?.email || user?.email || "",
       phone: profile?.phone || "",
@@ -142,7 +145,7 @@ export default function Appointments() {
     if (!rescheduleId || !rescheduleDate || !rescheduleTime) { toast.error("Select new date and time"); return; }
     const newDate = new Date(`${rescheduleDate}T${rescheduleTime}`).toISOString();
     const { error } = await supabase.from("appointments")
-      .update({ appointment_date: newDate, time_slot: rescheduleTime, status: "rescheduled" })
+      .update({ appointment_date: newDate, date: rescheduleDate, time_slot: rescheduleTime, status: "rescheduled" })
       .eq("id", rescheduleId);
     if (error) toast.error("Failed to reschedule");
     else { toast.success("Appointment rescheduled!"); setRescheduleId(null); fetchAppointments(); }
@@ -153,8 +156,8 @@ export default function Appointments() {
   }
 
   const now = new Date();
-  const upcoming = appointments.filter(a => new Date(a.appointment_date) >= now && a.status !== "cancelled");
-  const past = appointments.filter(a => new Date(a.appointment_date) < now || a.status === "cancelled");
+  const upcoming = appointments.filter(a => new Date(a.appointment_date || a.date) >= now && a.status !== "cancelled");
+  const past = appointments.filter(a => new Date(a.appointment_date || a.date) < now || a.status === "cancelled");
 
   const getTimeLabel = (slot) => TIME_SLOTS.find(s => s.value === slot)?.label || slot || "";
 
@@ -277,7 +280,7 @@ export default function Appointments() {
                         </div>
                         <div>
                           <p className="font-medium text-sm">
-                            {new Date(apt.appointment_date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
+                            {new Date(apt.appointment_date || apt.date).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })}
                             {" · "}{getTimeLabel(apt.time_slot)}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
@@ -318,7 +321,7 @@ export default function Appointments() {
                       <div className="flex items-center gap-3">
                         {MEETING_ICONS[apt.meeting_type] || <Video className="h-4 w-4" />}
                         <div>
-                          <span className="text-sm">{new Date(apt.appointment_date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
+                          <span className="text-sm">{new Date(apt.appointment_date || apt.date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}</span>
                           {apt.service_type && <span className="text-xs text-muted-foreground ml-2">· {apt.service_type}</span>}
                         </div>
                       </div>
